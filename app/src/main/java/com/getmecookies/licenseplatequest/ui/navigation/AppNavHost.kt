@@ -12,13 +12,16 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.getmecookies.licenseplatequest.ui.screens.map.MapDemoScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersScreen
+import com.getmecookies.licenseplatequest.ui.screens.statedetail.StateDetailScreen
 import com.getmecookies.licenseplatequest.ui.screens.trips.NewTripScreen
 import com.getmecookies.licenseplatequest.ui.screens.trips.TripListScreen
 
@@ -35,7 +38,12 @@ fun AppRoot() {
     val currentRoute = currentDestination?.route
 
     // Full-screen routes that should not show the bottom navigation bar.
-    val fullScreenRoutes = setOf(Routes.ADD_PLAYER, Routes.NEW_TRIP, Routes.MAP_DEMO)
+    val fullScreenRoutes = setOf(
+        Routes.ADD_PLAYER,
+        Routes.NEW_TRIP,
+        Routes.MAP_DEMO,
+        Routes.STATE_DETAIL,
+    )
     val showBottomBar = currentRoute !in fullScreenRoutes
 
     Scaffold(
@@ -114,6 +122,15 @@ fun AppRoot() {
             }
             composable(Routes.MAP_DEMO) {
                 MapDemoScreen(
+                    onBack = { navController.popBackStack() },
+                    onStateClick = { code -> navController.navigate(Routes.stateDetail(code)) },
+                )
+            }
+            composable(
+                route = Routes.STATE_DETAIL,
+                arguments = listOf(navArgument("code") { type = NavType.StringType }),
+            ) {
+                StateDetailScreen(
                     onBack = { navController.popBackStack() },
                 )
             }

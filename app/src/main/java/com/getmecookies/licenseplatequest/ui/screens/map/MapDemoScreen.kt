@@ -11,7 +11,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,14 +23,15 @@ import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.map.UsMap
 
 /**
- * Standalone map test (Milestone 5). Shows the interactive US map and a found-count; tapping
- * a state toggles it found/unfound so pan, zoom, fill, and hit-testing can be verified before
- * the Active Trip View wires the map to real spotting data.
+ * Interactive US map (interim host for the map until the Active Trip View in Milestone 7).
+ * Fills reflect the active trip's found states; tapping a state opens its State Detail, where
+ * it can be marked or unmarked.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapDemoScreen(
     onBack: () -> Unit,
+    onStateClick: (String) -> Unit,
     viewModel: MapDemoViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -44,9 +44,6 @@ fun MapDemoScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                },
-                actions = {
-                    TextButton(onClick = viewModel::onReset) { Text("Reset") }
                 },
             )
         },
@@ -64,7 +61,7 @@ fun MapDemoScreen(
                 UsMap(
                     shapes = shapes,
                     foundCodes = uiState.foundCodes,
-                    onStateClick = viewModel::onToggleState,
+                    onStateClick = onStateClick,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(8.dp),

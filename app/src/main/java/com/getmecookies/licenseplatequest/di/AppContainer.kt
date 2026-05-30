@@ -6,6 +6,7 @@ import com.getmecookies.licenseplatequest.data.local.DatabaseProvider
 import com.getmecookies.licenseplatequest.data.map.MapRepository
 import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
+import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
 
@@ -27,6 +28,8 @@ class AppContainer(context: Context) {
     )
 
     val tripRepository: TripRepository = TripRepository(database)
+
+    val spottingRepository: SpottingRepository = SpottingRepository(database)
 
     val mapRepository: MapRepository = MapRepository(context.applicationContext)
 

@@ -43,6 +43,10 @@ interface TripDao {
     @Query("SELECT * FROM trip WHERE status = :status LIMIT 1")
     suspend fun getByStatus(status: TripStatus): TripEntity?
 
+    /** Observe the single trip in a given status (used to react to the active trip changing). */
+    @Query("SELECT * FROM trip WHERE status = :status LIMIT 1")
+    fun observeByStatus(status: TripStatus): Flow<TripEntity?>
+
     @Query("SELECT * FROM trip WHERE id = :id")
     suspend fun getById(id: UUID): TripEntity?
 

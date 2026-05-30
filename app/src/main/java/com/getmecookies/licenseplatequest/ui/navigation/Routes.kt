@@ -12,6 +12,10 @@ object Routes {
     /** Temporary standalone map test (Milestone 5); folds into the Active Trip View at M7. */
     const val MAP_DEMO = "map/demo"
 
+    /** State Detail, parameterized by 2-letter state code. */
+    const val STATE_DETAIL = "state/{code}"
+    fun stateDetail(code: String) = "state/$code"
+
     /** savedStateHandle key: id of a player created via the shared Add Player screen. */
     const val RESULT_NEW_PLAYER_ID = "new_player_id"
 }
