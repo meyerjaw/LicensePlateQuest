@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base theme is intentionally minimal: all visual theming is done in Compose
+         (see ui/theme). A NoActionBar Material 3 parent gives the host Activity a
+         sane window background and removes the legacy ActionBar. -->
+    <style name="Theme.LicensePlateQuest" parent="Theme.Material3.DayNight.NoActionBar" />
+</resources>

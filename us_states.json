@@ -1,0 +1,958 @@
+{
+  "schema_version": 1,
+  "data_version": 2,
+  "country_code": "US",
+  "notes": "Bundled at /assets/regions/us_states.json. Loaded into the PlateRegion table on first run. Compare data_version with stored value on app start to apply updates without schema migration.",
+  "regions": [
+    {
+      "country_code": "US",
+      "region_code": "AL",
+      "name": "Alabama",
+      "bird": "Yellowhammer (Northern Flicker)",
+      "motto": "Audemus jura nostra defendere (We dare defend our rights)",
+      "flower": "Camellia",
+      "fun_facts": [
+        "Alabama was the first state to recognize Christmas as an official holiday, doing so in 1836.",
+        "The world's first electric trolley system began operation in Montgomery in 1886.",
+        "Helen Keller was born in Tuscumbia, Alabama in 1880."
+      ],
+      "plate_image_path": "plates/al.png",
+      "rarity_score": 0.32,
+      "center_lat": 32.806,
+      "center_lng": -86.791,
+      "display_order": 1,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "AK",
+      "name": "Alaska",
+      "bird": "Willow Ptarmigan",
+      "motto": "North to the Future",
+      "flower": "Forget-me-not",
+      "fun_facts": [
+        "Alaska is the largest U.S. state by area — more than twice the size of Texas.",
+        "It has more coastline than all other U.S. states combined.",
+        "The United States purchased Alaska from Russia in 1867 for about 2 cents per acre."
+      ],
+      "plate_image_path": "plates/ak.png",
+      "rarity_score": 0.88,
+      "center_lat": 61.37,
+      "center_lng": -152.404,
+      "display_order": 2,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "AZ",
+      "name": "Arizona",
+      "bird": "Cactus Wren",
+      "motto": "Ditat Deus (God enriches)",
+      "flower": "Saguaro Cactus Blossom",
+      "fun_facts": [
+        "The Grand Canyon is one of the Seven Natural Wonders of the World.",
+        "Arizona produces enough copper each year to lead the nation in production.",
+        "The original London Bridge was bought and reassembled in Lake Havasu City in 1971."
+      ],
+      "plate_image_path": "plates/az.png",
+      "rarity_score": 0.3,
+      "center_lat": 33.73,
+      "center_lng": -111.431,
+      "display_order": 3,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "AR",
+      "name": "Arkansas",
+      "bird": "Northern Mockingbird",
+      "motto": "Regnat populus (The people rule)",
+      "flower": "Apple Blossom",
+      "fun_facts": [
+        "Arkansas is the only U.S. state that produces diamonds — Crater of Diamonds State Park lets visitors keep what they find.",
+        "Hot Springs National Park is the smallest national park and one of the oldest federally protected areas in the U.S.",
+        "Walmart was founded in Bentonville, Arkansas in 1962."
+      ],
+      "plate_image_path": "plates/ar.png",
+      "rarity_score": 0.45,
+      "center_lat": 34.969,
+      "center_lng": -92.373,
+      "display_order": 4,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "CA",
+      "name": "California",
+      "bird": "California Quail",
+      "motto": "Eureka (I have found it)",
+      "flower": "California Poppy",
+      "fun_facts": [
+        "California is home to both the highest and lowest points in the contiguous U.S. — Mount Whitney and Death Valley.",
+        "It would be the fifth-largest economy in the world if it were its own country.",
+        "Coast redwoods in California are the tallest trees on Earth, with some growing over 380 feet tall."
+      ],
+      "plate_image_path": "plates/ca.png",
+      "rarity_score": 0.1,
+      "center_lat": 36.116,
+      "center_lng": -119.681,
+      "display_order": 5,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "CO",
+      "name": "Colorado",
+      "bird": "Lark Bunting",
+      "motto": "Nil sine numine (Nothing without providence)",
+      "flower": "Rocky Mountain Columbine",
+      "fun_facts": [
+        "Colorado has the highest mean elevation of any U.S. state.",
+        "The cheeseburger was reportedly invented in Denver in 1935.",
+        "Colorado has more than 50 mountain peaks that rise above 14,000 feet."
+      ],
+      "plate_image_path": "plates/co.png",
+      "rarity_score": 0.25,
+      "center_lat": 39.059,
+      "center_lng": -105.311,
+      "display_order": 6,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "CT",
+      "name": "Connecticut",
+      "bird": "American Robin",
+      "motto": "Qui transtulit sustinet (He who transplanted sustains)",
+      "flower": "Mountain Laurel",
+      "fun_facts": [
+        "The first hamburger in the U.S. was reportedly served at Louis' Lunch in New Haven in 1900.",
+        "Connecticut is nicknamed the Constitution State and home to the first written constitution in the colonies, the Fundamental Orders of 1638.",
+        "The first telephone book ever published contained only 50 names and was issued in New Haven in 1878."
+      ],
+      "plate_image_path": "plates/ct.png",
+      "rarity_score": 0.32,
+      "center_lat": 41.597,
+      "center_lng": -72.755,
+      "display_order": 7,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "DE",
+      "name": "Delaware",
+      "bird": "Blue Hen Chicken",
+      "motto": "Liberty and Independence",
+      "flower": "Peach Blossom",
+      "fun_facts": [
+        "Delaware was the first state to ratify the U.S. Constitution, on December 7, 1787 — earning it the nickname The First State.",
+        "It is the second-smallest U.S. state by area.",
+        "Delaware has no sales tax."
+      ],
+      "plate_image_path": "plates/de.png",
+      "rarity_score": 0.4,
+      "center_lat": 39.318,
+      "center_lng": -75.507,
+      "display_order": 8,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "FL",
+      "name": "Florida",
+      "bird": "Northern Mockingbird",
+      "motto": "In God We Trust",
+      "flower": "Orange Blossom",
+      "fun_facts": [
+        "Florida has the longest coastline of any state in the contiguous U.S.",
+        "It is the only state that borders both the Atlantic Ocean and the Gulf of Mexico.",
+        "St. Augustine, founded in 1565, is the oldest continuously inhabited European-established settlement in the U.S."
+      ],
+      "plate_image_path": "plates/fl.png",
+      "rarity_score": 0.15,
+      "center_lat": 27.766,
+      "center_lng": -81.687,
+      "display_order": 9,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "GA",
+      "name": "Georgia",
+      "bird": "Brown Thrasher",
+      "motto": "Wisdom, Justice, Moderation",
+      "flower": "Cherokee Rose",
+      "fun_facts": [
+        "Georgia is the leading producer of peaches, peanuts, and pecans in the U.S.",
+        "Coca-Cola was invented in Atlanta in 1886 by pharmacist John Pemberton.",
+        "Georgia was the fourth state to ratify the U.S. Constitution."
+      ],
+      "plate_image_path": "plates/ga.png",
+      "rarity_score": 0.18,
+      "center_lat": 33.04,
+      "center_lng": -83.643,
+      "display_order": 10,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "HI",
+      "name": "Hawaii",
+      "bird": "Nene (Hawaiian Goose)",
+      "motto": "Ua Mau ke Ea o ka 'Aina i ka Pono (The life of the land is perpetuated in righteousness)",
+      "flower": "Yellow Hibiscus",
+      "fun_facts": [
+        "Hawaii is the only U.S. state made entirely of islands.",
+        "It is the most isolated population center on Earth, more than 2,000 miles from the nearest continent.",
+        "Hawaii is the only state with two official languages: English and Hawaiian."
+      ],
+      "plate_image_path": "plates/hi.png",
+      "rarity_score": 0.95,
+      "center_lat": 21.094,
+      "center_lng": -157.498,
+      "display_order": 11,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "ID",
+      "name": "Idaho",
+      "bird": "Mountain Bluebird",
+      "motto": "Esto perpetua (May it be forever)",
+      "flower": "Syringa (Mock Orange)",
+      "fun_facts": [
+        "Idaho produces about one-third of all potatoes grown in the U.S.",
+        "Hells Canyon, on the Idaho-Oregon border, is the deepest river gorge in North America — deeper than the Grand Canyon.",
+        "Idaho was the 43rd state admitted to the Union in 1890."
+      ],
+      "plate_image_path": "plates/id.png",
+      "rarity_score": 0.55,
+      "center_lat": 44.24,
+      "center_lng": -114.479,
+      "display_order": 12,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "IL",
+      "name": "Illinois",
+      "bird": "Northern Cardinal",
+      "motto": "State Sovereignty, National Union",
+      "flower": "Violet",
+      "fun_facts": [
+        "The world's first skyscraper, the Home Insurance Building, was built in Chicago in 1885.",
+        "Abraham Lincoln practiced law and launched his political career in Illinois.",
+        "Illinois is home to the largest cookie and cracker factory in the world, Nabisco's bakery in Chicago."
+      ],
+      "plate_image_path": "plates/il.png",
+      "rarity_score": 0.15,
+      "center_lat": 40.349,
+      "center_lng": -88.986,
+      "display_order": 13,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "IN",
+      "name": "Indiana",
+      "bird": "Northern Cardinal",
+      "motto": "The Crossroads of America",
+      "flower": "Peony",
+      "fun_facts": [
+        "The Indianapolis 500, first run in 1911, is one of the oldest auto races in the world.",
+        "Indiana is one of only two states with a non-rectangular flag — its state flag features a torch and stars.",
+        "The first long-distance auto race in the U.S. was held in Indiana in 1909."
+      ],
+      "plate_image_path": "plates/in.png",
+      "rarity_score": 0.22,
+      "center_lat": 39.849,
+      "center_lng": -86.258,
+      "display_order": 14,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "IA",
+      "name": "Iowa",
+      "bird": "Eastern Goldfinch (American Goldfinch)",
+      "motto": "Our liberties we prize and our rights we will maintain",
+      "flower": "Wild Prairie Rose",
+      "fun_facts": [
+        "Iowa is the only state whose east and west borders are formed entirely by rivers — the Mississippi and the Missouri.",
+        "Iowa produces more corn than any other state, and more than most countries.",
+        "The Iowa caucuses are traditionally the first contest in the U.S. presidential primary season."
+      ],
+      "plate_image_path": "plates/ia.png",
+      "rarity_score": 0.42,
+      "center_lat": 42.011,
+      "center_lng": -93.21,
+      "display_order": 15,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "KS",
+      "name": "Kansas",
+      "bird": "Western Meadowlark",
+      "motto": "Ad astra per aspera (To the stars through difficulties)",
+      "flower": "Sunflower",
+      "fun_facts": [
+        "The geographic center of the contiguous 48 states is located near Lebanon, Kansas.",
+        "Kansas is one of the world's leading wheat producers.",
+        "Dodge City, Kansas is the windiest city in the U.S. on average."
+      ],
+      "plate_image_path": "plates/ks.png",
+      "rarity_score": 0.45,
+      "center_lat": 38.526,
+      "center_lng": -96.726,
+      "display_order": 16,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "KY",
+      "name": "Kentucky",
+      "bird": "Northern Cardinal",
+      "motto": "United we stand, divided we fall",
+      "flower": "Goldenrod",
+      "fun_facts": [
+        "About 95 percent of the world's bourbon is produced in Kentucky.",
+        "The Kentucky Derby, first run in 1875, is the oldest continuously held sporting event in the U.S.",
+        "Mammoth Cave is the longest known cave system in the world, with more than 400 miles of explored passageways."
+      ],
+      "plate_image_path": "plates/ky.png",
+      "rarity_score": 0.28,
+      "center_lat": 37.668,
+      "center_lng": -84.67,
+      "display_order": 17,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "LA",
+      "name": "Louisiana",
+      "bird": "Brown Pelican",
+      "motto": "Union, Justice, Confidence",
+      "flower": "Magnolia",
+      "fun_facts": [
+        "Louisiana is the only U.S. state with parishes instead of counties.",
+        "New Orleans is the birthplace of jazz music.",
+        "Louisiana's legal system is based on Napoleonic Code, unlike any other U.S. state."
+      ],
+      "plate_image_path": "plates/la.png",
+      "rarity_score": 0.38,
+      "center_lat": 31.169,
+      "center_lng": -91.867,
+      "display_order": 18,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "ME",
+      "name": "Maine",
+      "bird": "Black-capped Chickadee",
+      "motto": "Dirigo (I lead)",
+      "flower": "White Pine Cone and Tassel",
+      "fun_facts": [
+        "Maine produces about 90 percent of the lobster supply in the U.S.",
+        "Maine is the only state whose name has exactly one syllable.",
+        "Maine has more coastline than California, despite being much smaller."
+      ],
+      "plate_image_path": "plates/me.png",
+      "rarity_score": 0.55,
+      "center_lat": 44.693,
+      "center_lng": -69.381,
+      "display_order": 19,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "MD",
+      "name": "Maryland",
+      "bird": "Baltimore Oriole",
+      "motto": "Fatti maschii, parole femine (Strong deeds, gentle words)",
+      "flower": "Black-eyed Susan",
+      "fun_facts": [
+        "The U.S. national anthem, The Star-Spangled Banner, was written by Francis Scott Key during the Battle of Baltimore in 1814.",
+        "The U.S. Naval Academy is located in Annapolis.",
+        "Maryland is home to Old Bay seasoning, created in Baltimore in the 1940s."
+      ],
+      "plate_image_path": "plates/md.png",
+      "rarity_score": 0.22,
+      "center_lat": 39.063,
+      "center_lng": -76.802,
+      "display_order": 20,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "MA",
+      "name": "Massachusetts",
+      "bird": "Black-capped Chickadee",
+      "motto": "Ense petit placidam sub libertate quietem (By the sword we seek peace, but peace only under liberty)",
+      "flower": "Mayflower",
+      "fun_facts": [
+        "Harvard University, founded in 1636, is the oldest institution of higher learning in the U.S.",
+        "The first public park in America, Boston Common, was established in 1634.",
+        "Basketball and volleyball were both invented in Massachusetts."
+      ],
+      "plate_image_path": "plates/ma.png",
+      "rarity_score": 0.22,
+      "center_lat": 42.23,
+      "center_lng": -71.53,
+      "display_order": 21,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "MI",
+      "name": "Michigan",
+      "bird": "American Robin",
+      "motto": "Si quaeris peninsulam amoenam circumspice (If you seek a pleasant peninsula, look about you)",
+      "flower": "Apple Blossom",
+      "fun_facts": [
+        "Michigan is the only U.S. state made up of two separate peninsulas.",
+        "Michigan borders four of the five Great Lakes — only Lake Ontario is missing.",
+        "Detroit is known as the Motor City and birthplace of the American auto industry."
+      ],
+      "plate_image_path": "plates/mi.png",
+      "rarity_score": 0.18,
+      "center_lat": 43.326,
+      "center_lng": -84.536,
+      "display_order": 22,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "MN",
+      "name": "Minnesota",
+      "bird": "Common Loon",
+      "motto": "L'Étoile du Nord (The Star of the North)",
+      "flower": "Pink and White Lady's Slipper",
+      "fun_facts": [
+        "Minnesota is known as the Land of 10,000 Lakes — though it actually has more than 11,000.",
+        "The Mall of America in Bloomington is one of the largest shopping malls in the U.S.",
+        "Minnesota produces more turkeys than any other state."
+      ],
+      "plate_image_path": "plates/mn.png",
+      "rarity_score": 0.3,
+      "center_lat": 45.694,
+      "center_lng": -93.9,
+      "display_order": 23,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "MS",
+      "name": "Mississippi",
+      "bird": "Northern Mockingbird",
+      "motto": "Virtute et armis (By valor and arms)",
+      "flower": "Magnolia",
+      "fun_facts": [
+        "The teddy bear was named after President Theodore Roosevelt following a hunting trip in Mississippi in 1902.",
+        "Root beer was invented in Biloxi in 1898.",
+        "The Mississippi River, the second-longest river in North America, borders the state."
+      ],
+      "plate_image_path": "plates/ms.png",
+      "rarity_score": 0.5,
+      "center_lat": 32.741,
+      "center_lng": -89.678,
+      "display_order": 24,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "MO",
+      "name": "Missouri",
+      "bird": "Eastern Bluebird",
+      "motto": "Salus populi suprema lex esto (The welfare of the people shall be the supreme law)",
+      "flower": "Hawthorn",
+      "fun_facts": [
+        "The Gateway Arch in St. Louis is the tallest monument in the U.S. at 630 feet.",
+        "Missouri shares borders with eight states, tied with Tennessee for the most.",
+        "The ice cream cone is said to have been invented at the 1904 World's Fair in St. Louis."
+      ],
+      "plate_image_path": "plates/mo.png",
+      "rarity_score": 0.25,
+      "center_lat": 38.456,
+      "center_lng": -92.288,
+      "display_order": 25,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "MT",
+      "name": "Montana",
+      "bird": "Western Meadowlark",
+      "motto": "Oro y plata (Gold and silver)",
+      "flower": "Bitterroot",
+      "fun_facts": [
+        "Montana is nicknamed Big Sky Country for its wide open landscapes.",
+        "Glacier National Park in Montana is part of the world's first International Peace Park, shared with Canada.",
+        "Montana has the largest grizzly bear population in the lower 48 states."
+      ],
+      "plate_image_path": "plates/mt.png",
+      "rarity_score": 0.55,
+      "center_lat": 46.921,
+      "center_lng": -110.454,
+      "display_order": 26,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "NE",
+      "name": "Nebraska",
+      "bird": "Western Meadowlark",
+      "motto": "Equality before the law",
+      "flower": "Goldenrod",
+      "fun_facts": [
+        "Nebraska has the only unicameral (single-house) state legislature in the U.S.",
+        "Kool-Aid was invented in Hastings, Nebraska in 1927 and is the official state soft drink.",
+        "The Sandhills region of Nebraska is the largest sand dune formation in the Western Hemisphere."
+      ],
+      "plate_image_path": "plates/ne.png",
+      "rarity_score": 0.48,
+      "center_lat": 41.125,
+      "center_lng": -98.268,
+      "display_order": 27,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "NV",
+      "name": "Nevada",
+      "bird": "Mountain Bluebird",
+      "motto": "All for our country",
+      "flower": "Sagebrush",
+      "fun_facts": [
+        "Nevada is the driest state in the U.S., averaging just over 9 inches of rain per year.",
+        "About 86 percent of Nevada's land is owned by the federal government — the highest of any state.",
+        "Las Vegas has more hotel rooms than any other city in the world."
+      ],
+      "plate_image_path": "plates/nv.png",
+      "rarity_score": 0.38,
+      "center_lat": 38.313,
+      "center_lng": -117.055,
+      "display_order": 28,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "NH",
+      "name": "New Hampshire",
+      "bird": "Purple Finch",
+      "motto": "Live Free or Die",
+      "flower": "Purple Lilac",
+      "fun_facts": [
+        "New Hampshire holds the first primary election in U.S. presidential races.",
+        "It was the first colony to declare its independence from England, in January 1776.",
+        "New Hampshire has the shortest ocean coastline of any state with coastline — just 18 miles."
+      ],
+      "plate_image_path": "plates/nh.png",
+      "rarity_score": 0.5,
+      "center_lat": 43.452,
+      "center_lng": -71.564,
+      "display_order": 29,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "NJ",
+      "name": "New Jersey",
+      "bird": "Eastern Goldfinch (American Goldfinch)",
+      "motto": "Liberty and Prosperity",
+      "flower": "Violet",
+      "fun_facts": [
+        "New Jersey has the highest population density of any U.S. state.",
+        "The first organized baseball game was played in Hoboken in 1846.",
+        "Thomas Edison's lab in Menlo Park produced the phonograph, the light bulb, and the motion picture camera."
+      ],
+      "plate_image_path": "plates/nj.png",
+      "rarity_score": 0.18,
+      "center_lat": 40.298,
+      "center_lng": -74.521,
+      "display_order": 30,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "NM",
+      "name": "New Mexico",
+      "bird": "Greater Roadrunner",
+      "motto": "Crescit eundo (It grows as it goes)",
+      "flower": "Yucca",
+      "fun_facts": [
+        "New Mexico has the highest percentage of Hispanic Americans of any state.",
+        "Santa Fe, founded in 1610, is the oldest state capital in the U.S.",
+        "The world's first atomic bomb was detonated at the Trinity Site in New Mexico in 1945."
+      ],
+      "plate_image_path": "plates/nm.png",
+      "rarity_score": 0.5,
+      "center_lat": 34.84,
+      "center_lng": -106.248,
+      "display_order": 31,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "NY",
+      "name": "New York",
+      "bird": "Eastern Bluebird",
+      "motto": "Excelsior (Ever upward)",
+      "flower": "Rose",
+      "fun_facts": [
+        "New York City has more than 800 languages spoken, making it the most linguistically diverse city in the world.",
+        "The first U.S. capital was New York City, where George Washington was inaugurated in 1789.",
+        "New York's subway system has 472 stations — more than any other system in the world."
+      ],
+      "plate_image_path": "plates/ny.png",
+      "rarity_score": 0.15,
+      "center_lat": 42.165,
+      "center_lng": -74.948,
+      "display_order": 32,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "NC",
+      "name": "North Carolina",
+      "bird": "Northern Cardinal",
+      "motto": "Esse quam videri (To be, rather than to seem)",
+      "flower": "Dogwood",
+      "fun_facts": [
+        "The Wright brothers made the first powered airplane flight at Kitty Hawk in 1903, though they designed and built their aircraft in Dayton, Ohio.",
+        "North Carolina is the leading producer of sweet potatoes in the U.S.",
+        "The first state university in the U.S. opened here in 1795 — the University of North Carolina at Chapel Hill."
+      ],
+      "plate_image_path": "plates/nc.png",
+      "rarity_score": 0.2,
+      "center_lat": 35.63,
+      "center_lng": -79.806,
+      "display_order": 33,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "ND",
+      "name": "North Dakota",
+      "bird": "Western Meadowlark",
+      "motto": "Liberty and union, now and forever, one and inseparable",
+      "flower": "Wild Prairie Rose",
+      "fun_facts": [
+        "North Dakota is one of the least visited and least populated states in the U.S.",
+        "It is the leading producer of honey in the country.",
+        "The geographic center of North America is in Rugby, North Dakota."
+      ],
+      "plate_image_path": "plates/nd.png",
+      "rarity_score": 0.75,
+      "center_lat": 47.529,
+      "center_lng": -99.784,
+      "display_order": 34,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "OH",
+      "name": "Ohio",
+      "bird": "Northern Cardinal",
+      "motto": "With God, all things are possible",
+      "flower": "Scarlet Carnation",
+      "fun_facts": [
+        "Seven U.S. presidents were born in Ohio, more than any other state except Virginia.",
+        "Cincinnati hosted the first professional baseball team, the Red Stockings, in 1869.",
+        "The Wright brothers, inventors of the airplane, were from Dayton, Ohio."
+      ],
+      "plate_image_path": "plates/oh.png",
+      "rarity_score": 0.15,
+      "center_lat": 40.388,
+      "center_lng": -82.764,
+      "display_order": 35,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "OK",
+      "name": "Oklahoma",
+      "bird": "Scissor-tailed Flycatcher",
+      "motto": "Labor omnia vincit (Labor conquers all)",
+      "flower": "Oklahoma Rose",
+      "fun_facts": [
+        "Oklahoma has more man-made lakes than any other state — over 200.",
+        "The shopping cart was invented in Ardmore, Oklahoma in 1937.",
+        "Oklahoma has the largest Native American population of any U.S. state."
+      ],
+      "plate_image_path": "plates/ok.png",
+      "rarity_score": 0.4,
+      "center_lat": 35.565,
+      "center_lng": -96.928,
+      "display_order": 36,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "OR",
+      "name": "Oregon",
+      "bird": "Western Meadowlark",
+      "motto": "Alis volat propriis (She flies with her own wings)",
+      "flower": "Oregon Grape",
+      "fun_facts": [
+        "Crater Lake is the deepest lake in the U.S., at 1,943 feet.",
+        "Oregon's state flag is the only U.S. state flag with different designs on its two sides.",
+        "Hells Canyon, on the Oregon-Idaho border, is the deepest river gorge in North America."
+      ],
+      "plate_image_path": "plates/or.png",
+      "rarity_score": 0.4,
+      "center_lat": 44.572,
+      "center_lng": -122.071,
+      "display_order": 37,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "PA",
+      "name": "Pennsylvania",
+      "bird": "Ruffed Grouse",
+      "motto": "Virtue, Liberty, and Independence",
+      "flower": "Mountain Laurel",
+      "fun_facts": [
+        "The Declaration of Independence and the U.S. Constitution were both signed in Philadelphia.",
+        "Hershey, Pennsylvania is known as the Chocolate Capital of the U.S.",
+        "Pennsylvania was the second state to ratify the U.S. Constitution."
+      ],
+      "plate_image_path": "plates/pa.png",
+      "rarity_score": 0.15,
+      "center_lat": 40.59,
+      "center_lng": -77.209,
+      "display_order": 38,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "RI",
+      "name": "Rhode Island",
+      "bird": "Rhode Island Red",
+      "motto": "Hope",
+      "flower": "Violet",
+      "fun_facts": [
+        "Rhode Island is the smallest U.S. state by area.",
+        "It has the longest official name of any state: State of Rhode Island and Providence Plantations (shortened in 2020 to just State of Rhode Island).",
+        "The first fully automated post office in the U.S. opened in Providence in 1960."
+      ],
+      "plate_image_path": "plates/ri.png",
+      "rarity_score": 0.5,
+      "center_lat": 41.68,
+      "center_lng": -71.512,
+      "display_order": 39,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "SC",
+      "name": "South Carolina",
+      "bird": "Carolina Wren",
+      "motto": "Dum spiro spero (While I breathe, I hope)",
+      "flower": "Yellow Jessamine",
+      "fun_facts": [
+        "Charleston is one of the oldest cities in the U.S., founded in 1670.",
+        "The first shots of the Civil War were fired at Fort Sumter in Charleston Harbor in 1861.",
+        "South Carolina is the leading producer of peaches on the East Coast, ahead of Georgia."
+      ],
+      "plate_image_path": "plates/sc.png",
+      "rarity_score": 0.28,
+      "center_lat": 33.857,
+      "center_lng": -80.945,
+      "display_order": 40,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "SD",
+      "name": "South Dakota",
+      "bird": "Ring-necked Pheasant",
+      "motto": "Under God the people rule",
+      "flower": "Pasque Flower",
+      "fun_facts": [
+        "Mount Rushmore features 60-foot-tall sculpted faces of four U.S. presidents.",
+        "South Dakota is home to Badlands National Park, with its dramatic eroded rock formations.",
+        "Sturgis hosts one of the largest motorcycle rallies in the world each August."
+      ],
+      "plate_image_path": "plates/sd.png",
+      "rarity_score": 0.6,
+      "center_lat": 44.299,
+      "center_lng": -99.439,
+      "display_order": 41,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "TN",
+      "name": "Tennessee",
+      "bird": "Northern Mockingbird",
+      "motto": "Agriculture and Commerce",
+      "flower": "Iris",
+      "fun_facts": [
+        "Nashville is known as Music City and home to the Grand Ole Opry, the longest-running radio broadcast in U.S. history.",
+        "Tennessee borders eight states, tied with Missouri for the most.",
+        "Great Smoky Mountains National Park, which Tennessee shares with North Carolina, is the most-visited national park in the U.S."
+      ],
+      "plate_image_path": "plates/tn.png",
+      "rarity_score": 0.25,
+      "center_lat": 35.747,
+      "center_lng": -86.692,
+      "display_order": 42,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "TX",
+      "name": "Texas",
+      "bird": "Northern Mockingbird",
+      "motto": "Friendship",
+      "flower": "Bluebonnet",
+      "fun_facts": [
+        "Texas is the only U.S. state to have been an independent country before joining the Union.",
+        "It is the second-largest state by area and second-largest by population.",
+        "The King Ranch in Texas is larger than the state of Rhode Island."
+      ],
+      "plate_image_path": "plates/tx.png",
+      "rarity_score": 0.12,
+      "center_lat": 31.054,
+      "center_lng": -97.564,
+      "display_order": 43,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "UT",
+      "name": "Utah",
+      "bird": "California Gull",
+      "motto": "Industry",
+      "flower": "Sego Lily",
+      "fun_facts": [
+        "Utah has five national parks, more than any state except California and Alaska.",
+        "The Great Salt Lake is the largest saltwater lake in the Western Hemisphere.",
+        "Utah has the highest literacy rate in the U.S."
+      ],
+      "plate_image_path": "plates/ut.png",
+      "rarity_score": 0.42,
+      "center_lat": 40.15,
+      "center_lng": -111.862,
+      "display_order": 44,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "VT",
+      "name": "Vermont",
+      "bird": "Hermit Thrush",
+      "motto": "Freedom and Unity",
+      "flower": "Red Clover",
+      "fun_facts": [
+        "Vermont is the leading producer of maple syrup in the U.S.",
+        "Montpelier is the only U.S. state capital without a McDonald's.",
+        "Vermont was the first state admitted to the Union after the original 13 colonies."
+      ],
+      "plate_image_path": "plates/vt.png",
+      "rarity_score": 0.65,
+      "center_lat": 44.045,
+      "center_lng": -72.71,
+      "display_order": 45,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "VA",
+      "name": "Virginia",
+      "bird": "Northern Cardinal",
+      "motto": "Sic semper tyrannis (Thus always to tyrants)",
+      "flower": "American Dogwood",
+      "fun_facts": [
+        "Eight U.S. presidents were born in Virginia — more than any other state.",
+        "Jamestown, founded in 1607, was the first permanent English settlement in the Americas.",
+        "The Pentagon, the world's largest office building by floor area, is located in Arlington."
+      ],
+      "plate_image_path": "plates/va.png",
+      "rarity_score": 0.22,
+      "center_lat": 37.77,
+      "center_lng": -78.17,
+      "display_order": 46,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "WA",
+      "name": "Washington",
+      "bird": "American Goldfinch",
+      "motto": "Al-ki (Bye and bye)",
+      "flower": "Coast Rhododendron",
+      "fun_facts": [
+        "Washington is the only U.S. state named after a president.",
+        "Mount Rainier in Washington is the most glaciated peak in the contiguous U.S.",
+        "Seattle is home to the original Starbucks, which opened in Pike Place Market in 1971."
+      ],
+      "plate_image_path": "plates/wa.png",
+      "rarity_score": 0.28,
+      "center_lat": 47.401,
+      "center_lng": -121.49,
+      "display_order": 47,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "WV",
+      "name": "West Virginia",
+      "bird": "Northern Cardinal",
+      "motto": "Montani semper liberi (Mountaineers are always free)",
+      "flower": "Rhododendron",
+      "fun_facts": [
+        "West Virginia was formed by breaking away from Virginia during the Civil War, becoming the only state to be admitted that way.",
+        "Almost the entire state is covered by the Appalachian Mountains.",
+        "The New River Gorge Bridge was once the longest steel arch bridge in the world."
+      ],
+      "plate_image_path": "plates/wv.png",
+      "rarity_score": 0.48,
+      "center_lat": 38.491,
+      "center_lng": -80.954,
+      "display_order": 48,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "WI",
+      "name": "Wisconsin",
+      "bird": "American Robin",
+      "motto": "Forward",
+      "flower": "Wood Violet",
+      "fun_facts": [
+        "Wisconsin is the leading producer of cheese in the U.S.",
+        "The ice cream sundae was reportedly invented in Two Rivers, Wisconsin in 1881.",
+        "Wisconsin has over 15,000 lakes."
+      ],
+      "plate_image_path": "plates/wi.png",
+      "rarity_score": 0.28,
+      "center_lat": 44.268,
+      "center_lng": -89.616,
+      "display_order": 49,
+      "additional_info": {}
+    },
+    {
+      "country_code": "US",
+      "region_code": "WY",
+      "name": "Wyoming",
+      "bird": "Western Meadowlark",
+      "motto": "Equal Rights",
+      "flower": "Indian Paintbrush",
+      "fun_facts": [
+        "Wyoming is the least populated U.S. state.",
+        "Yellowstone, mostly in Wyoming, was the world's first national park, established in 1872.",
+        "Wyoming was the first U.S. territory or state to grant women the right to vote, in 1869."
+      ],
+      "plate_image_path": "plates/wy.png",
+      "rarity_score": 0.72,
+      "center_lat": 42.756,
+      "center_lng": -107.302,
+      "display_order": 50,
+      "additional_info": {}
+    }
+  ]
+}
