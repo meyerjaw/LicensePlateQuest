@@ -20,6 +20,10 @@ interface PlateRegionDao {
     @Query("SELECT * FROM plate_region ORDER BY display_order")
     suspend fun getAll(): List<PlateRegionEntity>
 
+    /** Observe regions (ordered) so dropdowns populate once first-run seeding completes. */
+    @Query("SELECT * FROM plate_region ORDER BY display_order")
+    fun observeAll(): Flow<List<PlateRegionEntity>>
+
     @Query("SELECT * FROM plate_region WHERE country_code = :country AND region_code = :region LIMIT 1")
     suspend fun getByCode(country: String, region: String): PlateRegionEntity?
 

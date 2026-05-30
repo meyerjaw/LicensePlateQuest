@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 /**
  * State for the full-screen Add Player flow. Kept deliberately small for now — future
@@ -21,7 +22,8 @@ data class AddPlayerUiState(
 
 /**
  * ViewModel for [AddPlayerScreen]. Owns name entry, validation, and the save call, then
- * signals completion via a one-shot [saved] flag the screen observes to navigate back.
+ * signals completion via [savedPlayerId] (the new player's id). The screen observes this to
+ * navigate back and, when launched from the New Trip flow, to report which player was added.
  */
 class AddPlayerViewModel(
     private val playerRepository: PlayerRepository,
@@ -30,8 +32,8 @@ class AddPlayerViewModel(
     private val _uiState = MutableStateFlow(AddPlayerUiState())
     val uiState: StateFlow<AddPlayerUiState> = _uiState.asStateFlow()
 
-    private val _saved = MutableStateFlow(false)
-    val saved: StateFlow<Boolean> = _saved.asStateFlow()
+    private val _savedPlayerId = MutableStateFlow<UUID?>(null)
+    val savedPlayerId: StateFlow<UUID?> = _savedPlayerId.asStateFlow()
 
     fun onNameChange(value: String) {
         _uiState.update { it.copy(name = value, error = null) }
@@ -46,8 +48,8 @@ class AddPlayerViewModel(
         }
         _uiState.update { it.copy(saving = true) }
         viewModelScope.launch {
-            playerRepository.addPlayer(current.name)
-            _saved.value = true
+            val id = playerRepository.addPlayer(current.name)
+            _savedPlayerId.value = id
         }
     }
 }

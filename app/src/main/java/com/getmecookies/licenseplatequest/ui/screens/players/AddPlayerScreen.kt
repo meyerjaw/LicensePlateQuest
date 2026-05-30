@@ -28,24 +28,28 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
+import java.util.UUID
 
 /**
  * Full-screen Add Player (replaces the former dialog so the flow can grow in future
- * phases). MVP: a single name field, a top-bar back button, and a Save action. On a
- * successful save the screen pops back to the roster.
+ * phases). MVP: a single name field, a top-bar back button, and a Save action.
+ *
+ * [onDone] reports the result: the new player's id on a successful save, or null if the user
+ * backed out. This lets callers (e.g. the New Trip flow) auto-select the player that was just
+ * created. Either way the screen is finished and should be popped.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddPlayerScreen(
-    onDone: () -> Unit,
+    onDone: (UUID?) -> Unit,
     viewModel: AddPlayerViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val saved by viewModel.saved.collectAsStateWithLifecycle()
+    val savedPlayerId by viewModel.savedPlayerId.collectAsStateWithLifecycle()
 
-    // Navigate back once the save completes.
-    LaunchedEffect(saved) {
-        if (saved) onDone()
+    // Navigate back (reporting the new id) once the save completes.
+    LaunchedEffect(savedPlayerId) {
+        savedPlayerId?.let { onDone(it) }
     }
 
     // Focus the name field as soon as the screen opens.
@@ -59,7 +63,7 @@ fun AddPlayerScreen(
             TopAppBar(
                 title = { Text("Add player") },
                 navigationIcon = {
-                    IconButton(onClick = onDone) {
+                    IconButton(onClick = { onDone(null) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },

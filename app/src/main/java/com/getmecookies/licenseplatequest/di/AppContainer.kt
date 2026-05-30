@@ -5,6 +5,7 @@ import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.DatabaseProvider
 import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
+import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
 
 /**
@@ -23,6 +24,8 @@ class AppContainer(context: Context) {
         tripPlayerDao = database.tripPlayerDao(),
         eventLogDao = database.eventLogDao(),
     )
+
+    val tripRepository: TripRepository = TripRepository(database)
 
     val regionSeeder: RegionSeeder = RegionSeeder(
         context = context.applicationContext,
