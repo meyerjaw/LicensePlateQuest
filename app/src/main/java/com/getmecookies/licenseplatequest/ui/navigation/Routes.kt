@@ -9,6 +9,9 @@ object Routes {
     const val ADD_PLAYER = "players/add"
     const val NEW_TRIP = "trips/new"
 
+    /** Temporary standalone map test (Milestone 5); folds into the Active Trip View at M7. */
+    const val MAP_DEMO = "map/demo"
+
     /** savedStateHandle key: id of a player created via the shared Add Player screen. */
     const val RESULT_NEW_PLAYER_ID = "new_player_id"
 }

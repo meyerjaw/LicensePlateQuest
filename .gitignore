@@ -1,15 +1,37 @@
+# Built application files / Gradle
+*.apk
+*.aar
+*.ap_
+*.aab
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
+.gradle/
+build/
 /captures
 .externalNativeBuild
 .cxx
+
+# Local config (machine-specific; never commit)
 local.properties
+
+# IDE
+.idea/
+*.iws
+
+# Kotlin compiler cache
+.kotlin/
+
+# Cowork / Claude tooling
+.claude/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Verification scratch files (generated during map/asset checks, never committed)
+app/src/main/assets/maps/c_*.txt
+app/src/main/assets/maps/keys*.txt
+app/src/main/assets/maps/verify.txt
+app/src/main/assets/maps/err.txt
+app/src/main/assets/maps/rep.txt
+tools/*.txt
+!tools/README.txt

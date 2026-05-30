@@ -5,6 +5,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.getmecookies.licenseplatequest.LicensePlateQuestApp
+import com.getmecookies.licenseplatequest.ui.screens.map.MapDemoViewModel
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerViewModel
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersViewModel
 import com.getmecookies.licenseplatequest.ui.screens.trips.NewTripViewModel
@@ -33,6 +34,9 @@ object AppViewModelProvider {
                 regionRepository = lpqApp().container.regionRepository,
                 playerRepository = lpqApp().container.playerRepository,
             )
+        }
+        initializer {
+            MapDemoViewModel(lpqApp().container.mapRepository)
         }
     }
 }

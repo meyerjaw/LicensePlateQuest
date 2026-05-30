@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.getmecookies.licenseplatequest.ui.screens.map.MapDemoScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersScreen
 import com.getmecookies.licenseplatequest.ui.screens.trips.NewTripScreen
@@ -34,7 +35,7 @@ fun AppRoot() {
     val currentRoute = currentDestination?.route
 
     // Full-screen routes that should not show the bottom navigation bar.
-    val fullScreenRoutes = setOf(Routes.ADD_PLAYER, Routes.NEW_TRIP)
+    val fullScreenRoutes = setOf(Routes.ADD_PLAYER, Routes.NEW_TRIP, Routes.MAP_DEMO)
     val showBottomBar = currentRoute !in fullScreenRoutes
 
     Scaffold(
@@ -72,9 +73,11 @@ fun AppRoot() {
             composable(TopDestination.Trips.route) {
                 TripListScreen(
                     onNewTrip = { navController.navigate(Routes.NEW_TRIP) },
-                    // Active Trip View arrives in a later milestone; selecting a trip
-                    // re-activates it (the list re-sorts it into the Active section).
-                    onOpenTrip = {},
+                    // Active Trip View (the real per-trip map) arrives in Milestone 7.
+                    // For now, tapping a trip activates it AND opens the map screen so the
+                    // selection is visible end-to-end.
+                    onOpenTrip = { navController.navigate(Routes.MAP_DEMO) },
+                    onOpenMap = { navController.navigate(Routes.MAP_DEMO) },
                 )
             }
             composable(TopDestination.Players.route) {
@@ -107,6 +110,11 @@ fun AppRoot() {
                     onAddedPlayerConsumed = {
                         entry.savedStateHandle[Routes.RESULT_NEW_PLAYER_ID] = null
                     },
+                )
+            }
+            composable(Routes.MAP_DEMO) {
+                MapDemoScreen(
+                    onBack = { navController.popBackStack() },
                 )
             }
         }
