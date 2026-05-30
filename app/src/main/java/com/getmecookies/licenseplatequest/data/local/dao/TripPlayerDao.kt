@@ -14,4 +14,8 @@ interface TripPlayerDao {
 
     @Query("SELECT * FROM trip_player WHERE trip_id = :tripId")
     suspend fun getForTrip(tripId: UUID): List<TripPlayerEntity>
+
+    /** How many trips a player belongs to — drives the delete-with-warning flow (SPEC §6/§10). */
+    @Query("SELECT COUNT(*) FROM trip_player WHERE player_id = :playerId")
+    suspend fun countTripsForPlayer(playerId: UUID): Int
 }

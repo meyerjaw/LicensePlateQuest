@@ -21,6 +21,26 @@ interface PlayerDao {
     @Query("SELECT * FROM player WHERE deleted = 0 ORDER BY name COLLATE NOCASE")
     fun observeActive(): Flow<List<PlayerEntity>>
 
+    /**
+     * Active players with trip-based play stats. LEFT JOINs so players with no trips still
+     * appear (trip_count = 0, last_played = NULL). start_date is stored as an ISO-8601 date
+     * string, so MAX() orders it chronologically.
+     */
+    @Query(
+        """
+        SELECT p.*,
+               COUNT(tp.id) AS trip_count,
+               MAX(t.start_date) AS last_played
+        FROM player p
+        LEFT JOIN trip_player tp ON tp.player_id = p.id
+        LEFT JOIN trip t ON t.id = tp.trip_id
+        WHERE p.deleted = 0
+        GROUP BY p.id
+        ORDER BY p.name COLLATE NOCASE
+        """
+    )
+    fun observeActiveWithStats(): Flow<List<PlayerWithStats>>
+
     @Query("SELECT * FROM player WHERE id = :id")
     suspend fun getById(id: UUID): PlayerEntity?
 }

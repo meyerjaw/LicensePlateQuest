@@ -5,6 +5,8 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.getmecookies.licenseplatequest.LicensePlateQuestApp
+import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerViewModel
+import com.getmecookies.licenseplatequest.ui.screens.players.PlayersViewModel
 import com.getmecookies.licenseplatequest.ui.screens.trips.TripListViewModel
 
 /**
@@ -15,6 +17,12 @@ object AppViewModelProvider {
     val Factory = viewModelFactory {
         initializer {
             TripListViewModel(lpqApp().container.regionRepository)
+        }
+        initializer {
+            PlayersViewModel(lpqApp().container.playerRepository)
+        }
+        initializer {
+            AddPlayerViewModel(lpqApp().container.playerRepository)
         }
     }
 }

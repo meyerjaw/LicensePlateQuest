@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.di
 import android.content.Context
 import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.DatabaseProvider
+import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
 
@@ -16,6 +17,12 @@ class AppContainer(context: Context) {
     val database: AppDatabase = DatabaseProvider.get(context)
 
     val regionRepository: RegionRepository = RegionRepository(database.plateRegionDao())
+
+    val playerRepository: PlayerRepository = PlayerRepository(
+        playerDao = database.playerDao(),
+        tripPlayerDao = database.tripPlayerDao(),
+        eventLogDao = database.eventLogDao(),
+    )
 
     val regionSeeder: RegionSeeder = RegionSeeder(
         context = context.applicationContext,

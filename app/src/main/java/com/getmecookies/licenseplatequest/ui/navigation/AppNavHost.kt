@@ -15,41 +15,48 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersScreen
 import com.getmecookies.licenseplatequest.ui.screens.trips.TripListScreen
 
 /**
- * Root composable: a [Scaffold] with bottom-nav tabs and the navigation graph. This is the
- * Foundation skeleton — each tab shows a placeholder screen wired to real navigation;
- * later milestones flesh out the destinations.
+ * Root composable: a [Scaffold] with bottom-nav tabs and the navigation graph. Tabs come
+ * from [TopDestination]; full-screen pushes (like Add Player) come from [Routes] and hide
+ * the bottom bar so they read as their own screen.
  */
 @Composable
 fun AppRoot() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
+    val currentRoute = currentDestination?.route
+
+    // Full-screen routes that should not show the bottom navigation bar.
+    val showBottomBar = currentRoute != Routes.ADD_PLAYER
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                TopDestination.entries.forEach { destination ->
-                    val selected = currentDestination
-                        ?.hierarchy
-                        ?.any { it.route == destination.route } == true
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            navController.navigate(destination.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+            if (showBottomBar) {
+                NavigationBar {
+                    TopDestination.entries.forEach { destination ->
+                        val selected = currentDestination
+                            ?.hierarchy
+                            ?.any { it.route == destination.route } == true
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                navController.navigate(destination.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                        icon = { Icon(destination.icon, contentDescription = destination.label) },
-                        label = { Text(destination.label) },
-                    )
+                            },
+                            icon = { Icon(destination.icon, contentDescription = destination.label) },
+                            label = { Text(destination.label) },
+                        )
+                    }
                 }
             }
         },
@@ -60,7 +67,16 @@ fun AppRoot() {
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(TopDestination.Trips.route) { TripListScreen() }
-            composable(TopDestination.Players.route) { PlayersScreen() }
+            composable(TopDestination.Players.route) {
+                PlayersScreen(
+                    onAddPlayer = { navController.navigate(Routes.ADD_PLAYER) },
+                )
+            }
+            composable(Routes.ADD_PLAYER) {
+                AddPlayerScreen(
+                    onDone = { navController.popBackStack() },
+                )
+            }
         }
     }
 }
