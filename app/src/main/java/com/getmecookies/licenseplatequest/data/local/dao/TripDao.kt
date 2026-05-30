@@ -1,6 +1,7 @@
 package com.getmecookies.licenseplatequest.data.local.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
@@ -21,10 +22,30 @@ interface TripDao {
     @Query("SELECT * FROM trip ORDER BY updated_at DESC")
     fun observeAll(): Flow<List<TripEntity>>
 
+    /**
+     * All trips, each with the count of distinct states found in it (across its game
+     * instances). LEFT JOINs so trips with no spottings report found_count = 0. Ordered
+     * newest-activity first; the ViewModel groups them into status sections.
+     */
+    @Query(
+        """
+        SELECT t.*, COUNT(DISTINCT s.plate_region_id) AS found_count
+        FROM trip t
+        LEFT JOIN game_instance gi ON gi.trip_id = t.id
+        LEFT JOIN spotting s ON s.game_instance_id = gi.id
+        GROUP BY t.id
+        ORDER BY t.updated_at DESC
+        """
+    )
+    fun observeTripListRows(): Flow<List<TripListRow>>
+
     /** The single active trip, if any (SPEC invariant: at most one). */
     @Query("SELECT * FROM trip WHERE status = :status LIMIT 1")
     suspend fun getByStatus(status: TripStatus): TripEntity?
 
     @Query("SELECT * FROM trip WHERE id = :id")
     suspend fun getById(id: UUID): TripEntity?
+
+    @Delete
+    suspend fun delete(trip: TripEntity)
 }

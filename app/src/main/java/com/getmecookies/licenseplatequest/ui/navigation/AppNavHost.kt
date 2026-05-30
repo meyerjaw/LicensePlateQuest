@@ -72,6 +72,9 @@ fun AppRoot() {
             composable(TopDestination.Trips.route) {
                 TripListScreen(
                     onNewTrip = { navController.navigate(Routes.NEW_TRIP) },
+                    // Active Trip View arrives in a later milestone; selecting a trip
+                    // re-activates it (the list re-sorts it into the Active section).
+                    onOpenTrip = {},
                 )
             }
             composable(TopDestination.Players.route) {

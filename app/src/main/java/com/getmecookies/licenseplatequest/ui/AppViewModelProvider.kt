@@ -19,7 +19,6 @@ object AppViewModelProvider {
         initializer {
             TripListViewModel(
                 tripRepository = lpqApp().container.tripRepository,
-                regionRepository = lpqApp().container.regionRepository,
             )
         }
         initializer {

@@ -2,11 +2,13 @@ package com.getmecookies.licenseplatequest.data.repository
 
 import androidx.room.withTransaction
 import com.getmecookies.licenseplatequest.data.local.AppDatabase
+import com.getmecookies.licenseplatequest.data.local.dao.TripListRow
 import com.getmecookies.licenseplatequest.data.local.entity.EventLogEntity
 import com.getmecookies.licenseplatequest.data.local.entity.GameInstanceEntity
 import com.getmecookies.licenseplatequest.data.local.entity.TripEntity
 import com.getmecookies.licenseplatequest.data.local.entity.TripPlayerEntity
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
+import com.getmecookies.licenseplatequest.domain.model.TripListItem
 import com.getmecookies.licenseplatequest.domain.model.TripStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -32,6 +34,51 @@ class TripRepository(
 
     /** Count of all trips — used for lightweight verification before the full list lands. */
     fun observeTripCount(): Flow<Int> = tripDao.observeAll().map { it.size }
+
+    /** All trips with their found-state counts, as domain models for the Trip List. */
+    fun observeTripListItems(): Flow<List<TripListItem>> =
+        tripDao.observeTripListRows().map { rows -> rows.map { it.toListItem() } }
+
+    /**
+     * Make [tripId] the active trip (SPEC: selecting a trip activates it). Demotes any other
+     * active trip to IN_PROGRESS in the same transaction. A COMPLETED trip stays completed.
+     */
+    suspend fun setActiveTrip(tripId: UUID) = database.withTransaction {
+        val target = tripDao.getById(tripId) ?: return@withTransaction
+        if (target.status == TripStatus.ACTIVE) return@withTransaction
+        val now = Instant.now()
+        tripDao.getByStatus(TripStatus.ACTIVE)?.let { current ->
+            if (current.id != tripId) {
+                tripDao.update(current.copy(status = TripStatus.IN_PROGRESS, updatedAt = now))
+            }
+        }
+        // Don't resurrect a completed trip into active; only in-progress trips re-activate.
+        if (target.status == TripStatus.IN_PROGRESS) {
+            tripDao.update(target.copy(status = TripStatus.ACTIVE, updatedAt = now))
+        }
+    }
+
+    /** Delete a trip and (via FK cascade) its players links, game instances, and spottings. */
+    suspend fun deleteTrip(tripId: UUID) {
+        val trip = tripDao.getById(tripId) ?: return
+        tripDao.delete(trip)
+        eventLogDao.insert(
+            EventLogEntity(
+                id = UUID.randomUUID(),
+                eventType = "trip_deleted",
+                payload = """{"trip_id":"$tripId"}""",
+                timestamp = Instant.now(),
+            ),
+        )
+    }
+
+    private fun TripListRow.toListItem(): TripListItem = TripListItem(
+        id = trip.id,
+        name = trip.name,
+        status = trip.status,
+        startDate = trip.startDate,
+        foundCount = foundCount,
+    )
 
     /**
      * Create a trip, make it the active one, attach its players, and start its license-plate
