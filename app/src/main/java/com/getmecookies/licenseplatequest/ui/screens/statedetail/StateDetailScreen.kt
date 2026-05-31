@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,8 +39,8 @@ import java.time.format.DateTimeFormatter
 
 /**
  * State Detail (SPEC section 6). Shows the state's bundled facts and plate image. When the
- * active trip hasn't found it, offers "Mark as found"; when found, shows the found timestamp
- * and trip and offers "Unmark". Both actions confirm first to avoid mis-taps.
+ * active trip hasn't found it, offers "Mark as found" (commits immediately, then returns to
+ * the map); when found, shows the found timestamp and trip and offers "Unmark" (confirmed).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +50,11 @@ fun StateDetailScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val data = uiState.data
+
+    // Marking commits immediately and returns to the map.
+    LaunchedEffect(uiState.markComplete) {
+        if (uiState.markComplete) onBack()
+    }
 
     Scaffold(
         topBar = {
@@ -82,13 +88,6 @@ fun StateDetailScreen(
 
     when (uiState.dialog) {
         StateDetailDialog.NONE -> Unit
-        StateDetailDialog.CONFIRM_MARK -> ConfirmDialog(
-            title = "Mark as found?",
-            body = "Add ${data?.info?.name ?: "this state"} to this trip?",
-            confirmLabel = "Mark found",
-            onConfirm = viewModel::onConfirmMark,
-            onDismiss = viewModel::onDismissDialog,
-        )
         StateDetailDialog.CONFIRM_UNMARK -> ConfirmDialog(
             title = "Unmark this state?",
             body = "Remove ${data?.info?.name ?: "this state"} from this trip? This can't be undone.",

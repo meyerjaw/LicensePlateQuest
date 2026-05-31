@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** Which confirmation dialog (if any) is showing on State Detail. */
-enum class StateDetailDialog { NONE, CONFIRM_MARK, CONFIRM_UNMARK }
+enum class StateDetailDialog { NONE, CONFIRM_UNMARK }
 
 data class StateDetailUiState(
     val loading: Boolean = true,
@@ -20,12 +20,15 @@ data class StateDetailUiState(
     val dialog: StateDetailDialog = StateDetailDialog.NONE,
     /** Set true once a brand-new mark is committed, so the screen can fire a celebration. */
     val justMarked: Boolean = false,
+    /** Set true after marking, signaling the screen to navigate back to the map. */
+    val markComplete: Boolean = false,
 )
 
 /**
  * ViewModel for State Detail (SPEC section 6). Loads the state's bundled facts plus its
- * found-status on the active trip, and drives mark/unmark — each gated behind a confirmation
- * dialog to prevent mis-taps. The state code comes from the navigation argument.
+ * found-status on the active trip. Marking commits immediately (the explicit "Mark as found"
+ * tap is confirmation enough) and signals the screen to return to the map; unmarking is
+ * gated behind a confirmation dialog. The state code comes from the navigation argument.
  */
 class StateDetailViewModel(
     savedStateHandle: SavedStateHandle,
@@ -50,8 +53,12 @@ class StateDetailViewModel(
         }
     }
 
+    /** Mark immediately (no confirmation), then signal the screen to return to the map. */
     fun onMarkClick() {
-        _uiState.update { it.copy(dialog = StateDetailDialog.CONFIRM_MARK) }
+        viewModelScope.launch {
+            val created = spottingRepository.markState(regionCode)
+            _uiState.update { it.copy(justMarked = created, markComplete = true) }
+        }
     }
 
     fun onUnmarkClick() {
@@ -60,14 +67,6 @@ class StateDetailViewModel(
 
     fun onDismissDialog() {
         _uiState.update { it.copy(dialog = StateDetailDialog.NONE) }
-    }
-
-    fun onConfirmMark() {
-        viewModelScope.launch {
-            val created = spottingRepository.markState(regionCode)
-            _uiState.update { it.copy(dialog = StateDetailDialog.NONE, justMarked = created) }
-            reload()
-        }
     }
 
     fun onConfirmUnmark() {
