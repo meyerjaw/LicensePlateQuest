@@ -18,12 +18,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.getmecookies.licenseplatequest.ui.screens.map.MapDemoScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersScreen
 import com.getmecookies.licenseplatequest.ui.screens.statedetail.StateDetailScreen
 import com.getmecookies.licenseplatequest.ui.screens.trips.NewTripScreen
-import com.getmecookies.licenseplatequest.ui.screens.trips.TripListScreen
+import com.getmecookies.licenseplatequest.ui.screens.trips.TripsTab
 
 /**
  * Root composable: a [Scaffold] with bottom-nav tabs and the navigation graph. Tabs come
@@ -41,7 +40,6 @@ fun AppRoot() {
     val fullScreenRoutes = setOf(
         Routes.ADD_PLAYER,
         Routes.NEW_TRIP,
-        Routes.MAP_DEMO,
         Routes.STATE_DETAIL,
     )
     val showBottomBar = currentRoute !in fullScreenRoutes
@@ -79,13 +77,9 @@ fun AppRoot() {
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(TopDestination.Trips.route) {
-                TripListScreen(
+                TripsTab(
                     onNewTrip = { navController.navigate(Routes.NEW_TRIP) },
-                    // Active Trip View (the real per-trip map) arrives in Milestone 7.
-                    // For now, tapping a trip activates it AND opens the map screen so the
-                    // selection is visible end-to-end.
-                    onOpenTrip = { navController.navigate(Routes.MAP_DEMO) },
-                    onOpenMap = { navController.navigate(Routes.MAP_DEMO) },
+                    onOpenState = { code -> navController.navigate(Routes.stateDetail(code)) },
                 )
             }
             composable(TopDestination.Players.route) {
@@ -118,12 +112,6 @@ fun AppRoot() {
                     onAddedPlayerConsumed = {
                         entry.savedStateHandle[Routes.RESULT_NEW_PLAYER_ID] = null
                     },
-                )
-            }
-            composable(Routes.MAP_DEMO) {
-                MapDemoScreen(
-                    onBack = { navController.popBackStack() },
-                    onStateClick = { code -> navController.navigate(Routes.stateDetail(code)) },
                 )
             }
             composable(

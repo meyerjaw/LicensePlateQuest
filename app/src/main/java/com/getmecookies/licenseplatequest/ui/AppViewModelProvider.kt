@@ -6,12 +6,13 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.getmecookies.licenseplatequest.LicensePlateQuestApp
-import com.getmecookies.licenseplatequest.ui.screens.map.MapDemoViewModel
+import com.getmecookies.licenseplatequest.ui.screens.activetrip.ActiveTripViewModel
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerViewModel
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersViewModel
 import com.getmecookies.licenseplatequest.ui.screens.statedetail.StateDetailViewModel
 import com.getmecookies.licenseplatequest.ui.screens.trips.NewTripViewModel
 import com.getmecookies.licenseplatequest.ui.screens.trips.TripListViewModel
+import com.getmecookies.licenseplatequest.ui.screens.trips.TripsTabViewModel
 
 /**
  * Central place that builds ViewModels by hand (no DI framework in MVP). Each ViewModel
@@ -25,6 +26,18 @@ object AppViewModelProvider {
             )
         }
         initializer {
+            TripsTabViewModel(
+                tripRepository = lpqApp().container.tripRepository,
+            )
+        }
+        initializer {
+            ActiveTripViewModel(
+                mapRepository = lpqApp().container.mapRepository,
+                tripRepository = lpqApp().container.tripRepository,
+                spottingRepository = lpqApp().container.spottingRepository,
+            )
+        }
+        initializer {
             PlayersViewModel(lpqApp().container.playerRepository)
         }
         initializer {
@@ -35,12 +48,6 @@ object AppViewModelProvider {
                 tripRepository = lpqApp().container.tripRepository,
                 regionRepository = lpqApp().container.regionRepository,
                 playerRepository = lpqApp().container.playerRepository,
-            )
-        }
-        initializer {
-            MapDemoViewModel(
-                mapRepository = lpqApp().container.mapRepository,
-                spottingRepository = lpqApp().container.spottingRepository,
             )
         }
         initializer {

@@ -9,9 +9,6 @@ object Routes {
     const val ADD_PLAYER = "players/add"
     const val NEW_TRIP = "trips/new"
 
-    /** Temporary standalone map test (Milestone 5); folds into the Active Trip View at M7. */
-    const val MAP_DEMO = "map/demo"
-
     /** State Detail, parameterized by 2-letter state code. */
     const val STATE_DETAIL = "state/{code}"
     fun stateDetail(code: String) = "state/$code"

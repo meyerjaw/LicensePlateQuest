@@ -39,6 +39,27 @@ class TripRepository(
     fun observeTripListItems(): Flow<List<TripListItem>> =
         tripDao.observeTripListRows().map { rows -> rows.map { it.toListItem() } }
 
+    /** The current active trip (or null), observed so the Active Trip View reacts to changes. */
+    fun observeActiveTrip(): Flow<TripEntity?> = tripDao.observeByStatus(TripStatus.ACTIVE)
+
+    /**
+     * Manually end a trip (SPEC: a trip becomes COMPLETED only on manual end, not on 50/50).
+     * Records [TripEntity.endedAt] and logs a trip_ended event.
+     */
+    suspend fun endTrip(tripId: UUID) {
+        val trip = tripDao.getById(tripId) ?: return
+        val now = Instant.now()
+        tripDao.update(trip.copy(status = TripStatus.COMPLETED, endedAt = now, updatedAt = now))
+        eventLogDao.insert(
+            EventLogEntity(
+                id = UUID.randomUUID(),
+                eventType = "trip_ended",
+                payload = """{"trip_id":"$tripId"}""",
+                timestamp = now,
+            ),
+        )
+    }
+
     /**
      * Make [tripId] the active trip (SPEC: selecting a trip activates it). Demotes any other
      * active trip to IN_PROGRESS in the same transaction. A COMPLETED trip stays completed.

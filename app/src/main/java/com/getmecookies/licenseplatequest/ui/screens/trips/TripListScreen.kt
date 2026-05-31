@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -54,24 +53,12 @@ import java.time.format.DateTimeFormatter
 fun TripListScreen(
     onNewTrip: () -> Unit,
     onOpenTrip: () -> Unit,
-    onOpenMap: () -> Unit,
     viewModel: TripListViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Trips") },
-                actions = {
-                    // Temporary entry to test the map (Milestone 5); the map becomes part of
-                    // the Active Trip View in Milestone 7.
-                    IconButton(onClick = onOpenMap) {
-                        Icon(Icons.Filled.Map, contentDescription = "Map")
-                    }
-                },
-            )
-        },
+        topBar = { TopAppBar(title = { Text("Trips") }) },
         floatingActionButton = {
             FloatingActionButton(onClick = onNewTrip) {
                 Icon(Icons.Filled.Add, contentDescription = "New trip")

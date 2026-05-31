@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.data.repository
 import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.entity.EventLogEntity
 import com.getmecookies.licenseplatequest.data.local.entity.SpottingEntity
+import com.getmecookies.licenseplatequest.domain.model.FoundState
 import com.getmecookies.licenseplatequest.domain.model.StateDetailData
 import com.getmecookies.licenseplatequest.domain.model.StateInfo
 import com.getmecookies.licenseplatequest.domain.model.TripStatus
@@ -50,6 +51,35 @@ class SpottingRepository(
                     flowOf(emptySet())
                 } else {
                     spottingDao.observeFoundCodesForGame(game.id).map { it.toSet() }
+                }
+            }
+        }
+
+    /**
+     * Found states (with display details) for the active trip, newest-found first. Like
+     * [observeFoundCodesForActiveTrip], it re-subscribes when the active trip changes and
+     * emits an empty list when no trip is active.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun observeFoundStatesForActiveTrip(): Flow<List<FoundState>> =
+        tripDao.observeByStatus(TripStatus.ACTIVE).flatMapLatest { trip ->
+            if (trip == null) {
+                flowOf(emptyList())
+            } else {
+                val game = gameInstanceDao.getForTrip(trip.id).firstOrNull()
+                if (game == null) {
+                    flowOf(emptyList())
+                } else {
+                    spottingDao.observeFoundDetailsForGame(game.id).map { rows ->
+                        rows.map {
+                            FoundState(
+                                code = it.code,
+                                name = it.name,
+                                plateImagePath = it.plateImagePath,
+                                foundAt = it.foundAt,
+                            )
+                        }
+                    }
                 }
             }
         }

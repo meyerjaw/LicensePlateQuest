@@ -37,4 +37,22 @@ interface SpottingDao {
             "AND plate_region_id = :plateRegionId LIMIT 1"
     )
     suspend fun getForRegion(gameInstanceId: UUID, plateRegionId: UUID): SpottingEntity?
+
+    /**
+     * Found states in a game with the details the Active Trip View's bottom sheet needs,
+     * newest-found first. Ordering by the ISO-8601 UTC timestamp string sorts chronologically.
+     */
+    @Query(
+        """
+        SELECT pr.region_code AS region_code,
+               pr.name AS name,
+               pr.plate_image_path AS plate_image_path,
+               s.timestamp AS found_at
+        FROM spotting s
+        JOIN plate_region pr ON pr.id = s.plate_region_id
+        WHERE s.game_instance_id = :gameInstanceId
+        ORDER BY s.timestamp DESC
+        """
+    )
+    fun observeFoundDetailsForGame(gameInstanceId: UUID): Flow<List<FoundStateRow>>
 }

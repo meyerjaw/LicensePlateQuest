@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -32,12 +33,17 @@ import androidx.compose.ui.unit.sp
  * "plates/oh.png") exists it is rendered; otherwise a styled plate-card placeholder showing
  * the [code] is drawn. Dropping real PNGs into assets/plates/ later "just works" — no code
  * change needed (same drop-in pattern as the map data).
+ *
+ * The caller controls size via [modifier] (e.g. fillMaxWidth() for the detail screen, or
+ * width(56.dp) for a sheet thumbnail); a 2:1 plate aspect ratio is applied internally.
+ * [placeholderFontSize] scales the placeholder's code text for smaller renderings.
  */
 @Composable
 fun PlateImage(
     code: String,
     assetPath: String,
     modifier: Modifier = Modifier,
+    placeholderFontSize: TextUnit = 44.sp,
 ) {
     val context = LocalContext.current
     var bitmap by remember(assetPath) { mutableStateOf<ImageBitmap?>(null) }
@@ -54,25 +60,24 @@ fun PlateImage(
             bitmap = bmp,
             contentDescription = "$code license plate",
             contentScale = ContentScale.Fit,
-            modifier = modifier
-                .fillMaxWidth()
-                .aspectRatio(2f),
+            modifier = modifier.aspectRatio(2f),
         )
     } else {
-        PlatePlaceholder(code = code, modifier = modifier)
+        PlatePlaceholder(code = code, fontSize = placeholderFontSize, modifier = modifier)
     }
 }
 
 @Composable
-private fun PlatePlaceholder(code: String, modifier: Modifier = Modifier) {
-    // A simple US-plate-proportioned card (roughly 2:1) with the state code.
+private fun PlatePlaceholder(
+    code: String,
+    fontSize: TextUnit,
+    modifier: Modifier = Modifier,
+) {
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant,
         contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         shape = RoundedCornerShape(12.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .aspectRatio(2f),
+        modifier = modifier.aspectRatio(2f),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Box(
@@ -84,14 +89,14 @@ private fun PlatePlaceholder(code: String, modifier: Modifier = Modifier) {
                         color = MaterialTheme.colorScheme.outline,
                         shape = RoundedCornerShape(8.dp),
                     )
-                    .padding(8.dp),
+                    .padding(6.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text = code,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 44.sp,
-                    letterSpacing = 4.sp,
+                    fontSize = fontSize,
+                    letterSpacing = 2.sp,
                 )
             }
         }

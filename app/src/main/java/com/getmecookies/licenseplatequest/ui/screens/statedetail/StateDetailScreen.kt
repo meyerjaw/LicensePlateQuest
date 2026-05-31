@@ -113,7 +113,11 @@ private fun StateDetailContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        PlateImage(code = info.code, assetPath = info.plateImagePath)
+        PlateImage(
+            code = info.code,
+            assetPath = info.plateImagePath,
+            modifier = Modifier.fillMaxWidth(),
+        )
 
         FactRow(label = "State bird", value = info.bird)
         FactRow(label = "State flower", value = info.flower)
