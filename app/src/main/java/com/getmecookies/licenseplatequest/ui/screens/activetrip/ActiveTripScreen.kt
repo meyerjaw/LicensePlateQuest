@@ -31,6 +31,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,13 +40,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.domain.model.FoundState
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
+import com.getmecookies.licenseplatequest.ui.components.Confetti
 import com.getmecookies.licenseplatequest.ui.components.PlateImage
 import com.getmecookies.licenseplatequest.ui.map.UsMap
-import androidx.compose.ui.unit.sp
+import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode
+import java.util.UUID
 
 /**
  * Active Trip View (SPEC section 6). The home screen while a trip is active: the trip name up
@@ -53,77 +57,113 @@ import androidx.compose.ui.unit.sp
  * collapsible bottom sheet listing found states — sortable by order found or alphabetically,
  * each row tappable to open State Detail. An overflow menu ends the trip (with confirmation).
  *
- * Tapping a state on the map or a row in the sheet opens that state's detail via [onOpenState].
- * [onViewAllTrips] returns to the full Trip List.
+ * Celebrations (SPEC section 8): a brief confetti burst fires whenever a new state is marked;
+ * the 50/50 and manual-end celebrations are launched via [onCelebrate].
+ *
+ * @param onOpenState open a state's detail (map tap or sheet row).
+ * @param onViewAllTrips return to the full Trip List.
+ * @param onCelebrate launch the celebration screen for (tripId, mode).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActiveTripScreen(
     onOpenState: (String) -> Unit,
     onViewAllTrips: () -> Unit,
+    onCelebrate: (UUID, CelebrationMode) -> Unit,
     viewModel: ActiveTripViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val scaffoldState = rememberBottomSheetScaffoldState()
     var menuOpen by remember { mutableStateOf(false) }
 
-    BottomSheetScaffold(
-        scaffoldState = scaffoldState,
-        sheetPeekHeight = 96.dp,
-        topBar = {
-            TopAppBar(
-                title = { Text(uiState.tripName.ifBlank { "Active trip" }) },
-                navigationIcon = {
-                    IconButton(onClick = onViewAllTrips) {
-                        Icon(Icons.AutoMirrored.Filled.List, contentDescription = "All trips")
-                    }
-                },
-                actions = {
-                    Box {
-                        IconButton(onClick = { menuOpen = true }) {
-                            Icon(Icons.Filled.MoreVert, contentDescription = "More")
+    // Fire one-shot celebration navigation (50/50 or manual end).
+    LaunchedEffect(uiState.celebration) {
+        uiState.celebration?.let {
+            onCelebrate(it.tripId, it.mode)
+            viewModel.onCelebrationConsumed()
+        }
+    }
+
+    // Per-state confetti: a local key bumped only by consume-once events from the ViewModel, so
+    // it plays exactly once per new find and never replays on returning from State Detail.
+    var confettiKey by remember { mutableStateOf(0) }
+    LaunchedEffect(Unit) {
+        viewModel.confettiEvents.collect { confettiKey++ }
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        BottomSheetScaffold(
+            scaffoldState = scaffoldState,
+            sheetPeekHeight = 96.dp,
+            topBar = {
+                TopAppBar(
+                    title = { Text(uiState.tripName.ifBlank { "Active trip" }) },
+                    navigationIcon = {
+                        IconButton(onClick = onViewAllTrips) {
+                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = "All trips")
                         }
-                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                            DropdownMenuItem(
-                                text = { Text("End trip") },
-                                onClick = {
-                                    menuOpen = false
-                                    viewModel.onEndTripClick()
-                                },
-                            )
+                    },
+                    actions = {
+                        Box {
+                            IconButton(onClick = { menuOpen = true }) {
+                                Icon(Icons.Filled.MoreVert, contentDescription = "More")
+                            }
+                            DropdownMenu(
+                                expanded = menuOpen,
+                                onDismissRequest = { menuOpen = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("End trip") },
+                                    onClick = {
+                                        menuOpen = false
+                                        viewModel.onEndTripClick()
+                                    },
+                                )
+                            }
                         }
-                    }
-                },
-            )
-        },
-        sheetContent = {
-            FoundStatesSheet(
-                count = uiState.foundCount,
-                sort = uiState.sort,
-                foundStates = uiState.foundStates,
-                onSortChange = viewModel::onSortChange,
-                onRowClick = onOpenState,
-            )
-        },
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentAlignment = Alignment.Center,
-        ) {
-            val shapes = uiState.shapes
-            when {
-                uiState.loading || shapes == null -> CircularProgressIndicator()
-                else -> UsMap(
-                    shapes = shapes,
-                    foundCodes = uiState.foundCodes,
-                    onStateClick = onOpenState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
+                    },
                 )
+            },
+            sheetContent = {
+                FoundStatesSheet(
+                    count = uiState.foundCount,
+                    sort = uiState.sort,
+                    foundStates = uiState.foundStates,
+                    onSortChange = viewModel::onSortChange,
+                    onRowClick = onOpenState,
+                )
+            },
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center,
+            ) {
+                val shapes = uiState.shapes
+                when {
+                    uiState.loading || shapes == null -> CircularProgressIndicator()
+                    else -> UsMap(
+                        shapes = shapes,
+                        foundCodes = uiState.foundCodes,
+                        onStateClick = onOpenState,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(8.dp),
+                    )
+                }
             }
+        }
+
+        // Brief confetti burst on each new find. Keyed on a consume-once counter so it fires
+        // only on an actual mark, never on returning to this screen.
+        if (confettiKey > 0) {
+            Confetti(
+                trigger = confettiKey,
+                particleCount = 60,
+                durationMillis = 1600,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
     }
 

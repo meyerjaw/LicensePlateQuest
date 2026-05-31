@@ -55,4 +55,23 @@ interface SpottingDao {
         """
     )
     fun observeFoundDetailsForGame(gameInstanceId: UUID): Flow<List<FoundStateRow>>
+
+    /**
+     * All spottings in a game with the region attributes needed to compute celebration stats
+     * (name, geographic center, rarity), ordered chronologically.
+     */
+    @Query(
+        """
+        SELECT pr.name AS name,
+               pr.center_lat AS center_lat,
+               pr.center_lng AS center_lng,
+               pr.rarity_score AS rarity_score,
+               s.timestamp AS timestamp
+        FROM spotting s
+        JOIN plate_region pr ON pr.id = s.plate_region_id
+        WHERE s.game_instance_id = :gameInstanceId
+        ORDER BY s.timestamp
+        """
+    )
+    suspend fun getStatRows(gameInstanceId: UUID): List<SpottingStatRow>
 }

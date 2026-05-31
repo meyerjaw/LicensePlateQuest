@@ -18,4 +18,16 @@ interface TripPlayerDao {
     /** How many trips a player belongs to — drives the delete-with-warning flow (SPEC §6/§10). */
     @Query("SELECT COUNT(*) FROM trip_player WHERE player_id = :playerId")
     suspend fun countTripsForPlayer(playerId: UUID): Int
+
+    /** Names of players on a trip, in join order (for the celebration stats screen). */
+    @Query(
+        """
+        SELECT p.name
+        FROM trip_player tp
+        JOIN player p ON p.id = tp.player_id
+        WHERE tp.trip_id = :tripId
+        ORDER BY tp.joined_at
+        """
+    )
+    suspend fun getPlayerNamesForTrip(tripId: UUID): List<String>
 }

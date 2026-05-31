@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.getmecookies.licenseplatequest.LicensePlateQuestApp
 import com.getmecookies.licenseplatequest.ui.screens.activetrip.ActiveTripViewModel
+import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationViewModel
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerViewModel
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersViewModel
 import com.getmecookies.licenseplatequest.ui.screens.statedetail.StateDetailViewModel
@@ -35,6 +36,14 @@ object AppViewModelProvider {
                 mapRepository = lpqApp().container.mapRepository,
                 tripRepository = lpqApp().container.tripRepository,
                 spottingRepository = lpqApp().container.spottingRepository,
+                celebrationTracker = lpqApp().container.celebrationTracker,
+            )
+        }
+        initializer {
+            CelebrationViewModel(
+                savedStateHandle = createSavedStateHandle(),
+                celebrationRepository = lpqApp().container.celebrationRepository,
+                tripRepository = lpqApp().container.tripRepository,
             )
         }
         initializer {

@@ -14,6 +14,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.screens.activetrip.ActiveTripScreen
+import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode
+import java.util.UUID
 
 /**
  * Gateway for the Trips tab (SPEC section 5): shows the Active Trip View when a trip is
@@ -27,6 +29,7 @@ import com.getmecookies.licenseplatequest.ui.screens.activetrip.ActiveTripScreen
 fun TripsTab(
     onNewTrip: () -> Unit,
     onOpenState: (String) -> Unit,
+    onCelebrate: (UUID, CelebrationMode) -> Unit,
     viewModel: TripsTabViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val hasActiveTrip by viewModel.hasActiveTrip.collectAsStateWithLifecycle()
@@ -50,6 +53,7 @@ fun TripsTab(
                 ActiveTripScreen(
                     onOpenState = onOpenState,
                     onViewAllTrips = { forceList = true },
+                    onCelebrate = onCelebrate,
                 )
             }
         }

@@ -18,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersScreen
 import com.getmecookies.licenseplatequest.ui.screens.statedetail.StateDetailScreen
@@ -26,8 +27,8 @@ import com.getmecookies.licenseplatequest.ui.screens.trips.TripsTab
 
 /**
  * Root composable: a [Scaffold] with bottom-nav tabs and the navigation graph. Tabs come
- * from [TopDestination]; full-screen pushes (Add Player, New Trip) come from [Routes] and
- * hide the bottom bar so they read as their own screen.
+ * from [TopDestination]; full-screen pushes (Add Player, New Trip, State Detail, Celebration)
+ * come from [Routes] and hide the bottom bar so they read as their own screen.
  */
 @Composable
 fun AppRoot() {
@@ -41,6 +42,7 @@ fun AppRoot() {
         Routes.ADD_PLAYER,
         Routes.NEW_TRIP,
         Routes.STATE_DETAIL,
+        Routes.CELEBRATION,
     )
     val showBottomBar = currentRoute !in fullScreenRoutes
 
@@ -80,6 +82,9 @@ fun AppRoot() {
                 TripsTab(
                     onNewTrip = { navController.navigate(Routes.NEW_TRIP) },
                     onOpenState = { code -> navController.navigate(Routes.stateDetail(code)) },
+                    onCelebrate = { tripId, mode ->
+                        navController.navigate(Routes.celebration(tripId.toString(), mode.name))
+                    },
                 )
             }
             composable(TopDestination.Players.route) {
@@ -90,8 +95,6 @@ fun AppRoot() {
             composable(Routes.ADD_PLAYER) {
                 AddPlayerScreen(
                     onDone = { newId ->
-                        // Report the created player back to whoever launched this screen
-                        // (the New Trip form reads it to auto-select; the Players tab ignores it).
                         if (newId != null) {
                             navController.previousBackStackEntry
                                 ?.savedStateHandle
@@ -120,6 +123,17 @@ fun AppRoot() {
             ) {
                 StateDetailScreen(
                     onBack = { navController.popBackStack() },
+                )
+            }
+            composable(
+                route = Routes.CELEBRATION,
+                arguments = listOf(
+                    navArgument("tripId") { type = NavType.StringType },
+                    navArgument("mode") { type = NavType.StringType },
+                ),
+            ) {
+                CelebrationScreen(
+                    onExit = { navController.popBackStack() },
                 )
             }
         }

@@ -13,6 +13,10 @@ object Routes {
     const val STATE_DETAIL = "state/{code}"
     fun stateDetail(code: String) = "state/$code"
 
+    /** Celebration screen: trip id + mode (FIFTY_FIFTY or MANUAL_END). */
+    const val CELEBRATION = "celebration/{tripId}/{mode}"
+    fun celebration(tripId: String, mode: String) = "celebration/$tripId/$mode"
+
     /** savedStateHandle key: id of a player created via the shared Add Player screen. */
     const val RESULT_NEW_PLAYER_ID = "new_player_id"
 }
