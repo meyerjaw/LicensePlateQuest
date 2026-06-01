@@ -43,4 +43,14 @@ interface PlayerDao {
 
     @Query("SELECT * FROM player WHERE id = :id")
     suspend fun getById(id: UUID): PlayerEntity?
+
+    /**
+     * Count active players whose name matches (case-insensitively), optionally excluding one
+     * id (so renaming a player to its own current name isn't flagged as a duplicate).
+     */
+    @Query(
+        "SELECT COUNT(*) FROM player WHERE deleted = 0 " +
+            "AND name = :name COLLATE NOCASE AND id != :excludeId"
+    )
+    suspend fun countActiveByName(name: String, excludeId: UUID): Int
 }

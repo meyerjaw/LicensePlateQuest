@@ -42,13 +42,18 @@ class AddPlayerViewModel(
     fun onSave() {
         val current = _uiState.value
         if (current.saving) return
-        if (current.name.isBlank()) {
+        val name = current.name.trim()
+        if (name.isBlank()) {
             _uiState.update { it.copy(error = "Name can't be empty") }
             return
         }
-        _uiState.update { it.copy(saving = true) }
+        _uiState.update { it.copy(saving = true, error = null) }
         viewModelScope.launch {
-            val id = playerRepository.addPlayer(current.name)
+            if (playerRepository.nameExists(name)) {
+                _uiState.update { it.copy(saving = false, error = "A player named \"$name\" already exists") }
+                return@launch
+            }
+            val id = playerRepository.addPlayer(name)
             _savedPlayerId.value = id
         }
     }

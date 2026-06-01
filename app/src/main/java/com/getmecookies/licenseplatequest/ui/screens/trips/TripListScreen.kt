@@ -40,7 +40,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.domain.model.TripListItem
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 /**
  * Trip List / Home (SPEC section 6). Trips are grouped into Active, In Progress, and
@@ -188,7 +190,7 @@ private fun TripRow(
             }
 
             Text(
-                text = "Started ${item.startDate.format(DATE_FORMAT)}",
+                text = "Started ${relativeStartLabel(item.startDate)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp),
@@ -211,3 +213,18 @@ private fun TripRow(
 }
 
 private val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
+
+/**
+ * Friendly relative phrasing for a trip's start date: "today", "yesterday", "N days ago" for
+ * the last week, otherwise the absolute date. Future dates fall back to the absolute date.
+ */
+private fun relativeStartLabel(date: LocalDate): String {
+    val today = LocalDate.now()
+    val days = ChronoUnit.DAYS.between(date, today)
+    return when {
+        days == 0L -> "today"
+        days == 1L -> "yesterday"
+        days in 2L..6L -> "$days days ago"
+        else -> date.format(DATE_FORMAT)
+    }
+}

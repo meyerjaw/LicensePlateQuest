@@ -1,5 +1,6 @@
 package com.getmecookies.licenseplatequest.ui.screens.activetrip
 
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +39,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -84,11 +87,16 @@ fun ActiveTripScreen(
         }
     }
 
-    // Per-state confetti: a local key bumped only by consume-once events from the ViewModel, so
-    // it plays exactly once per new find and never replays on returning from State Detail.
+    // Per-state confetti + haptic: a local key bumped only by consume-once events from the
+    // ViewModel, so feedback fires exactly once per new find and never replays on returning
+    // from State Detail.
+    val haptics = LocalHapticFeedback.current
     var confettiKey by remember { mutableStateOf(0) }
     LaunchedEffect(Unit) {
-        viewModel.confettiEvents.collect { confettiKey++ }
+        viewModel.confettiEvents.collect {
+            confettiKey++
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -197,8 +205,9 @@ private fun FoundStatesSheet(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val animatedCount by animateIntAsState(targetValue = count, label = "foundCount")
             Text(
-                text = "$count / 50 found",
+                text = "$animatedCount / 50 found",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )

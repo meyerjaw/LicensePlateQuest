@@ -70,8 +70,17 @@ class PlayersViewModel(
             _uiState.update { it.copy(dialog = dialog.copy(error = error)) }
             return
         }
+        val trimmed = dialog.name.trim()
         viewModelScope.launch {
-            playerRepository.renamePlayer(dialog.player.id, dialog.name)
+            // Reject a clash with another active player (renaming to its own name is fine).
+            if (playerRepository.nameExists(trimmed, excludeId = dialog.player.id)) {
+                _uiState.update {
+                    val d = it.dialog as? PlayerDialog.Edit ?: return@update it
+                    it.copy(dialog = d.copy(error = "A player named \"$trimmed\" already exists"))
+                }
+                return@launch
+            }
+            playerRepository.renamePlayer(dialog.player.id, trimmed)
             _uiState.update { it.copy(dialog = PlayerDialog.None) }
         }
     }

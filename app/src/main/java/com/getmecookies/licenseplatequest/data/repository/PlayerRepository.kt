@@ -75,6 +75,18 @@ class PlayerRepository(
     suspend fun tripCountForPlayer(id: UUID): Int =
         tripPlayerDao.countTripsForPlayer(id)
 
+    /**
+     * True if another active player already has this name (case-insensitive). [excludeId] lets
+     * a rename keep its own name. Used to surface a friendly "already exists" validation error.
+     */
+    suspend fun nameExists(name: String, excludeId: UUID? = null): Boolean =
+        playerDao.countActiveByName(name.trim(), excludeId ?: ZERO_UUID) > 0
+
+    private companion object {
+        // A UUID that can never collide with a real (random) player id, for "exclude nothing".
+        val ZERO_UUID: UUID = UUID(0L, 0L)
+    }
+
     private suspend fun logEvent(type: String, playerId: UUID, name: String) {
         eventLogDao.insert(
             EventLogEntity(

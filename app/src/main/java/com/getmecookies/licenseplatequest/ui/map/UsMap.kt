@@ -1,10 +1,13 @@
 package com.getmecookies.licenseplatequest.ui.map
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -12,9 +15,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -41,12 +47,27 @@ fun UsMap(
     unfoundColor: Color = Color(0xFF33486A),
     outlineColor: Color = Color(0xFF0F1B2D),
     labelColor: Color = Color(0xFFEAF1FB),
+    checkColor: Color = Color(0xFF04201C),
 ) {
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
     var scale by remember { mutableFloatStateOf(0f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
     var minScale by remember { mutableFloatStateOf(0f) }
     val textMeasurer = rememberTextMeasurer()
+
+    // Animate newly-found states from the unfound to the found color (brief fill sweep).
+    var previousFound by remember { mutableStateOf(foundCodes) }
+    var newlyFound by remember { mutableStateOf(emptySet<String>()) }
+    val fillProgress = remember { Animatable(1f) }
+    LaunchedEffect(foundCodes) {
+        val added = foundCodes - previousFound
+        previousFound = foundCodes
+        if (added.isNotEmpty()) {
+            newlyFound = added
+            fillProgress.snapTo(0f)
+            fillProgress.animateTo(1f, animationSpec = tween(durationMillis = 450))
+        }
+    }
 
     // Fit-and-center once the canvas size and shapes are both known.
     fun ensureInitialized(size: IntSize) {
@@ -60,8 +81,12 @@ fun UsMap(
         )
     }
 
+    val mapDescription = "United States map, ${foundCodes.size} of ${shapes.states.size} " +
+        "states found. Use the found-states list below to review or open states."
+
     Canvas(
         modifier = modifier
+            .semantics { contentDescription = mapDescription }
             .pointerInput(shapes) {
                 detectTransformGestures { centroid, pan, zoom, _ ->
                     if (scale <= 0f) return@detectTransformGestures
@@ -72,12 +97,31 @@ fun UsMap(
                 }
             }
             .pointerInput(shapes) {
-                detectTapGestures { tap ->
-                    if (scale <= 0f) return@detectTapGestures
-                    val mapX = (tap.x - offset.x) / scale
-                    val mapY = (tap.y - offset.y) / scale
-                    shapes.hitTest(mapX, mapY)?.let(onStateClick)
-                }
+                detectTapGestures(
+                    onTap = onTap@{ tap ->
+                        if (scale <= 0f) return@onTap
+                        val mapX = (tap.x - offset.x) / scale
+                        val mapY = (tap.y - offset.y) / scale
+                        shapes.hitTest(mapX, mapY)?.let(onStateClick)
+                    },
+                    onDoubleTap = onDoubleTap@{ tap ->
+                        if (minScale <= 0f) return@onDoubleTap
+                        // Toggle: if zoomed in, reset to fit-and-center; else zoom toward the tap.
+                        val zoomedIn = scale > minScale * 1.5f
+                        if (zoomedIn) {
+                            scale = minScale
+                            offset = Offset(
+                                x = (canvasSize.width - shapes.width * minScale) / 2f,
+                                y = (canvasSize.height - shapes.height * minScale) / 2f,
+                            )
+                        } else {
+                            val newScale = (minScale * 3f).coerceAtMost(minScale * 12f)
+                            // Keep the tapped screen point fixed as we scale up.
+                            offset = tap - (tap - offset) * (newScale / scale)
+                            scale = newScale
+                        }
+                    },
+                )
             },
     ) {
         canvasSize = IntSize(size.width.toInt(), size.height.toInt())
@@ -91,10 +135,33 @@ fun UsMap(
             translate(offset.x, offset.y)
             scale(scale, scale, pivot = Offset.Zero)
         }) {
+            val animatedFill = lerp(unfoundColor, foundColor, fillProgress.value)
             shapes.states.forEach { state ->
-                val fill = if (state.code in foundCodes) foundColor else unfoundColor
+                val fill = when {
+                    state.code in foundCodes && state.code in newlyFound -> animatedFill
+                    state.code in foundCodes -> foundColor
+                    else -> unfoundColor
+                }
                 drawPath(path = state.path, color = fill)
                 drawPath(path = state.path, color = outlineColor, style = Stroke(width = strokeWidth))
+            }
+
+            // Color-blind-safe cue: mark found states with a check, not color alone (SPEC §12).
+            // Only on the real shapes map; the tile-grid placeholder shows its code label instead.
+            if (!shapes.showLabels) {
+                val checkStyle = TextStyle(color = checkColor, fontSize = (13f / scale).sp)
+                shapes.states.forEach { state ->
+                    if (state.code !in foundCodes) return@forEach
+                    val anchor = state.labelAnchor ?: return@forEach
+                    val measured = textMeasurer.measure("✓", checkStyle)
+                    drawText(
+                        textLayoutResult = measured,
+                        topLeft = Offset(
+                            x = anchor.x - measured.size.width / 2f,
+                            y = anchor.y - measured.size.height / 2f,
+                        ),
+                    )
+                }
             }
 
             if (shapes.showLabels) {
