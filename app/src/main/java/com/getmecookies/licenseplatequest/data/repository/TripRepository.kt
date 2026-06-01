@@ -42,6 +42,28 @@ class TripRepository(
     /** The current active trip (or null), observed so the Active Trip View reacts to changes. */
     fun observeActiveTrip(): Flow<TripEntity?> = tripDao.observeByStatus(TripStatus.ACTIVE)
 
+    /** Player ids on a trip (join order), observed for the manage-players screen. */
+    fun observePlayerIdsForTrip(tripId: UUID): Flow<List<UUID>> =
+        tripPlayerDao.observePlayerIdsForTrip(tripId)
+
+    /** Add an existing player to a trip. No-ops if they're already on it. */
+    suspend fun addPlayerToTrip(tripId: UUID, playerId: UUID) {
+        if (tripPlayerDao.isOnTrip(tripId, playerId) > 0) return
+        tripPlayerDao.insert(
+            TripPlayerEntity(
+                id = UUID.randomUUID(),
+                tripId = tripId,
+                playerId = playerId,
+                joinedAt = Instant.now(),
+            ),
+        )
+    }
+
+    /** Remove a player from a trip (keeps the player in the roster). */
+    suspend fun removePlayerFromTrip(tripId: UUID, playerId: UUID) {
+        tripPlayerDao.removeFromTrip(tripId, playerId)
+    }
+
     /**
      * Manually end a trip (SPEC: a trip becomes COMPLETED only on manual end, not on 50/50).
      * Records [TripEntity.endedAt] and logs a trip_ended event.

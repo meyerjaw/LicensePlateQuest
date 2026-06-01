@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.getmecookies.licenseplatequest.data.local.entity.TripPlayerEntity
+import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
 @Dao
@@ -14,6 +15,18 @@ interface TripPlayerDao {
 
     @Query("SELECT * FROM trip_player WHERE trip_id = :tripId")
     suspend fun getForTrip(tripId: UUID): List<TripPlayerEntity>
+
+    /** Player ids on a trip, in join order — observed so the manage-players screen reacts live. */
+    @Query("SELECT player_id FROM trip_player WHERE trip_id = :tripId ORDER BY joined_at")
+    fun observePlayerIdsForTrip(tripId: UUID): Flow<List<UUID>>
+
+    /** Whether a player is already linked to a trip (the link is unique per trip + player). */
+    @Query("SELECT COUNT(*) FROM trip_player WHERE trip_id = :tripId AND player_id = :playerId")
+    suspend fun isOnTrip(tripId: UUID, playerId: UUID): Int
+
+    /** Remove a player from a trip (does not delete the player themselves). */
+    @Query("DELETE FROM trip_player WHERE trip_id = :tripId AND player_id = :playerId")
+    suspend fun removeFromTrip(tripId: UUID, playerId: UUID)
 
     /** How many trips a player belongs to — drives the delete-with-warning flow (SPEC §6/§10). */
     @Query("SELECT COUNT(*) FROM trip_player WHERE player_id = :playerId")

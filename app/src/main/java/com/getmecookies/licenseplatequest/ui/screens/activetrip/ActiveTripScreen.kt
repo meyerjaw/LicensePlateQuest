@@ -85,6 +85,7 @@ fun ActiveTripScreen(
     onOpenState: (String) -> Unit,
     onViewAllTrips: () -> Unit,
     onCelebrate: (UUID, CelebrationMode) -> Unit,
+    onManagePlayers: (UUID) -> Unit,
     viewModel: ActiveTripViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -154,6 +155,13 @@ fun ActiveTripScreen(
                                 expanded = menuOpen,
                                 onDismissRequest = { menuOpen = false },
                             ) {
+                                DropdownMenuItem(
+                                    text = { Text("Manage players") },
+                                    onClick = {
+                                        menuOpen = false
+                                        uiState.tripId?.let(onManagePlayers)
+                                    },
+                                )
                                 DropdownMenuItem(
                                     text = { Text("End trip") },
                                     onClick = {

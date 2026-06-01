@@ -23,6 +23,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationScreen
+import com.getmecookies.licenseplatequest.ui.screens.manageplayers.ManagePlayersScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersScreen
 import com.getmecookies.licenseplatequest.ui.screens.statedetail.StateDetailScreen
@@ -47,6 +48,7 @@ fun AppRoot() {
         Routes.NEW_TRIP,
         Routes.STATE_DETAIL,
         Routes.CELEBRATION,
+        Routes.MANAGE_PLAYERS,
     )
     // The Active Trip (map) view lives inside the Trips tab rather than on its own route, so it
     // reports up whether it's showing; the bottom bar hides while the map is up so it reads as a
@@ -95,6 +97,9 @@ fun AppRoot() {
                     onOpenState = { code -> navController.navigate(Routes.stateDetail(code)) },
                     onCelebrate = { tripId, mode ->
                         navController.navigate(Routes.celebration(tripId.toString(), mode.name))
+                    },
+                    onManagePlayers = { tripId ->
+                        navController.navigate(Routes.managePlayers(tripId.toString()))
                     },
                     onMapViewActiveChange = { mapViewActive = it },
                 )
@@ -155,6 +160,14 @@ fun AppRoot() {
             ) {
                 CelebrationScreen(
                     onExit = { navController.popBackStack() },
+                )
+            }
+            composable(
+                route = Routes.MANAGE_PLAYERS,
+                arguments = listOf(navArgument("tripId") { type = NavType.StringType }),
+            ) {
+                ManagePlayersScreen(
+                    onBack = { navController.popBackStack() },
                 )
             }
         }
