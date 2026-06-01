@@ -1,21 +1,31 @@
 package com.getmecookies.licenseplatequest.ui.screens.activetrip
 
 import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,6 +37,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -39,6 +50,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -46,7 +59,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.getmecookies.licenseplatequest.domain.model.FoundState
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.components.Confetti
 import com.getmecookies.licenseplatequest.ui.components.FlagImage
@@ -99,10 +111,32 @@ fun ActiveTripScreen(
         }
     }
 
+    // The system navigation-bar inset (this screen is full-screen, so the sheet must clear it
+    // itself). Used both to lift the collapsed handle above the bar and to pad the expanded list.
+    val navBarInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+
     Box(modifier = Modifier.fillMaxSize()) {
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
-            sheetPeekHeight = 96.dp,
+            // A custom handle with a known height; the peek matches it exactly so the collapsed
+            // sheet shows ONLY the pull-up bar. The handle carries the nav-bar inset below it so
+            // the bar sits above the system navigation bar; none of the list content peeks.
+            sheetPeekHeight = SHEET_HANDLE_HEIGHT + navBarInset,
+            sheetDragHandle = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp, bottom = 12.dp + navBarInset),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(width = 32.dp, height = 4.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)),
+                    )
+                }
+            },
             topBar = {
                 TopAppBar(
                     title = { Text(uiState.tripName.ifBlank { "Active trip" }) },
@@ -136,8 +170,12 @@ fun ActiveTripScreen(
                 FoundStatesSheet(
                     count = uiState.foundCount,
                     sort = uiState.sort,
-                    foundStates = uiState.foundStates,
+                    states = uiState.states,
+                    searchQuery = uiState.searchQuery,
+                    showUnfound = uiState.showUnfound,
                     onSortChange = viewModel::onSortChange,
+                    onSearchChange = viewModel::onSearchChange,
+                    onToggleShowUnfound = viewModel::onToggleShowUnfound,
                     onRowClick = onOpenState,
                 )
             },
@@ -168,8 +206,8 @@ fun ActiveTripScreen(
         if (confettiKey > 0) {
             Confetti(
                 trigger = confettiKey,
-                particleCount = 60,
-                durationMillis = 1600,
+                particleCount = 150,
+                durationMillis = 1500,
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -190,15 +228,21 @@ fun ActiveTripScreen(
 private fun FoundStatesSheet(
     count: Int,
     sort: FoundSort,
-    foundStates: List<FoundState>,
+    states: List<StateRow>,
+    searchQuery: String,
+    showUnfound: Boolean,
     onSortChange: (FoundSort) -> Unit,
+    onSearchChange: (String) -> Unit,
+    onToggleShowUnfound: (Boolean) -> Unit,
     onRowClick: (String) -> Unit,
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .navigationBarsPadding()
             .padding(horizontal = 16.dp)
             .padding(bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -225,9 +269,40 @@ private fun FoundStatesSheet(
             }
         }
 
-        if (foundStates.isEmpty()) {
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = onSearchChange,
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Search states") },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    IconButton(onClick = { onSearchChange("") }) {
+                        Icon(Icons.Filled.Close, contentDescription = "Clear search")
+                    }
+                }
+            },
+            singleLine = true,
+        )
+
+        FilterChip(
+            selected = showUnfound,
+            onClick = { onToggleShowUnfound(!showUnfound) },
+            label = { Text("Show unfound states") },
+            leadingIcon = if (showUnfound) {
+                { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
+            } else {
+                null
+            },
+        )
+
+        if (states.isEmpty()) {
+            val message = when {
+                searchQuery.isNotBlank() -> "No states match “$searchQuery”."
+                else -> "No states yet — tap a state on the map when you spot its plate."
+            }
             Text(
-                text = "No states yet — tap a state on the map when you spot its plate.",
+                text = message,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(vertical = 16.dp),
@@ -239,8 +314,8 @@ private fun FoundStatesSheet(
                     .heightIn(max = 420.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                items(foundStates, key = { it.code }) { state ->
-                    FoundStateRowItem(state = state, onClick = { onRowClick(state.code) })
+                items(states, key = { it.code }) { state ->
+                    StateRowItem(state = state, onClick = { onRowClick(state.code) })
                     HorizontalDivider()
                 }
             }
@@ -249,7 +324,7 @@ private fun FoundStatesSheet(
 }
 
 @Composable
-private fun FoundStateRowItem(state: FoundState, onClick: () -> Unit) {
+private fun StateRowItem(state: StateRow, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -260,9 +335,32 @@ private fun FoundStateRowItem(state: FoundState, onClick: () -> Unit) {
     ) {
         FlagImage(
             code = state.code,
-            modifier = Modifier.width(64.dp),
+            modifier = Modifier
+                .width(64.dp)
+                .alpha(if (state.found) 1f else 0.4f),
             placeholderFontSize = 16.sp,
         )
-        Text(text = state.name, style = MaterialTheme.typography.bodyLarge)
+        Column {
+            Text(
+                text = state.name,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (state.found) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            )
+            if (!state.found) {
+                Text(
+                    text = "Not found yet",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
+
+/** Height of the custom drag handle (12dp top pad + 4dp bar + 12dp bottom pad); the collapsed
+ *  sheet peek matches this so only the pull-up bar shows. */
+private val SHEET_HANDLE_HEIGHT = 28.dp

@@ -7,6 +7,7 @@ import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.domain.CelebrationTracker
 import com.getmecookies.licenseplatequest.domain.model.FoundState
+import com.getmecookies.licenseplatequest.domain.model.StateSummary
 import com.getmecookies.licenseplatequest.ui.map.UsMapShapes
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode
 import kotlinx.coroutines.channels.Channel
@@ -18,10 +19,23 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.util.UUID
 
 /** How the found-states bottom sheet is ordered (SPEC section 6). */
 enum class FoundSort { ORDER_FOUND, ALPHABETICAL }
+
+/**
+ * One row in the Active Trip bottom-sheet list. [foundAt] is null for states the trip hasn't
+ * found yet (shown only when the "show unfound" toggle is on).
+ */
+data class StateRow(
+    val code: String,
+    val name: String,
+    val foundAt: Instant?,
+) {
+    val found: Boolean get() = foundAt != null
+}
 
 data class ActiveTripUiState(
     val loading: Boolean = true,
@@ -29,8 +43,11 @@ data class ActiveTripUiState(
     val tripName: String = "",
     val shapes: UsMapShapes? = null,
     val foundCodes: Set<String> = emptySet(),
-    val foundStates: List<FoundState> = emptyList(),
+    /** The (filtered + sorted) rows shown in the sheet — found states, plus unfound when toggled. */
+    val states: List<StateRow> = emptyList(),
     val sort: FoundSort = FoundSort.ORDER_FOUND,
+    val searchQuery: String = "",
+    val showUnfound: Boolean = false,
     val showEndDialog: Boolean = false,
     /** One-shot: navigate to a celebration for (tripId, mode). Cleared via [ActiveTripViewModel.onCelebrationConsumed]. */
     val celebration: Celebration? = null,
@@ -57,6 +74,8 @@ class ActiveTripViewModel(
 ) : ViewModel() {
 
     private val sort = MutableStateFlow(FoundSort.ORDER_FOUND)
+    private val searchQuery = MutableStateFlow("")
+    private val showUnfound = MutableStateFlow(false)
     private val _uiState = MutableStateFlow(ActiveTripUiState())
     val uiState: StateFlow<ActiveTripUiState> = _uiState.asStateFlow()
 
@@ -78,30 +97,61 @@ class ActiveTripViewModel(
             _uiState.update { it.copy(shapes = shapes) }
         }
         viewModelScope.launch {
-            combine(
+            // The trip + its spottings + the full state list on one side; the sheet's view
+            // controls (sort/search/show-unfound) on the other. Combined so the list re-filters
+            // live as the user types or toggles.
+            val tripData = combine(
                 tripRepository.observeActiveTrip(),
                 spottingRepository.observeFoundStatesForActiveTrip(),
-                sort,
-            ) { trip, found, sortMode ->
-                Triple(trip, found, sortMode)
-            }.collect { (trip, found, sortMode) ->
-                val ordered = when (sortMode) {
-                    FoundSort.ORDER_FOUND -> found // already newest-first from the query
-                    FoundSort.ALPHABETICAL -> found.sortedBy { it.name }
+                spottingRepository.observeAllStates(),
+            ) { trip, found, allStates -> Triple(trip, found, allStates) }
+            val controls = combine(sort, searchQuery, showUnfound) { s, q, u -> Triple(s, q, u) }
+
+            combine(tripData, controls) { data, control -> data to control }
+                .collect { (data, control) ->
+                    val (trip, found, allStates) = data
+                    val (sortMode, query, showUnfoundSel) = control
+                    detectCelebrations(trip?.id, found.size)
+                    _uiState.update {
+                        it.copy(
+                            loading = false,
+                            tripId = trip?.id,
+                            tripName = trip?.name ?: "",
+                            foundCodes = found.map { f -> f.code }.toSet(),
+                            states = buildRows(found, allStates, sortMode, query, showUnfoundSel),
+                            sort = sortMode,
+                            searchQuery = query,
+                            showUnfound = showUnfoundSel,
+                        )
+                    }
                 }
-                detectCelebrations(trip?.id, found.size)
-                _uiState.update {
-                    it.copy(
-                        loading = false,
-                        tripId = trip?.id,
-                        tripName = trip?.name ?: "",
-                        foundCodes = found.map { f -> f.code }.toSet(),
-                        foundStates = ordered,
-                        sort = sortMode,
-                    )
-                }
-            }
         }
+    }
+
+    /**
+     * Builds the sheet rows: found states (in [FoundSort] order), optionally followed by unfound
+     * states (alphabetical), then narrowed by the search query against the state name.
+     */
+    private fun buildRows(
+        found: List<FoundState>,
+        allStates: List<StateSummary>,
+        sortMode: FoundSort,
+        query: String,
+        showUnfound: Boolean,
+    ): List<StateRow> {
+        val foundRows = found.map { StateRow(it.code, it.name, it.foundAt) } // newest-first
+        val foundCodes = found.mapTo(HashSet()) { it.code }
+        val unfoundRows = allStates
+            .filterNot { it.code in foundCodes }
+            .map { StateRow(it.code, it.name, null) }
+            .sortedBy { it.name }
+        val ordered = when (sortMode) {
+            FoundSort.ORDER_FOUND -> foundRows + unfoundRows
+            FoundSort.ALPHABETICAL -> (foundRows + unfoundRows).sortedBy { it.name }
+        }
+        val visible = if (showUnfound) ordered else ordered.filter { it.found }
+        val q = query.trim()
+        return if (q.isEmpty()) visible else visible.filter { it.name.contains(q, ignoreCase = true) }
     }
 
     /** Fire per-state confetti and the once-per-trip 50/50 celebration on real count increases. */
@@ -128,6 +178,14 @@ class ActiveTripViewModel(
 
     fun onSortChange(newSort: FoundSort) {
         sort.value = newSort
+    }
+
+    fun onSearchChange(query: String) {
+        searchQuery.value = query
+    }
+
+    fun onToggleShowUnfound(show: Boolean) {
+        showUnfound.value = show
     }
 
     fun onEndTripClick() {

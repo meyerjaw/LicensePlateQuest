@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,6 +36,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -74,6 +76,16 @@ fun StateDetailScreen(
                 },
             )
         },
+        // The primary action is pinned to the bottom so it's always reachable without scrolling.
+        bottomBar = {
+            if (data != null) {
+                StateDetailActionBar(
+                    data = data,
+                    onMark = viewModel::onMarkClick,
+                    onUnmark = viewModel::onUnmarkClick,
+                )
+            }
+        },
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -84,11 +96,7 @@ fun StateDetailScreen(
             when {
                 uiState.loading -> CircularProgressIndicator()
                 data == null -> Text("State not found.")
-                else -> StateDetailContent(
-                    data = data,
-                    onMark = viewModel::onMarkClick,
-                    onUnmark = viewModel::onUnmarkClick,
-                )
+                else -> StateDetailContent(data = data)
             }
         }
     }
@@ -108,8 +116,6 @@ fun StateDetailScreen(
 @Composable
 private fun StateDetailContent(
     data: StateDetailData,
-    onMark: () -> Unit,
-    onUnmark: () -> Unit,
 ) {
     val info = data.info
     Column(
@@ -160,23 +166,46 @@ private fun StateDetailContent(
                 }
             }
         }
+    }
+}
 
-        when {
-            data.found -> {
-                OutlinedButton(onClick = onUnmark, modifier = Modifier.fillMaxWidth()) {
+/** The primary mark/unmark action, pinned to the bottom of the screen above the system bar. */
+@Composable
+private fun StateDetailActionBar(
+    data: StateDetailData,
+    onMark: () -> Unit,
+    onUnmark: () -> Unit,
+) {
+    Surface(
+        tonalElevation = 3.dp,
+        shadowElevation = 8.dp,
+        color = MaterialTheme.colorScheme.surface,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        ) {
+            when {
+                data.found -> OutlinedButton(
+                    onClick = onUnmark,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                     Text("Unmark")
                 }
-            }
-            data.hasActiveTrip -> {
-                Button(onClick = onMark, modifier = Modifier.fillMaxWidth()) {
+                data.hasActiveTrip -> Button(
+                    onClick = onMark,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                     Text("Mark as found")
                 }
-            }
-            else -> {
-                Text(
-                    "Start or select a trip to mark states.",
+                else -> Text(
+                    text = "Start or select a trip to mark states.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }

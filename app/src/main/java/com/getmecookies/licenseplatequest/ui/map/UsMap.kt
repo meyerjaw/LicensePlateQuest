@@ -43,11 +43,9 @@ fun UsMap(
     foundCodes: Set<String>,
     onStateClick: (String) -> Unit,
     modifier: Modifier = Modifier,
-    foundColor: Color = Color(0xFF2A9D8F),
     unfoundColor: Color = Color(0xFF33486A),
     outlineColor: Color = Color(0xFF0F1B2D),
     labelColor: Color = Color(0xFFEAF1FB),
-    checkColor: Color = Color(0xFF04201C),
 ) {
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
     var scale by remember { mutableFloatStateOf(0f) }
@@ -152,11 +150,14 @@ fun UsMap(
             translate(offset.x, offset.y)
             scale(scale, scale, pivot = Offset.Zero)
         }) {
-            val animatedFill = lerp(unfoundColor, foundColor, fillProgress.value)
             shapes.states.forEach { state ->
+                // Each found state gets its own vibrant color (stable per state code), so the
+                // map fills in as a colorful mosaic; newly-found states animate from unfound.
+                val target = foundColorFor(state.code)
                 val fill = when {
-                    state.code in foundCodes && state.code in newlyFound -> animatedFill
-                    state.code in foundCodes -> foundColor
+                    state.code in foundCodes && state.code in newlyFound ->
+                        lerp(unfoundColor, target, fillProgress.value)
+                    state.code in foundCodes -> target
                     else -> unfoundColor
                 }
                 drawPath(path = state.path, color = fill)
@@ -166,10 +167,14 @@ fun UsMap(
             // Color-blind-safe cue: mark found states with a check, not color alone (SPEC §12).
             // Only on the real shapes map; the tile-grid placeholder shows its code label instead.
             if (!shapes.showLabels) {
-                val checkStyle = TextStyle(color = checkColor, fontSize = (13f / scale).sp)
                 shapes.states.forEach { state ->
                     if (state.code !in foundCodes) return@forEach
                     val anchor = state.labelAnchor ?: return@forEach
+                    // Pick a dark or light check per state so it stays legible on any fill color.
+                    val checkStyle = TextStyle(
+                        color = checkColorOn(foundColorFor(state.code)),
+                        fontSize = (13f / scale).sp,
+                    )
                     val measured = textMeasurer.measure("✓", checkStyle)
                     drawText(
                         textLayoutResult = measured,
@@ -200,4 +205,26 @@ fun UsMap(
             }
         }
     }
+}
+
+/** Vibrant fill colors for found states; each state maps to one deterministically by its code. */
+private val FOUND_PALETTE = listOf(
+    Color(0xFF06D6A0), // green
+    Color(0xFFFFD166), // yellow
+    Color(0xFFEF476F), // pink-red
+    Color(0xFF4CC9F0), // sky blue
+    Color(0xFFF78C6B), // coral
+    Color(0xFF9B5DE5), // purple
+    Color(0xFF43AA8B), // teal
+    Color(0xFFFFB703), // amber
+)
+
+/** Stable per-state fill color (same state code always yields the same palette entry). */
+private fun foundColorFor(code: String): Color =
+    FOUND_PALETTE[(code.hashCode() and 0x7fffffff) % FOUND_PALETTE.size]
+
+/** A dark or light check mark depending on the fill's brightness, so it always reads clearly. */
+private fun checkColorOn(fill: Color): Color {
+    val luminance = 0.299f * fill.red + 0.587f * fill.green + 0.114f * fill.blue
+    return if (luminance > 0.6f) Color(0xFF06231D) else Color(0xFFFFFFFF)
 }

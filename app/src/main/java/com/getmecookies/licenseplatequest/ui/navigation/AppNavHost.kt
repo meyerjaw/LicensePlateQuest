@@ -9,6 +9,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -45,7 +48,11 @@ fun AppRoot() {
         Routes.STATE_DETAIL,
         Routes.CELEBRATION,
     )
-    val showBottomBar = currentRoute !in fullScreenRoutes
+    // The Active Trip (map) view lives inside the Trips tab rather than on its own route, so it
+    // reports up whether it's showing; the bottom bar hides while the map is up so it reads as a
+    // full-screen view.
+    var mapViewActive by remember { mutableStateOf(false) }
+    val showBottomBar = currentRoute !in fullScreenRoutes && !mapViewActive
 
     Scaffold(
         bottomBar = {
@@ -76,6 +83,7 @@ fun AppRoot() {
     ) { innerPadding ->
         // Only reserve space for the bottom nav bar here; each screen's own Scaffold/TopAppBar
         // handles the top (status-bar) inset, so applying the full innerPadding would double it.
+        // Full-screen content (the map, celebration, etc.) applies its own navigation-bar inset.
         NavHost(
             navController = navController,
             startDestination = TopDestination.START.route,
@@ -88,6 +96,7 @@ fun AppRoot() {
                     onCelebrate = { tripId, mode ->
                         navController.navigate(Routes.celebration(tripId.toString(), mode.name))
                     },
+                    onMapViewActiveChange = { mapViewActive = it },
                 )
             }
             composable(TopDestination.Players.route) {

@@ -6,6 +6,7 @@ import com.getmecookies.licenseplatequest.data.local.entity.SpottingEntity
 import com.getmecookies.licenseplatequest.domain.model.FoundState
 import com.getmecookies.licenseplatequest.domain.model.StateDetailData
 import com.getmecookies.licenseplatequest.domain.model.StateInfo
+import com.getmecookies.licenseplatequest.domain.model.StateSummary
 import com.getmecookies.licenseplatequest.domain.model.TripStatus
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -81,6 +82,15 @@ class SpottingRepository(
                     }
                 }
             }
+        }
+
+    /**
+     * Every state (code + name), ordered for display. Used to list unfound states alongside
+     * found ones in the Active Trip bottom sheet.
+     */
+    fun observeAllStates(): Flow<List<StateSummary>> =
+        plateRegionDao.observeAll().map { regions ->
+            regions.map { StateSummary(code = it.regionCode, name = it.name) }
         }
 
     /** Load the static facts + active-trip found status for one state. */
