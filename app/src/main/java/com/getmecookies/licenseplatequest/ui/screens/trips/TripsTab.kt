@@ -54,8 +54,9 @@ fun TripsTab(
 
         true -> {
             if (forceList) {
-                // Trip List (shown over an active trip): back returns to the active view.
-                BackHandler { forceList = false }
+                // Trip List is showing (even over an active trip): back double-taps to exit,
+                // consistent with the Trip List always being the app's home.
+                BackHandler(onBack = exitOnDoubleBack)
                 TripListScreen(
                     onNewTrip = onNewTrip,
                     // Selecting a trip activates it; return to the active view.

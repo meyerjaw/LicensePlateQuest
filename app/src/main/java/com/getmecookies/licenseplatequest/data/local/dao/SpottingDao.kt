@@ -46,7 +46,6 @@ interface SpottingDao {
         """
         SELECT pr.region_code AS region_code,
                pr.name AS name,
-               pr.plate_image_path AS plate_image_path,
                s.timestamp AS found_at
         FROM spotting s
         JOIN plate_region pr ON pr.id = s.plate_region_id

@@ -49,7 +49,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.domain.model.FoundState
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.components.Confetti
-import com.getmecookies.licenseplatequest.ui.components.PlateImage
+import com.getmecookies.licenseplatequest.ui.components.FlagImage
 import com.getmecookies.licenseplatequest.ui.map.UsMap
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode
 import java.util.UUID
@@ -258,9 +258,8 @@ private fun FoundStateRowItem(state: FoundState, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        PlateImage(
+        FlagImage(
             code = state.code,
-            assetPath = state.plateImagePath,
             modifier = Modifier.width(64.dp),
             placeholderFontSize = 16.sp,
         )

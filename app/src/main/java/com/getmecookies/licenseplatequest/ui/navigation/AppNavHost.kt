@@ -74,10 +74,12 @@ fun AppRoot() {
             }
         },
     ) { innerPadding ->
+        // Only reserve space for the bottom nav bar here; each screen's own Scaffold/TopAppBar
+        // handles the top (status-bar) inset, so applying the full innerPadding would double it.
         NavHost(
             navController = navController,
             startDestination = TopDestination.START.route,
-            modifier = Modifier.padding(innerPadding),
+            modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding()),
         ) {
             composable(TopDestination.Trips.route) {
                 TripsTab(

@@ -13,7 +13,6 @@ data class StateInfo(
     val motto: String,
     val flower: String,
     val funFacts: List<String>,
-    val plateImagePath: String,
 )
 
 /**

@@ -75,7 +75,6 @@ class SpottingRepository(
                             FoundState(
                                 code = it.code,
                                 name = it.name,
-                                plateImagePath = it.plateImagePath,
                                 foundAt = it.foundAt,
                             )
                         }
@@ -94,7 +93,6 @@ class SpottingRepository(
             motto = region.motto,
             flower = region.flower,
             funFacts = parseFunFacts(region.funFacts),
-            plateImagePath = region.plateImagePath,
         )
 
         val activeTrip = tripDao.getByStatus(TripStatus.ACTIVE)

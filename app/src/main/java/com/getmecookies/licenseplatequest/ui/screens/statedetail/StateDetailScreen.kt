@@ -33,7 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.domain.model.StateDetailData
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
-import com.getmecookies.licenseplatequest.ui.components.PlateImage
+import com.getmecookies.licenseplatequest.ui.components.FlagImage
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -112,9 +112,8 @@ private fun StateDetailContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        PlateImage(
+        FlagImage(
             code = info.code,
-            assetPath = info.plateImagePath,
             modifier = Modifier.fillMaxWidth(),
         )
 
