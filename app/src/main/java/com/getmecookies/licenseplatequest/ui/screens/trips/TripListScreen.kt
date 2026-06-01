@@ -1,6 +1,8 @@
 package com.getmecookies.licenseplatequest.ui.screens.trips
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -21,15 +24,23 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,10 +50,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.domain.model.TripListItem
+import com.getmecookies.licenseplatequest.domain.model.TripStatus
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.util.UUID
 
 /**
  * Trip List / Home (SPEC section 6). Trips are grouped into Active, In Progress, and
@@ -55,12 +68,30 @@ import java.time.temporal.ChronoUnit
 fun TripListScreen(
     onNewTrip: () -> Unit,
     onOpenTrip: () -> Unit,
+    onOpenSummary: (UUID) -> Unit = {},
     viewModel: TripListViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Show an undo snackbar whenever a trip is swiped away; commit the delete if not undone.
+    LaunchedEffect(uiState.pendingDelete?.id) {
+        val pending = uiState.pendingDelete ?: return@LaunchedEffect
+        val result = snackbarHostState.showSnackbar(
+            message = "Deleted \"${pending.name}\"",
+            actionLabel = "Undo",
+            withDismissAction = true,
+        )
+        if (result == SnackbarResult.ActionPerformed) {
+            viewModel.onUndoDelete()
+        } else {
+            viewModel.onPendingDeleteCommit()
+        }
+    }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Trips") }) },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = onNewTrip) {
                 Icon(Icons.Filled.Add, contentDescription = "New trip")
@@ -85,10 +116,17 @@ fun TripListScreen(
                 TripSections(
                     uiState = uiState,
                     onSelect = { item ->
-                        viewModel.onSelectTrip(item.id)
-                        onOpenTrip()
+                        // A completed trip is finished — re-open its read-only summary instead
+                        // of reactivating it; others activate and open the active trip view.
+                        if (item.status == TripStatus.COMPLETED) {
+                            onOpenSummary(item.id)
+                        } else {
+                            viewModel.onSelectTrip(item.id)
+                            onOpenTrip()
+                        }
                     },
                     onDelete = viewModel::onDeleteRequest,
+                    onSwipeDelete = viewModel::onSwipeDelete,
                 )
             }
         }
@@ -110,6 +148,7 @@ private fun TripSections(
     uiState: TripListUiState,
     onSelect: (TripListItem) -> Unit,
     onDelete: (TripListItem) -> Unit,
+    onSwipeDelete: (TripListItem) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -119,23 +158,70 @@ private fun TripSections(
         uiState.active?.let { active ->
             item(key = "header-active") { SectionHeader("Active") }
             item(key = active.id) {
-                TripRow(item = active, onSelect = onSelect, onDelete = onDelete)
+                SwipeableTripRow(active, onSelect, onDelete, onSwipeDelete)
             }
         }
 
         if (uiState.inProgress.isNotEmpty()) {
             item(key = "header-in-progress") { SectionHeader("In Progress") }
             items(uiState.inProgress, key = { it.id }) { item ->
-                TripRow(item = item, onSelect = onSelect, onDelete = onDelete)
+                SwipeableTripRow(item, onSelect, onDelete, onSwipeDelete)
             }
         }
 
         if (uiState.completed.isNotEmpty()) {
             item(key = "header-completed") { SectionHeader("Completed") }
             items(uiState.completed, key = { it.id }) { item ->
-                TripRow(item = item, onSelect = onSelect, onDelete = onDelete)
+                SwipeableTripRow(item, onSelect, onDelete, onSwipeDelete)
             }
         }
+    }
+}
+
+/**
+ * A trip row that can be swiped (either direction) to delete, revealing a red backdrop with a
+ * trash icon. The actual deletion is deferred — the screen shows an undo snackbar — so
+ * dismissing here just notifies [onSwipeDelete].
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeableTripRow(
+    item: TripListItem,
+    onSelect: (TripListItem) -> Unit,
+    onDelete: (TripListItem) -> Unit,
+    onSwipeDelete: (TripListItem) -> Unit,
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value != SwipeToDismissBoxValue.Settled) {
+                onSwipeDelete(item)
+                true
+            } else {
+                false
+            }
+        },
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.errorContainer)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Delete,
+                    contentDescription = "Delete",
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                )
+            }
+        },
+    ) {
+        TripRow(item = item, onSelect = onSelect, onDelete = onDelete)
     }
 }
 
@@ -162,16 +248,26 @@ private fun TripRow(
     } else {
         CardDefaults.cardColors()
     }
+    // A gold accent outline reinforces a completed-map trip beyond color alone.
+    val cardModifier = Modifier
+        .fillMaxWidth()
+        .then(
+            if (item.isComplete) {
+                Modifier.border(
+                    width = 1.5.dp,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    shape = CardDefaults.shape,
+                )
+            } else {
+                Modifier
+            },
+        )
+        .combinedClickable(
+            onClick = { onSelect(item) },
+            onLongClick = { onDelete(item) },
+        )
 
-    Card(
-        colors = colors,
-        modifier = Modifier
-            .fillMaxWidth()
-            .combinedClickable(
-                onClick = { onSelect(item) },
-                onLongClick = { onDelete(item) },
-            ),
-    ) {
+    Card(colors = colors, modifier = cardModifier) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -180,17 +276,22 @@ private fun TripRow(
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.weight(1f),
                 )
+                StatusChip(item.status)
                 if (item.isComplete) {
                     Icon(
                         imageVector = Icons.Filled.Star,
                         contentDescription = "All 50 states found",
                         tint = MaterialTheme.colorScheme.tertiary,
+                        modifier = Modifier.padding(start = 6.dp),
                     )
                 }
             }
 
+            val subtitle = item.durationLabel
+                ?.let { "Started ${relativeStartLabel(item.startDate)} · lasted $it" }
+                ?: "Started ${relativeStartLabel(item.startDate)}"
             Text(
-                text = "Started ${relativeStartLabel(item.startDate)}",
+                text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp),
@@ -209,6 +310,35 @@ private fun TripRow(
                 modifier = Modifier.padding(top = 4.dp),
             )
         }
+    }
+}
+
+/** Small pill showing a trip's lifecycle status, color-coded. */
+@Composable
+private fun StatusChip(status: TripStatus) {
+    val (label, container, content) = when (status) {
+        TripStatus.ACTIVE -> Triple(
+            "Active",
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.colorScheme.onPrimary,
+        )
+        TripStatus.IN_PROGRESS -> Triple(
+            "In progress",
+            MaterialTheme.colorScheme.secondaryContainer,
+            MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+        TripStatus.COMPLETED -> Triple(
+            "Completed",
+            MaterialTheme.colorScheme.tertiary,
+            MaterialTheme.colorScheme.onTertiary,
+        )
+    }
+    Surface(color = container, contentColor = content, shape = RoundedCornerShape(50)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+        )
     }
 }
 

@@ -43,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -117,6 +118,7 @@ fun NewTripScreen(
                 supportingText = if (uiState.showErrors && !uiState.nameValid) {
                     { Text("Give the trip a name") }
                 } else null,
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                 modifier = Modifier.fillMaxWidth(),
             )
 
@@ -129,7 +131,10 @@ fun NewTripScreen(
                     label = { Text("City") },
                     singleLine = true,
                     isError = uiState.showErrors && !uiState.originCityValid,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Words,
+                        imeAction = ImeAction.Next,
+                    ),
                     modifier = Modifier.weight(1f),
                 )
                 StateDropdown(
@@ -151,7 +156,10 @@ fun NewTripScreen(
                     label = { Text("City") },
                     singleLine = true,
                     isError = uiState.showErrors && !uiState.destinationCityValid,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Words,
+                        imeAction = ImeAction.Next,
+                    ),
                     modifier = Modifier.weight(1f),
                 )
                 StateDropdown(

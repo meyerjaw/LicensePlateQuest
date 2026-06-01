@@ -48,6 +48,7 @@ fun CelebrationScreen(
     }
 
     val isFifty = uiState.mode == CelebrationMode.FIFTY_FIFTY
+    val isSummary = uiState.mode == CelebrationMode.SUMMARY
     val stats = uiState.stats
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -63,7 +64,11 @@ fun CelebrationScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text(
-                    text = if (isFifty) "All 50!" else "Made it home!",
+                    text = when {
+                        isFifty -> "All 50!"
+                        isSummary -> "Trip summary"
+                        else -> "Made it home!"
+                    },
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -79,7 +84,8 @@ fun CelebrationScreen(
 
                 Button(
                     onClick = {
-                        if (isFifty) onExit() else viewModel.onFinishManualEnd()
+                        // Summary + 50/50 just dismiss; only an active manual-end finalizes.
+                        if (isFifty || isSummary) onExit() else viewModel.onFinishManualEnd()
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -90,12 +96,14 @@ fun CelebrationScreen(
             }
         }
 
-        // Confetti overlay on top of everything; smaller burst for the manual-end variant.
-        Confetti(
-            trigger = "celebration",
-            particleCount = if (isFifty) 160 else 90,
-            modifier = Modifier.fillMaxSize(),
-        )
+        // Confetti only celebrates a fresh achievement; a re-opened summary is calm.
+        if (!isSummary) {
+            Confetti(
+                trigger = "celebration",
+                particleCount = if (isFifty) 160 else 90,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
     }
 }
 

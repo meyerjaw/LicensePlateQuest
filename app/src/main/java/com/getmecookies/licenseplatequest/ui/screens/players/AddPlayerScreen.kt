@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -83,7 +84,10 @@ fun AddPlayerScreen(
                 singleLine = true,
                 isError = uiState.error != null,
                 supportingText = uiState.error?.let { { Text(it) } },
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words,
+                    imeAction = ImeAction.Done,
+                ),
                 keyboardActions = KeyboardActions(onDone = { viewModel.onSave() }),
                 modifier = Modifier
                     .fillMaxWidth()

@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.ui.Modifier
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -13,11 +12,12 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -81,6 +81,21 @@ fun UsMap(
         )
     }
 
+    // Keep the map from being panned off-screen: clamp the offset so the scaled content stays
+    // within the canvas, centering on any axis where the content is smaller than the canvas.
+    fun clampOffset(candidate: Offset, atScale: Float): Offset {
+        val cw = canvasSize.width.toFloat()
+        val ch = canvasSize.height.toFloat()
+        if (cw == 0f || ch == 0f) return candidate
+        val contentW = shapes.width * atScale
+        val contentH = shapes.height * atScale
+        val x = if (contentW <= cw) (cw - contentW) / 2f
+        else candidate.x.coerceIn(cw - contentW, 0f)
+        val y = if (contentH <= ch) (ch - contentH) / 2f
+        else candidate.y.coerceIn(ch - contentH, 0f)
+        return Offset(x, y)
+    }
+
     val mapDescription = "United States map, ${foundCodes.size} of ${shapes.states.size} " +
         "states found. Use the found-states list below to review or open states."
 
@@ -91,8 +106,9 @@ fun UsMap(
                 detectTransformGestures { centroid, pan, zoom, _ ->
                     if (scale <= 0f) return@detectTransformGestures
                     val newScale = (scale * zoom).coerceIn(minScale, minScale * 12f)
-                    // Keep the gesture centroid anchored, then apply pan.
-                    offset = (offset - centroid) * (newScale / scale) + centroid + pan
+                    // Keep the gesture centroid anchored, then apply pan, then clamp on-screen.
+                    val candidate = (offset - centroid) * (newScale / scale) + centroid + pan
+                    offset = clampOffset(candidate, newScale)
                     scale = newScale
                 }
             }
@@ -116,8 +132,9 @@ fun UsMap(
                             )
                         } else {
                             val newScale = (minScale * 3f).coerceAtMost(minScale * 12f)
-                            // Keep the tapped screen point fixed as we scale up.
-                            offset = tap - (tap - offset) * (newScale / scale)
+                            // Keep the tapped screen point fixed as we scale up, then clamp.
+                            val candidate = tap - (tap - offset) * (newScale / scale)
+                            offset = clampOffset(candidate, newScale)
                             scale = newScale
                         }
                     },

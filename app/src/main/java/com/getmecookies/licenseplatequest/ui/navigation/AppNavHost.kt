@@ -1,5 +1,6 @@
 package com.getmecookies.licenseplatequest.ui.navigation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -88,6 +89,15 @@ fun AppRoot() {
                 )
             }
             composable(TopDestination.Players.route) {
+                // Back from the Players tab returns to the Trips tab (the app's home), rather
+                // than exiting; the Trips tab itself handles double-back-to-exit.
+                BackHandler {
+                    navController.navigate(TopDestination.Trips.route) {
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
                 PlayersScreen(
                     onAddPlayer = { navController.navigate(Routes.ADD_PLAYER) },
                 )

@@ -98,6 +98,8 @@ class TripRepository(
         name = trip.name,
         status = trip.status,
         startDate = trip.startDate,
+        endedAt = trip.endedAt,
+        createdAt = trip.createdAt,
         foundCount = foundCount,
     )
 

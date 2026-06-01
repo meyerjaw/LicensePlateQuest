@@ -27,10 +27,13 @@ class TripListViewModel(
         viewModelScope.launch {
             tripRepository.observeTripListItems().collect { items ->
                 _uiState.update { state ->
+                    // Hide a swipe-pending trip from the sections until its undo window closes.
+                    val pendingId = state.pendingDelete?.id
+                    val visible = items.filter { it.id != pendingId }
                     state.copy(
-                        active = items.firstOrNull { it.status == TripStatus.ACTIVE },
-                        inProgress = items.filter { it.status == TripStatus.IN_PROGRESS },
-                        completed = items.filter { it.status == TripStatus.COMPLETED },
+                        active = visible.firstOrNull { it.status == TripStatus.ACTIVE },
+                        inProgress = visible.filter { it.status == TripStatus.IN_PROGRESS },
+                        completed = visible.filter { it.status == TripStatus.COMPLETED },
                         loading = false,
                     )
                 }
@@ -58,6 +61,49 @@ class TripListViewModel(
         viewModelScope.launch {
             tripRepository.deleteTrip(target.id)
             _uiState.update { it.copy(deleteTarget = null) }
+        }
+    }
+
+    // --- Swipe-to-delete with undo ----------------------------------------
+
+    /**
+     * Swiping a row hides it and starts the undo window. The real delete is deferred until
+     * [onPendingDeleteCommit]; [onUndoDelete] cancels it. Re-grouping happens via the observed
+     * flow once [pendingDelete] is set, so the row vanishes immediately.
+     */
+    fun onSwipeDelete(item: TripListItem) {
+        _uiState.update { state ->
+            val visible = listOfNotNull(state.active) + state.inProgress + state.completed
+            val remaining = visible.filter { it.id != item.id }
+            state.copy(
+                pendingDelete = item,
+                active = remaining.firstOrNull { it.status == TripStatus.ACTIVE },
+                inProgress = remaining.filter { it.status == TripStatus.IN_PROGRESS },
+                completed = remaining.filter { it.status == TripStatus.COMPLETED },
+            )
+        }
+    }
+
+    /** Undo a swipe: the trip reappears (the observed flow re-includes it) and nothing is deleted. */
+    fun onUndoDelete() {
+        val restored = _uiState.value.pendingDelete ?: return
+        _uiState.update { state ->
+            val visible = listOfNotNull(state.active) + state.inProgress + state.completed + restored
+            state.copy(
+                pendingDelete = null,
+                active = visible.firstOrNull { it.status == TripStatus.ACTIVE },
+                inProgress = visible.filter { it.status == TripStatus.IN_PROGRESS },
+                completed = visible.filter { it.status == TripStatus.COMPLETED },
+            )
+        }
+    }
+
+    /** Commit the deferred delete once the undo window has passed without an undo. */
+    fun onPendingDeleteCommit() {
+        val target = _uiState.value.pendingDelete ?: return
+        viewModelScope.launch {
+            tripRepository.deleteTrip(target.id)
+            _uiState.update { it.copy(pendingDelete = null) }
         }
     }
 }

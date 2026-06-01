@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.getmecookies.licenseplatequest.data.local.AppDatabase.Companion.VERSION
 import com.getmecookies.licenseplatequest.data.local.dao.EventLogDao
 import com.getmecookies.licenseplatequest.data.local.dao.GameInstanceDao
 import com.getmecookies.licenseplatequest.data.local.dao.GameTypeDao

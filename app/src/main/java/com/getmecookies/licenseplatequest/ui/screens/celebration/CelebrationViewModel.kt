@@ -6,6 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.getmecookies.licenseplatequest.data.repository.CelebrationRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.domain.model.CelebrationStats
+import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode.FIFTY_FIFTY
+import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode.MANUAL_END
+import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode.SUMMARY
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,8 +16,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-/** Which celebration is showing (SPEC section 6). */
-enum class CelebrationMode { FIFTY_FIFTY, MANUAL_END }
+/**
+ * Which celebration/summary is showing (SPEC section 6).
+ * - [FIFTY_FIFTY]: all 50 found; trip stays active.
+ * - [MANUAL_END]: user is ending the trip now; finalizes it on "Done".
+ * - [SUMMARY]: re-opening an already-completed trip's stats; read-only, no finalize.
+ */
+enum class CelebrationMode { FIFTY_FIFTY, MANUAL_END, SUMMARY }
 
 data class CelebrationUiState(
     val loading: Boolean = true,

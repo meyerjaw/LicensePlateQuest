@@ -1,5 +1,10 @@
 package com.getmecookies.licenseplatequest.domain.model
 
+import com.getmecookies.licenseplatequest.domain.model.TripStatus.ACTIVE
+import com.getmecookies.licenseplatequest.domain.model.TripStatus.COMPLETED
+import com.getmecookies.licenseplatequest.domain.model.TripStatus.IN_PROGRESS
+
+
 /**
  * Lifecycle status of a [com.getmecookies.licenseplatequest.data.local.entity.TripEntity].
  *
