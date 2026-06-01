@@ -51,7 +51,11 @@ class CelebrationRepository(
         val estimatedMiles = rows.zipWithNext { a, b ->
             haversineMiles(a.centerLat, a.centerLng, b.centerLat, b.centerLng)
         }.sum()
-        val estimatedDistanceText = if (rows.size >= 2) "${estimatedMiles.roundToInt()} mi" else null
+        val estimatedDistanceText = if (rows.size >= 2) {
+            "${"%,d".format(estimatedMiles.roundToInt())} mi"
+        } else {
+            null
+        }
 
         // Furthest state from the trip origin (by state-center distance).
         val origin = plateRegionDao.getById(trip.originRegionId)

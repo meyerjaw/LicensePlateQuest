@@ -3,22 +3,29 @@ package com.getmecookies.licenseplatequest.ui.screens.statedetail
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -109,28 +116,53 @@ private fun StateDetailContent(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(horizontal = 16.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        FlagImage(
-            code = info.code,
+        // Flag, framed so it reads as a single hero element regardless of flag shape.
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            tonalElevation = 1.dp,
+            color = MaterialTheme.colorScheme.surfaceVariant,
             modifier = Modifier.fillMaxWidth(),
-        )
+        ) {
+            FlagImage(
+                code = info.code,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+            )
+        }
 
-        FactRow(label = "State bird", value = info.bird)
-        FactRow(label = "State flower", value = info.flower)
-        FactRow(label = "Motto", value = info.motto)
+        // When-found banner sits up top once a state is in the trip.
+        if (data.found) {
+            FoundBanner(data)
+        }
+
+        SectionCard(title = "State symbols") {
+            FactRow(label = "State bird", value = info.bird)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            FactRow(label = "State flower", value = info.flower)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            FactRow(label = "Motto", value = info.motto)
+        }
 
         if (info.funFacts.isNotEmpty()) {
-            Text("Fun facts", style = MaterialTheme.typography.titleSmall)
-            info.funFacts.forEach { fact ->
-                Text("• $fact", style = MaterialTheme.typography.bodyMedium)
+            SectionCard(title = "Fun facts") {
+                info.funFacts.forEachIndexed { index, fact ->
+                    if (index > 0) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("•", style = MaterialTheme.typography.bodyMedium)
+                        Text(fact, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
             }
         }
 
         when {
             data.found -> {
-                FoundBanner(data)
                 OutlinedButton(onClick = onUnmark, modifier = Modifier.fillMaxWidth()) {
                     Text("Unmark")
                 }
@@ -147,6 +179,34 @@ private fun StateDetailContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+    }
+}
+
+/** A titled card section with a subtle background, used to group related rows. */
+@Composable
+private fun SectionCard(
+    title: String,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            ),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                content = content,
+            )
         }
     }
 }
@@ -173,12 +233,19 @@ private fun FoundBanner(data: StateDetailData) {
         data.foundTripName?.let { add("on “$it”") }
     }
     if (parts.isNotEmpty()) {
-        Text(
-            text = parts.joinToString(" "),
-            style = MaterialTheme.typography.bodyMedium,
-            fontStyle = FontStyle.Italic,
-            color = MaterialTheme.colorScheme.primary,
-        )
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = parts.joinToString(" "),
+                style = MaterialTheme.typography.bodyMedium,
+                fontStyle = FontStyle.Italic,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            )
+        }
     }
 }
 
