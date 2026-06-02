@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">License Plate Quest</string>
+    <!-- Shorter label shown under the launcher icon in the app drawer / home screen. -->
+    <string name="app_name_short">LP Quest</string>
 </resources>
