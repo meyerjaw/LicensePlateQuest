@@ -35,11 +35,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.CelebrationStats
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.components.Confetti
@@ -98,16 +100,20 @@ fun CelebrationScreen(
                     ) {
                         Text(
                             text = when {
-                                isFifty -> "All 50!"
-                                isSummary -> "Trip summary"
-                                else -> "Made it home!"
+                                isFifty -> stringResource(R.string.celebration_all_fifty)
+                                isSummary -> stringResource(R.string.celebration_summary)
+                                else -> stringResource(R.string.celebration_made_it_home)
                             },
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             textAlign = TextAlign.Center,
                         )
                         Text(
-                            text = if (isFifty) "Congratulations, ${stats.tripName}!" else stats.tripName,
+                            text = if (isFifty) {
+                                stringResource(R.string.celebration_congrats, stats.tripName)
+                            } else {
+                                stats.tripName
+                            },
                             style = MaterialTheme.typography.titleMedium,
                             textAlign = TextAlign.Center,
                         )
@@ -125,7 +131,13 @@ fun CelebrationScreen(
                         .fillMaxWidth()
                         .padding(top = 4.dp),
                 ) {
-                    Text(if (isFifty) "Continue" else "Done")
+                    Text(
+                        if (isFifty) {
+                            stringResource(R.string.celebration_continue)
+                        } else {
+                            stringResource(R.string.celebration_done)
+                        },
+                    )
                 }
             }
         }
@@ -150,34 +162,43 @@ private data class Stat(val label: String, val value: String?, val info: String?
 @Composable
 private fun StatsSections(stats: CelebrationStats) {
     val progress = listOf(
-        Stat("States found", "${stats.foundCount} / 50"),
-        Stat("Trip duration", stats.durationText),
         Stat(
-            label = "Estimated distance",
+            stringResource(R.string.celebration_stat_states_found),
+            stringResource(R.string.celebration_states_found, stats.foundCount),
+        ),
+        Stat(stringResource(R.string.celebration_stat_trip_duration), stats.durationText),
+        Stat(
+            label = stringResource(R.string.celebration_stat_estimated_distance),
             value = stats.estimatedDistanceText,
-            info = "A rough total of the straight-line distances between the center of each " +
-                "state, connected in the order you found them — like driving from state to " +
-                "state as you spotted their plates. It's just for fun, not a real odometer.",
+            info = stringResource(R.string.celebration_estimated_distance_info),
         ),
     )
     val timing = listOf(
-        Stat("Average between finds", stats.averageGapText),
-        Stat("Longest gap", stats.longestGapText),
-        Stat("Quickest back-to-back", stats.shortestGapText),
+        Stat(stringResource(R.string.celebration_stat_average_gap), stats.averageGapText),
+        Stat(stringResource(R.string.celebration_stat_longest_gap), stats.longestGapText),
+        Stat(stringResource(R.string.celebration_stat_shortest_gap), stats.shortestGapText),
     )
     val highlights = listOf(
-        Stat("First state", stats.firstStateName),
-        Stat("Last state", stats.lastStateName),
-        Stat("Furthest from home", stats.furthestStateName),
-        Stat("Rarest find", stats.rarestStateName),
+        Stat(stringResource(R.string.celebration_stat_first_state), stats.firstStateName),
+        Stat(stringResource(R.string.celebration_stat_last_state), stats.lastStateName),
+        Stat(stringResource(R.string.celebration_stat_furthest_state), stats.furthestStateName),
+        Stat(stringResource(R.string.celebration_stat_rarest_state), stats.rarestStateName),
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        StatSection("Progress", progress)
-        StatSection("Timing", timing)
-        StatSection("Highlights", highlights)
+        StatSection(stringResource(R.string.celebration_section_progress), progress)
+        StatSection(stringResource(R.string.celebration_section_timing), timing)
+        StatSection(stringResource(R.string.celebration_section_highlights), highlights)
         if (stats.playerNames.isNotEmpty()) {
-            StatSection("Players", listOf(Stat("On this trip", stats.playerNames.joinToString(", "))))
+            StatSection(
+                stringResource(R.string.celebration_section_players),
+                listOf(
+                    Stat(
+                        stringResource(R.string.celebration_on_this_trip),
+                        stats.playerNames.joinToString(", "),
+                    ),
+                ),
+            )
         }
     }
 }
@@ -245,7 +266,7 @@ private fun StatRow(stat: Stat) {
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Info,
-                        contentDescription = "About ${stat.label}",
+                        contentDescription = stringResource(R.string.celebration_cd_about_stat, stat.label),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(16.dp),
                     )
@@ -264,7 +285,7 @@ private fun StatRow(stat: Stat) {
             onDismissRequest = { showInfo = false },
             title = { Text(stat.label) },
             text = { Text(stat.info) },
-            confirmButton = { TextButton(onClick = { showInfo = false }) { Text("Got it") } },
+            confirmButton = { TextButton(onClick = { showInfo = false }) { Text(stringResource(R.string.action_got_it)) } },
         )
     }
 }

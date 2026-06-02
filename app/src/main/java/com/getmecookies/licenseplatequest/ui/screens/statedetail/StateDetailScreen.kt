@@ -35,11 +35,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.StateDetailData
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.components.FlagImage
@@ -68,10 +70,13 @@ fun StateDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(data?.info?.name ?: "State") },
+                title = { Text(data?.info?.name ?: stringResource(R.string.state_detail_title_fallback)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_back),
+                        )
                     }
                 },
             )
@@ -95,7 +100,7 @@ fun StateDetailScreen(
         ) {
             when {
                 uiState.loading -> CircularProgressIndicator()
-                data == null -> Text("State not found.")
+                data == null -> Text(stringResource(R.string.state_detail_not_found))
                 else -> StateDetailContent(data = data)
             }
         }
@@ -104,9 +109,12 @@ fun StateDetailScreen(
     when (uiState.dialog) {
         StateDetailDialog.NONE -> Unit
         StateDetailDialog.CONFIRM_UNMARK -> ConfirmDialog(
-            title = "Unmark this state?",
-            body = "Remove ${data?.info?.name ?: "this state"} from this trip? This can't be undone.",
-            confirmLabel = "Unmark",
+            title = stringResource(R.string.state_detail_unmark_title),
+            body = stringResource(
+                R.string.state_detail_unmark_body,
+                data?.info?.name ?: stringResource(R.string.state_detail_this_state),
+            ),
+            confirmLabel = stringResource(R.string.state_detail_unmark),
             onConfirm = viewModel::onConfirmUnmark,
             onDismiss = viewModel::onDismissDialog,
         )
@@ -145,22 +153,22 @@ private fun StateDetailContent(
             FoundBanner(data)
         }
 
-        SectionCard(title = "State symbols") {
-            FactRow(label = "State bird", value = info.bird)
+        SectionCard(title = stringResource(R.string.state_detail_symbols)) {
+            FactRow(label = stringResource(R.string.state_detail_bird), value = info.bird)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            FactRow(label = "State flower", value = info.flower)
+            FactRow(label = stringResource(R.string.state_detail_flower), value = info.flower)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            FactRow(label = "Motto", value = info.motto)
+            FactRow(label = stringResource(R.string.state_detail_motto), value = info.motto)
         }
 
         if (info.funFacts.isNotEmpty()) {
-            SectionCard(title = "Fun facts") {
+            SectionCard(title = stringResource(R.string.state_detail_fun_facts)) {
                 info.funFacts.forEachIndexed { index, fact ->
                     if (index > 0) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("•", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.state_detail_bullet), style = MaterialTheme.typography.bodyMedium)
                         Text(fact, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
@@ -192,16 +200,16 @@ private fun StateDetailActionBar(
                     onClick = onUnmark,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Unmark")
+                    Text(stringResource(R.string.state_detail_unmark))
                 }
                 data.hasActiveTrip -> Button(
                     onClick = onMark,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text("Mark as found")
+                    Text(stringResource(R.string.state_detail_mark))
                 }
                 else -> Text(
-                    text = "Start or select a trip to mark states.",
+                    text = stringResource(R.string.state_detail_no_trip),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -258,8 +266,8 @@ private fun FoundBanner(data: StateDetailData) {
         DATE_FORMAT.format(it.atZone(ZoneId.systemDefault()))
     }
     val parts = buildList {
-        if (whenText != null) add("Found $whenText")
-        data.foundTripName?.let { add("on “$it”") }
+        if (whenText != null) add(stringResource(R.string.state_detail_found_when, whenText))
+        data.foundTripName?.let { add(stringResource(R.string.state_detail_found_on, it)) }
     }
     if (parts.isNotEmpty()) {
         Surface(
@@ -291,7 +299,7 @@ private fun ConfirmDialog(
         title = { Text(title) },
         text = { Text(body) },
         confirmButton = { TextButton(onClick = onConfirm) { Text(confirmLabel) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 

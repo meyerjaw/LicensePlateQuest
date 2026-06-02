@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.domain.model.Player
+import com.getmecookies.licenseplatequest.ui.screens.players.PlayerNameError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +22,7 @@ data class ManagePlayersUiState(
     /** Active roster players not yet on the trip, alphabetized. */
     val available: List<Player> = emptyList(),
     val newName: String = "",
-    val newNameError: String? = null,
+    val newNameError: PlayerNameError? = null,
     val addingNew: Boolean = false,
 )
 
@@ -71,14 +72,14 @@ class ManagePlayersViewModel(
         if (current.addingNew) return
         val name = current.newName.trim()
         if (name.isBlank()) {
-            _uiState.update { it.copy(newNameError = "Name can't be empty") }
+            _uiState.update { it.copy(newNameError = PlayerNameError.BLANK) }
             return
         }
         _uiState.update { it.copy(addingNew = true, newNameError = null) }
         viewModelScope.launch {
             if (playerRepository.nameExists(name)) {
                 _uiState.update {
-                    it.copy(addingNew = false, newNameError = "A player named \"$name\" already exists")
+                    it.copy(addingNew = false, newNameError = PlayerNameError.DUPLICATE)
                 }
                 return@launch
             }

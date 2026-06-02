@@ -38,6 +38,7 @@ object AppViewModelProvider {
                 tripRepository = lpqApp().container.tripRepository,
                 spottingRepository = lpqApp().container.spottingRepository,
                 celebrationTracker = lpqApp().container.celebrationTracker,
+                uiPreferences = lpqApp().container.uiPreferences,
             )
         }
         initializer {

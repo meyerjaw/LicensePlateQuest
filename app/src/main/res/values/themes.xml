@@ -3,5 +3,7 @@
     <!-- Base theme is intentionally minimal: all visual theming is done in Compose
          (see ui/theme). A NoActionBar Material 3 parent gives the host Activity a
          sane window background and removes the legacy ActionBar. -->
-    <style name="Theme.LicensePlateQuest" parent="Theme.Material3.DayNight.NoActionBar" />
+    <style name="Theme.LicensePlateQuest" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
 </resources>

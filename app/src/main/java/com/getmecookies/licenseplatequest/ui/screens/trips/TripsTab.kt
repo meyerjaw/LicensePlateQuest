@@ -80,7 +80,7 @@ fun TripsTab(
                 BackHandler { forceList = true }
                 ActiveTripScreen(
                     onOpenState = onOpenState,
-                    onViewAllTrips = { forceList = true },
+                    onBack = { forceList = true },
                     onCelebrate = onCelebrate,
                     onManagePlayers = onManagePlayers,
                 )

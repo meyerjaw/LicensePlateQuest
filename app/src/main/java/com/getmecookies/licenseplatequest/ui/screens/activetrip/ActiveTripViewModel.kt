@@ -6,6 +6,7 @@ import com.getmecookies.licenseplatequest.data.map.MapRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.domain.CelebrationTracker
+import com.getmecookies.licenseplatequest.domain.UiPreferences
 import com.getmecookies.licenseplatequest.domain.model.FoundState
 import com.getmecookies.licenseplatequest.domain.model.StateSummary
 import com.getmecookies.licenseplatequest.ui.map.UsMapShapes
@@ -22,8 +23,11 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import java.util.UUID
 
-/** How the found-states bottom sheet is ordered (SPEC section 6). */
+/** How the found-states list is ordered (SPEC section 6). */
 enum class FoundSort { ORDER_FOUND, ALPHABETICAL }
+
+/** The two top tabs on the Active Trip screen. */
+enum class ActiveTripTab { MAP, LIST }
 
 /**
  * One row in the Active Trip bottom-sheet list. [foundAt] is null for states the trip hasn't
@@ -48,6 +52,8 @@ data class ActiveTripUiState(
     val sort: FoundSort = FoundSort.ORDER_FOUND,
     val searchQuery: String = "",
     val showUnfound: Boolean = false,
+    /** Which top tab is showing; restored from [UiPreferences] when the screen opens. */
+    val selectedTab: ActiveTripTab = ActiveTripTab.MAP,
     val showEndDialog: Boolean = false,
     /** One-shot: navigate to a celebration for (tripId, mode). Cleared via [ActiveTripViewModel.onCelebrationConsumed]. */
     val celebration: Celebration? = null,
@@ -71,12 +77,15 @@ class ActiveTripViewModel(
     private val tripRepository: TripRepository,
     spottingRepository: SpottingRepository,
     private val celebrationTracker: CelebrationTracker,
+    private val uiPreferences: UiPreferences,
 ) : ViewModel() {
 
     private val sort = MutableStateFlow(FoundSort.ORDER_FOUND)
     private val searchQuery = MutableStateFlow("")
     private val showUnfound = MutableStateFlow(false)
-    private val _uiState = MutableStateFlow(ActiveTripUiState())
+    // Restore the last-used tab so re-entering a trip shows Map or List as the user left it.
+    private val initialTab = ActiveTripTab.entries.getOrElse(uiPreferences.activeTripTab) { ActiveTripTab.MAP }
+    private val _uiState = MutableStateFlow(ActiveTripUiState(selectedTab = initialTab))
     val uiState: StateFlow<ActiveTripUiState> = _uiState.asStateFlow()
 
     /**
@@ -174,6 +183,12 @@ class ActiveTripViewModel(
         } else {
             _confettiEvents.trySend(Unit)
         }
+    }
+
+    /** Switch tabs and remember the choice for next time the user opens a trip. */
+    fun onTabSelected(tab: ActiveTripTab) {
+        uiPreferences.activeTripTab = tab.ordinal
+        _uiState.update { it.copy(selectedTab = tab) }
     }
 
     fun onSortChange(newSort: FoundSort) {

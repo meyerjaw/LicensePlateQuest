@@ -21,7 +21,7 @@ sealed interface PlayerDialog {
     data class Edit(
         val player: Player,
         val name: String,
-        val error: String? = null,
+        val error: PlayerNameError? = null,
     ) : PlayerDialog
 
     /** Delete confirmation. [tripCount] > 0 triggers the "on existing trips" warning. */

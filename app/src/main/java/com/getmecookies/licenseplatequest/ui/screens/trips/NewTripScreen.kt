@@ -42,11 +42,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.RegionOption
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import java.time.Instant
@@ -92,10 +94,13 @@ fun NewTripScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("New trip") },
+                title = { Text(stringResource(R.string.new_trip_title)) },
                 navigationIcon = {
                     IconButton(onClick = onDone) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_back),
+                        )
                     }
                 },
             )
@@ -112,23 +117,23 @@ fun NewTripScreen(
             OutlinedTextField(
                 value = uiState.name,
                 onValueChange = viewModel::onNameChange,
-                label = { Text("Trip name") },
+                label = { Text(stringResource(R.string.new_trip_name_label)) },
                 singleLine = true,
                 isError = uiState.showErrors && !uiState.nameValid,
                 supportingText = if (uiState.showErrors && !uiState.nameValid) {
-                    { Text("Give the trip a name") }
+                    { Text(stringResource(R.string.new_trip_name_error)) }
                 } else null,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                 modifier = Modifier.fillMaxWidth(),
             )
 
             // --- Origin -------------------------------------------------
-            Text("From", style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.new_trip_from), style = MaterialTheme.typography.titleSmall)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = uiState.originCity,
                     onValueChange = viewModel::onOriginCityChange,
-                    label = { Text("City") },
+                    label = { Text(stringResource(R.string.new_trip_city_label)) },
                     singleLine = true,
                     isError = uiState.showErrors && !uiState.originCityValid,
                     keyboardOptions = KeyboardOptions(
@@ -138,7 +143,7 @@ fun NewTripScreen(
                     modifier = Modifier.weight(1f),
                 )
                 StateDropdown(
-                    label = "State",
+                    label = stringResource(R.string.new_trip_state_label),
                     options = uiState.regionOptions,
                     selected = uiState.originRegion,
                     isError = uiState.showErrors && !uiState.originRegionValid,
@@ -148,12 +153,12 @@ fun NewTripScreen(
             }
 
             // --- Destination --------------------------------------------
-            Text("To", style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.new_trip_to), style = MaterialTheme.typography.titleSmall)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = uiState.destinationCity,
                     onValueChange = viewModel::onDestinationCityChange,
-                    label = { Text("City") },
+                    label = { Text(stringResource(R.string.new_trip_city_label)) },
                     singleLine = true,
                     isError = uiState.showErrors && !uiState.destinationCityValid,
                     keyboardOptions = KeyboardOptions(
@@ -163,7 +168,7 @@ fun NewTripScreen(
                     modifier = Modifier.weight(1f),
                 )
                 StateDropdown(
-                    label = "State",
+                    label = stringResource(R.string.new_trip_state_label),
                     options = uiState.regionOptions,
                     selected = uiState.destinationRegion,
                     isError = uiState.showErrors && !uiState.destinationRegionValid,
@@ -173,7 +178,7 @@ fun NewTripScreen(
             }
 
             // --- Start date ---------------------------------------------
-            Text("Start date", style = MaterialTheme.typography.titleSmall)
+            Text(stringResource(R.string.new_trip_start_date), style = MaterialTheme.typography.titleSmall)
             AssistChip(
                 onClick = { showDatePicker = true },
                 label = { Text(uiState.startDate.format(DATE_FORMAT)) },
@@ -186,19 +191,19 @@ fun NewTripScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text("Players", style = MaterialTheme.typography.titleSmall)
-                TextButton(onClick = onAddPlayer) { Text("+ Add new") }
+                Text(stringResource(R.string.new_trip_players), style = MaterialTheme.typography.titleSmall)
+                TextButton(onClick = onAddPlayer) { Text(stringResource(R.string.new_trip_add_new)) }
             }
             if (uiState.showErrors && !uiState.playersValid) {
                 Text(
-                    "Pick at least one player",
+                    stringResource(R.string.new_trip_players_error),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                 )
             }
             if (uiState.allPlayers.isEmpty()) {
                 Text(
-                    "No players yet - add one to get started.",
+                    stringResource(R.string.new_trip_no_players),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -221,7 +226,7 @@ fun NewTripScreen(
                     .fillMaxWidth()
                     .padding(top = 8.dp),
             ) {
-                Text("Start trip")
+                Text(stringResource(R.string.new_trip_start))
             }
         }
     }
@@ -271,7 +276,7 @@ private fun StateDropdown(
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text("${option.code} - ${option.name}") },
+                    text = { Text(stringResource(R.string.new_trip_region_option, option.code, option.name)) },
                     onClick = {
                         onSelected(option.id)
                         expanded = false
@@ -302,9 +307,9 @@ private fun TripDatePicker(
                 } else {
                     onDismiss()
                 }
-            }) { Text("OK") }
+            }) { Text(stringResource(R.string.action_ok)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     ) {
         DatePicker(state = state)
     }

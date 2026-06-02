@@ -11,6 +11,7 @@ import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
 import com.getmecookies.licenseplatequest.domain.CelebrationTracker
+import com.getmecookies.licenseplatequest.domain.UiPreferences
 
 /**
  * Manual dependency container (MVP uses no DI framework, per SPEC section 9). Owns the
@@ -36,6 +37,8 @@ class AppContainer(context: Context) {
     val celebrationRepository: CelebrationRepository = CelebrationRepository(database)
 
     val celebrationTracker: CelebrationTracker = CelebrationTracker(context.applicationContext)
+
+    val uiPreferences: UiPreferences = UiPreferences(context.applicationContext)
 
     val mapRepository: MapRepository = MapRepository(context.applicationContext)
 

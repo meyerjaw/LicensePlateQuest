@@ -22,10 +22,12 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.getmecookies.licenseplatequest.R
 
 /** Asset path for a state's flag, derived from its 2-letter code (e.g. "OH" -> "flags/oh.png"). */
 fun flagAssetPath(code: String): String = "flags/${code.lowercase()}.png"
@@ -60,7 +62,7 @@ fun FlagImage(
         // Preserve the flag's real proportions; wrap height to whatever the width implies.
         Image(
             bitmap = bmp,
-            contentDescription = "$code state flag",
+            contentDescription = stringResource(R.string.flag_image_cd, code),
             contentScale = ContentScale.Fit,
             modifier = modifier
                 .wrapContentHeight()

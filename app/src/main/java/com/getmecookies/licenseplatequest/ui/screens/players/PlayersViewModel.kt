@@ -76,7 +76,7 @@ class PlayersViewModel(
             if (playerRepository.nameExists(trimmed, excludeId = dialog.player.id)) {
                 _uiState.update {
                     val d = it.dialog as? PlayerDialog.Edit ?: return@update it
-                    it.copy(dialog = d.copy(error = "A player named \"$trimmed\" already exists"))
+                    it.copy(dialog = d.copy(error = PlayerNameError.DUPLICATE))
                 }
                 return@launch
             }
@@ -93,6 +93,6 @@ class PlayersViewModel(
         }
     }
 
-    private fun validate(name: String): String? =
-        if (name.isBlank()) "Name can't be empty" else null
+    private fun validate(name: String): PlayerNameError? =
+        if (name.isBlank()) PlayerNameError.BLANK else null
 }

@@ -14,9 +14,15 @@ import java.util.UUID
  * State for the full-screen Add Player flow. Kept deliberately small for now — future
  * phases will add more fields here (e.g. avatar, color) without touching the list screen.
  */
+/**
+ * A typed player-name validation failure. The screen resolves this to a localized string
+ * (supplying the entered name for [DUPLICATE]) so no user-facing text lives in the ViewModel.
+ */
+enum class PlayerNameError { BLANK, DUPLICATE }
+
 data class AddPlayerUiState(
     val name: String = "",
-    val error: String? = null,
+    val error: PlayerNameError? = null,
     val saving: Boolean = false,
 )
 
@@ -44,13 +50,13 @@ class AddPlayerViewModel(
         if (current.saving) return
         val name = current.name.trim()
         if (name.isBlank()) {
-            _uiState.update { it.copy(error = "Name can't be empty") }
+            _uiState.update { it.copy(error = PlayerNameError.BLANK) }
             return
         }
         _uiState.update { it.copy(saving = true, error = null) }
         viewModelScope.launch {
             if (playerRepository.nameExists(name)) {
-                _uiState.update { it.copy(saving = false, error = "A player named \"$name\" already exists") }
+                _uiState.update { it.copy(saving = false, error = PlayerNameError.DUPLICATE) }
                 return@launch
             }
             val id = playerRepository.addPlayer(name)

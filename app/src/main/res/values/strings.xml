@@ -2,4 +2,162 @@
     <string name="app_name">License Plate Quest</string>
     <!-- Shorter label shown under the launcher icon in the app drawer / home screen. -->
     <string name="app_name_short">LP Quest</string>
+
+    <!-- Shared actions / accessibility -->
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_save">Save</string>
+    <string name="action_ok">OK</string>
+    <string name="action_got_it">Got it</string>
+    <string name="action_add_player">Add player</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_more">More</string>
+
+    <!-- Bottom navigation tabs -->
+    <string name="nav_trips">Trips</string>
+    <string name="nav_players">Players</string>
+
+    <!-- Trip list / home -->
+    <string name="trip_list_title">Trips</string>
+    <string name="trip_list_empty">No trips yet — tap + to start your first one.</string>
+    <string name="trip_list_cd_new_trip">New trip</string>
+    <string name="trip_list_cd_delete">Delete</string>
+    <string name="trip_list_cd_completed">All 50 states found</string>
+    <string name="trip_list_deleted_snackbar">Deleted \"%1$s\"</string>
+    <string name="trip_list_undo">Undo</string>
+    <string name="trip_list_delete_title">Delete trip?</string>
+    <string name="trip_list_delete_body">Delete \"%1$s\"? This can\'t be undone.</string>
+    <string name="trip_list_section_active">Active</string>
+    <string name="trip_list_section_in_progress">In Progress</string>
+    <string name="trip_list_section_completed">Completed</string>
+    <string name="trip_list_status_active">Active</string>
+    <string name="trip_list_status_in_progress">In progress</string>
+    <string name="trip_list_status_completed">Completed</string>
+    <string name="trip_list_states_count">%1$d / %2$d states</string>
+    <string name="trip_list_started">Started %1$s</string>
+    <string name="trip_list_started_lasted">Started %1$s · lasted %2$s</string>
+    <string name="trip_list_relative_today">today</string>
+    <string name="trip_list_relative_yesterday">yesterday</string>
+    <string name="trip_list_relative_days_ago">%1$d days ago</string>
+
+    <!-- New trip -->
+    <string name="new_trip_title">New trip</string>
+    <string name="new_trip_name_label">Trip name</string>
+    <string name="new_trip_name_error">Give the trip a name</string>
+    <string name="new_trip_from">From</string>
+    <string name="new_trip_to">To</string>
+    <string name="new_trip_city_label">City</string>
+    <string name="new_trip_state_label">State</string>
+    <string name="new_trip_start_date">Start date</string>
+    <string name="new_trip_players">Players</string>
+    <string name="new_trip_add_new">+ Add new</string>
+    <string name="new_trip_players_error">Pick at least one player</string>
+    <string name="new_trip_no_players">No players yet - add one to get started.</string>
+    <string name="new_trip_start">Start trip</string>
+    <string name="new_trip_region_option">%1$s - %2$s</string>
+
+    <!-- Active trip -->
+    <string name="active_trip_title_fallback">Active trip</string>
+    <string name="active_trip_cd_back">Back to trips</string>
+    <string name="active_trip_manage_players">Manage players</string>
+    <string name="active_trip_end">End trip</string>
+    <string name="active_trip_tab_map">Map</string>
+    <string name="active_trip_tab_list">List</string>
+    <string name="active_trip_end_title">End this trip?</string>
+    <string name="active_trip_end_body">End \"%1$s\"? You can still view it afterward, but it\'ll move to your completed trips.</string>
+    <string name="active_trip_found_count">%1$d / 50 found</string>
+    <string name="active_trip_sort_order_found">Order found</string>
+    <string name="active_trip_sort_alphabetical">A–Z</string>
+    <string name="active_trip_search_placeholder">Search states</string>
+    <string name="active_trip_cd_clear_search">Clear search</string>
+    <string name="active_trip_show_unfound">Show unfound states</string>
+    <string name="active_trip_no_match">No states match “%1$s”.</string>
+    <string name="active_trip_no_states">No states yet — switch to the Map tab and tap a state when you spot its plate.</string>
+    <string name="active_trip_not_found_yet">Not found yet</string>
+
+    <!-- State detail -->
+    <string name="state_detail_title_fallback">State</string>
+    <string name="state_detail_not_found">State not found.</string>
+    <string name="state_detail_this_state">this state</string>
+    <string name="state_detail_unmark_title">Unmark this state?</string>
+    <string name="state_detail_unmark_body">Remove %1$s from this trip? This can\'t be undone.</string>
+    <string name="state_detail_unmark">Unmark</string>
+    <string name="state_detail_mark">Mark as found</string>
+    <string name="state_detail_no_trip">Start or select a trip to mark states.</string>
+    <string name="state_detail_symbols">State symbols</string>
+    <string name="state_detail_bird">State bird</string>
+    <string name="state_detail_flower">State flower</string>
+    <string name="state_detail_motto">Motto</string>
+    <string name="state_detail_fun_facts">Fun facts</string>
+    <string name="state_detail_bullet">•</string>
+    <string name="state_detail_found_when">Found %1$s</string>
+    <string name="state_detail_found_on">on “%1$s”</string>
+
+    <!-- Players roster -->
+    <string name="players_title">Players</string>
+    <string name="players_cd_add">Add player</string>
+    <string name="players_empty">Add your first player to get started.</string>
+    <string name="players_cd_edit">Edit %1$s</string>
+    <string name="players_cd_delete">Delete %1$s</string>
+    <string name="players_trip_singular">trip</string>
+    <string name="players_trip_plural">trips</string>
+    <string name="players_stats_not_played">%1$s - not played yet</string>
+    <string name="players_stats_last_played">%1$s - last played %2$s</string>
+    <string name="players_trip_count">%1$d %2$s</string>
+    <string name="players_edit_title">Edit name</string>
+    <string name="players_name_label">Name</string>
+    <string name="players_delete_title">Delete %1$s?</string>
+    <string name="players_delete_on_trips">%1$s is on %2$d %3$s. Deleting keeps that trip history but removes them from the roster.</string>
+    <string name="players_delete_no_trips">This removes %1$s from your roster.</string>
+
+    <!-- Add player -->
+    <string name="add_player_title">Add player</string>
+    <string name="add_player_name_label">Name</string>
+
+    <!-- Shared player-name validation -->
+    <string name="player_name_blank">Name can\'t be empty</string>
+    <string name="player_name_duplicate">A player named “%1$s” already exists</string>
+
+    <!-- Manage players -->
+    <string name="manage_players_title">Players</string>
+    <string name="manage_players_add_new_section">Add a new player</string>
+    <string name="manage_players_name_label">Player name</string>
+    <string name="manage_players_add_button">Add player</string>
+    <string name="manage_players_on_trip">On this trip (%1$d)</string>
+    <string name="manage_players_none_yet">No players on this trip yet. Add some below.</string>
+    <string name="manage_players_add_from_roster">Add from your players</string>
+    <string name="manage_players_cd_remove">Remove %1$s from this trip</string>
+    <string name="manage_players_cd_add">Add %1$s to this trip</string>
+
+    <!-- Celebration -->
+    <string name="celebration_all_fifty">All 50!</string>
+    <string name="celebration_summary">Trip summary</string>
+    <string name="celebration_made_it_home">Made it home!</string>
+    <string name="celebration_congrats">Congratulations, %1$s!</string>
+    <string name="celebration_continue">Continue</string>
+    <string name="celebration_done">Done</string>
+    <string name="celebration_states_found">%1$d / 50</string>
+    <string name="celebration_stat_states_found">States found</string>
+    <string name="celebration_stat_trip_duration">Trip duration</string>
+    <string name="celebration_stat_estimated_distance">Estimated distance</string>
+    <string name="celebration_estimated_distance_info">A rough total of the straight-line distances between the center of each state, connected in the order you found them — like driving from state to state as you spotted their plates. It\'s just for fun, not a real odometer.</string>
+    <string name="celebration_stat_average_gap">Average between finds</string>
+    <string name="celebration_stat_longest_gap">Longest gap</string>
+    <string name="celebration_stat_shortest_gap">Quickest back-to-back</string>
+    <string name="celebration_stat_first_state">First state</string>
+    <string name="celebration_stat_last_state">Last state</string>
+    <string name="celebration_stat_furthest_state">Furthest from home</string>
+    <string name="celebration_stat_rarest_state">Rarest find</string>
+    <string name="celebration_section_progress">Progress</string>
+    <string name="celebration_section_timing">Timing</string>
+    <string name="celebration_section_highlights">Highlights</string>
+    <string name="celebration_section_players">Players</string>
+    <string name="celebration_on_this_trip">On this trip</string>
+    <string name="celebration_cd_about_stat">About %1$s</string>
+
+    <!-- Flag image -->
+    <string name="flag_image_cd">%1$s state flag</string>
+
+    <!-- US map accessibility -->
+    <string name="us_map_cd">United States map, %1$d of %2$d states found. Use the List tab to review or open states.</string>
 </resources>

@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -26,6 +27,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
+import com.getmecookies.licenseplatequest.R
 
 /**
  * Interactive US map (SPEC section 6 "Active Trip View"). Renders each state from bundled
@@ -94,8 +96,11 @@ fun UsMap(
         return Offset(x, y)
     }
 
-    val mapDescription = "United States map, ${foundCodes.size} of ${shapes.states.size} " +
-        "states found. Use the found-states list below to review or open states."
+    val mapDescription = stringResource(
+        R.string.us_map_cd,
+        foundCodes.size,
+        shapes.states.size,
+    )
 
     Canvas(
         modifier = modifier

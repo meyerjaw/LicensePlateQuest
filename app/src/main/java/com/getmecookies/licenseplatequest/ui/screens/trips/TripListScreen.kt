@@ -44,11 +44,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.TripListItem
 import com.getmecookies.licenseplatequest.domain.model.TripStatus
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
@@ -73,13 +76,15 @@ fun TripListScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val undoLabel = stringResource(R.string.trip_list_undo)
 
     // Show an undo snackbar whenever a trip is swiped away; commit the delete if not undone.
     LaunchedEffect(uiState.pendingDelete?.id) {
         val pending = uiState.pendingDelete ?: return@LaunchedEffect
         val result = snackbarHostState.showSnackbar(
-            message = "Deleted \"${pending.name}\"",
-            actionLabel = "Undo",
+            message = context.getString(R.string.trip_list_deleted_snackbar, pending.name),
+            actionLabel = undoLabel,
             withDismissAction = true,
         )
         if (result == SnackbarResult.ActionPerformed) {
@@ -90,11 +95,11 @@ fun TripListScreen(
     }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Trips") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.trip_list_title)) }) },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = onNewTrip) {
-                Icon(Icons.Filled.Add, contentDescription = "New trip")
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.trip_list_cd_new_trip))
             }
         },
     ) { innerPadding ->
@@ -105,7 +110,7 @@ fun TripListScreen(
         ) {
             if (!uiState.loading && uiState.isEmpty) {
                 Text(
-                    text = "No trips yet — tap + to start your first one.",
+                    text = stringResource(R.string.trip_list_empty),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
@@ -135,10 +140,10 @@ fun TripListScreen(
     uiState.deleteTarget?.let { target ->
         AlertDialog(
             onDismissRequest = viewModel::onDismissDelete,
-            title = { Text("Delete trip?") },
-            text = { Text("Delete \"${target.name}\"? This can't be undone.") },
-            confirmButton = { TextButton(onClick = viewModel::onConfirmDelete) { Text("Delete") } },
-            dismissButton = { TextButton(onClick = viewModel::onDismissDelete) { Text("Cancel") } },
+            title = { Text(stringResource(R.string.trip_list_delete_title)) },
+            text = { Text(stringResource(R.string.trip_list_delete_body, target.name)) },
+            confirmButton = { TextButton(onClick = viewModel::onConfirmDelete) { Text(stringResource(R.string.action_delete)) } },
+            dismissButton = { TextButton(onClick = viewModel::onDismissDelete) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 }
@@ -156,21 +161,21 @@ private fun TripSections(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         uiState.active?.let { active ->
-            item(key = "header-active") { SectionHeader("Active") }
+            item(key = "header-active") { SectionHeader(stringResource(R.string.trip_list_section_active)) }
             item(key = active.id) {
                 SwipeableTripRow(active, onSelect, onDelete, onSwipeDelete)
             }
         }
 
         if (uiState.inProgress.isNotEmpty()) {
-            item(key = "header-in-progress") { SectionHeader("In Progress") }
+            item(key = "header-in-progress") { SectionHeader(stringResource(R.string.trip_list_section_in_progress)) }
             items(uiState.inProgress, key = { it.id }) { item ->
                 SwipeableTripRow(item, onSelect, onDelete, onSwipeDelete)
             }
         }
 
         if (uiState.completed.isNotEmpty()) {
-            item(key = "header-completed") { SectionHeader("Completed") }
+            item(key = "header-completed") { SectionHeader(stringResource(R.string.trip_list_section_completed)) }
             items(uiState.completed, key = { it.id }) { item ->
                 SwipeableTripRow(item, onSelect, onDelete, onSwipeDelete)
             }
@@ -215,7 +220,7 @@ private fun SwipeableTripRow(
             ) {
                 Icon(
                     imageVector = Icons.Filled.Delete,
-                    contentDescription = "Delete",
+                    contentDescription = stringResource(R.string.trip_list_cd_delete),
                     tint = MaterialTheme.colorScheme.onErrorContainer,
                 )
             }
@@ -280,16 +285,17 @@ private fun TripRow(
                 if (item.isComplete) {
                     Icon(
                         imageVector = Icons.Filled.Star,
-                        contentDescription = "All 50 states found",
+                        contentDescription = stringResource(R.string.trip_list_cd_completed),
                         tint = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.padding(start = 6.dp),
                     )
                 }
             }
 
+            val startLabel = relativeStartLabel(item.startDate)
             val subtitle = item.durationLabel
-                ?.let { "Started ${relativeStartLabel(item.startDate)} · lasted $it" }
-                ?: "Started ${relativeStartLabel(item.startDate)}"
+                ?.let { stringResource(R.string.trip_list_started_lasted, startLabel, it) }
+                ?: stringResource(R.string.trip_list_started, startLabel)
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
@@ -305,7 +311,11 @@ private fun TripRow(
                     .clip(RoundedCornerShape(8.dp)),
             )
             Text(
-                text = "${item.foundCount} / ${TripListItem.TOTAL_STATES} states",
+                text = stringResource(
+                    R.string.trip_list_states_count,
+                    item.foundCount,
+                    TripListItem.TOTAL_STATES,
+                ),
                 style = MaterialTheme.typography.labelMedium,
                 modifier = Modifier.padding(top = 4.dp),
             )
@@ -318,17 +328,17 @@ private fun TripRow(
 private fun StatusChip(status: TripStatus) {
     val (label, container, content) = when (status) {
         TripStatus.ACTIVE -> Triple(
-            "Active",
+            stringResource(R.string.trip_list_status_active),
             MaterialTheme.colorScheme.primary,
             MaterialTheme.colorScheme.onPrimary,
         )
         TripStatus.IN_PROGRESS -> Triple(
-            "In progress",
+            stringResource(R.string.trip_list_status_in_progress),
             MaterialTheme.colorScheme.secondaryContainer,
             MaterialTheme.colorScheme.onSecondaryContainer,
         )
         TripStatus.COMPLETED -> Triple(
-            "Completed",
+            stringResource(R.string.trip_list_status_completed),
             MaterialTheme.colorScheme.tertiary,
             MaterialTheme.colorScheme.onTertiary,
         )
@@ -348,13 +358,14 @@ private val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("MMM d,
  * Friendly relative phrasing for a trip's start date: "today", "yesterday", "N days ago" for
  * the last week, otherwise the absolute date. Future dates fall back to the absolute date.
  */
+@Composable
 private fun relativeStartLabel(date: LocalDate): String {
     val today = LocalDate.now()
     val days = ChronoUnit.DAYS.between(date, today)
     return when {
-        days == 0L -> "today"
-        days == 1L -> "yesterday"
-        days in 2L..6L -> "$days days ago"
+        days == 0L -> stringResource(R.string.trip_list_relative_today)
+        days == 1L -> stringResource(R.string.trip_list_relative_yesterday)
+        days in 2L..6L -> stringResource(R.string.trip_list_relative_days_ago, days.toInt())
         else -> date.format(DATE_FORMAT)
     }
 }

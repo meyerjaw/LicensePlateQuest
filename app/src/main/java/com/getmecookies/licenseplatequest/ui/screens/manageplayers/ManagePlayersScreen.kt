@@ -32,13 +32,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.Player
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
+import com.getmecookies.licenseplatequest.ui.screens.players.PlayerNameError
 
 /**
  * Manage the players on a trip (reached from the Active Trip overflow menu). Lets the user add
@@ -55,10 +58,13 @@ fun ManagePlayersScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Players") },
+                title = { Text(stringResource(R.string.manage_players_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_back),
+                        )
                     }
                 },
             )
@@ -91,16 +97,16 @@ fun ManagePlayersScreen(
                 onAdd = viewModel::onAddNew,
             )
 
-            Section(title = "On this trip (${uiState.onTrip.size})") {
+            Section(title = stringResource(R.string.manage_players_on_trip, uiState.onTrip.size)) {
                 if (uiState.onTrip.isEmpty()) {
-                    HintText("No players on this trip yet. Add some below.")
+                    HintText(stringResource(R.string.manage_players_none_yet))
                 } else {
                     uiState.onTrip.forEachIndexed { index, player ->
                         if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         PlayerRow(
                             player = player,
                             actionIcon = Icons.Filled.Close,
-                            actionDescription = "Remove ${player.name} from this trip",
+                            actionDescription = stringResource(R.string.manage_players_cd_remove, player.name),
                             onAction = { viewModel.onRemove(player.id) },
                         )
                     }
@@ -108,13 +114,13 @@ fun ManagePlayersScreen(
             }
 
             if (uiState.available.isNotEmpty()) {
-                Section(title = "Add from your players") {
+                Section(title = stringResource(R.string.manage_players_add_from_roster)) {
                     uiState.available.forEachIndexed { index, player ->
                         if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         PlayerRow(
                             player = player,
                             actionIcon = Icons.Filled.Add,
-                            actionDescription = "Add ${player.name} to this trip",
+                            actionDescription = stringResource(R.string.manage_players_cd_add, player.name),
                             onAction = { viewModel.onAddExisting(player.id) },
                         )
                     }
@@ -127,20 +133,26 @@ fun ManagePlayersScreen(
 @Composable
 private fun AddNewPlayerCard(
     name: String,
-    error: String?,
+    error: PlayerNameError?,
     adding: Boolean,
     onNameChange: (String) -> Unit,
     onAdd: () -> Unit,
 ) {
-    Section(title = "Add a new player") {
+    val errorText = when (error) {
+        PlayerNameError.BLANK -> stringResource(R.string.player_name_blank)
+        PlayerNameError.DUPLICATE ->
+            stringResource(R.string.player_name_duplicate, name.trim())
+        null -> null
+    }
+    Section(title = stringResource(R.string.manage_players_add_new_section)) {
         OutlinedTextField(
             value = name,
             onValueChange = onNameChange,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Player name") },
+            label = { Text(stringResource(R.string.manage_players_name_label)) },
             singleLine = true,
-            isError = error != null,
-            supportingText = error?.let { msg -> { Text(msg) } },
+            isError = errorText != null,
+            supportingText = errorText?.let { msg -> { Text(msg) } },
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Words,
                 imeAction = ImeAction.Done,
@@ -152,7 +164,7 @@ private fun AddNewPlayerCard(
             enabled = !adding && name.isNotBlank(),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text("Add player")
+            Text(stringResource(R.string.manage_players_add_button))
         }
     }
 }

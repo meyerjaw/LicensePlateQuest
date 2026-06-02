@@ -33,12 +33,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.Player
 import com.getmecookies.licenseplatequest.domain.model.PlayerListItem
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
@@ -59,10 +61,10 @@ fun PlayersScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Players") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.players_title)) }) },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddPlayer) {
-                Icon(Icons.Filled.Add, contentDescription = "Add player")
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.players_cd_add))
             }
         },
     ) { innerPadding ->
@@ -106,7 +108,7 @@ fun PlayersScreen(
 @Composable
 private fun EmptyPlayers(modifier: Modifier = Modifier) {
     Text(
-        text = "Add your first player to get started.",
+        text = stringResource(R.string.players_empty),
         style = MaterialTheme.typography.bodyLarge,
         textAlign = TextAlign.Center,
         modifier = modifier.padding(24.dp),
@@ -167,24 +169,35 @@ private fun PlayerRow(
                 )
             }
             IconButton(onClick = onEdit) {
-                Icon(Icons.Filled.Edit, contentDescription = "Edit ${item.player.name}")
+                Icon(
+                    Icons.Filled.Edit,
+                    contentDescription = stringResource(R.string.players_cd_edit, item.player.name),
+                )
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = "Delete ${item.player.name}")
+                Icon(
+                    Icons.Filled.Delete,
+                    contentDescription = stringResource(R.string.players_cd_delete, item.player.name),
+                )
             }
         }
     }
 }
 
 /** "3 trips - last played May 12, 2026" — or a friendly note when never played. */
+@Composable
 private fun playStatsLabel(item: PlayerListItem): String {
-    val tripWord = if (item.tripCount == 1) "trip" else "trips"
-    val plays = "${item.tripCount} $tripWord"
+    val tripWord = if (item.tripCount == 1) {
+        stringResource(R.string.players_trip_singular)
+    } else {
+        stringResource(R.string.players_trip_plural)
+    }
+    val plays = stringResource(R.string.players_trip_count, item.tripCount, tripWord)
     val last = item.lastPlayed
     return if (last == null) {
-        "$plays - not played yet"
+        stringResource(R.string.players_stats_not_played, plays)
     } else {
-        "$plays - last played ${last.format(DATE_FORMAT)}"
+        stringResource(R.string.players_stats_last_played, plays, last.format(DATE_FORMAT))
     }
 }
 
@@ -193,27 +206,33 @@ private val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("MMM d,
 @Composable
 private fun EditPlayerDialog(
     name: String,
-    error: String?,
+    error: PlayerNameError?,
     onNameChange: (String) -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val errorText = when (error) {
+        PlayerNameError.BLANK -> stringResource(R.string.player_name_blank)
+        PlayerNameError.DUPLICATE ->
+            stringResource(R.string.player_name_duplicate, name.trim())
+        null -> null
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit name") },
+        title = { Text(stringResource(R.string.players_edit_title)) },
         text = {
             OutlinedTextField(
                 value = name,
                 onValueChange = onNameChange,
                 singleLine = true,
-                label = { Text("Name") },
-                isError = error != null,
-                supportingText = error?.let { { Text(it) } },
+                label = { Text(stringResource(R.string.players_name_label)) },
+                isError = errorText != null,
+                supportingText = errorText?.let { { Text(it) } },
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
             )
         },
-        confirmButton = { TextButton(onClick = onConfirm) { Text("Save") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.action_save)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -226,19 +245,22 @@ private fun DeletePlayerDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Delete ${player.name}?") },
+        title = { Text(stringResource(R.string.players_delete_title, player.name)) },
         text = {
             val message = if (tripCount > 0) {
-                val tripWord = if (tripCount == 1) "trip" else "trips"
-                "${player.name} is on $tripCount $tripWord. Deleting keeps that trip history " +
-                    "but removes them from the roster."
+                val tripWord = if (tripCount == 1) {
+                    stringResource(R.string.players_trip_singular)
+                } else {
+                    stringResource(R.string.players_trip_plural)
+                }
+                stringResource(R.string.players_delete_on_trips, player.name, tripCount, tripWord)
             } else {
-                "This removes ${player.name} from your roster."
+                stringResource(R.string.players_delete_no_trips, player.name)
             }
             Text(message)
         },
-        confirmButton = { TextButton(onClick = onConfirm) { Text("Delete") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.action_delete)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -247,7 +269,7 @@ private fun DeletePlayerDialog(
 private fun PlayersScreenPreview() {
     LicensePlateQuestTheme {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Add your first player to get started.")
+            Text(stringResource(R.string.players_empty))
         }
     }
 }

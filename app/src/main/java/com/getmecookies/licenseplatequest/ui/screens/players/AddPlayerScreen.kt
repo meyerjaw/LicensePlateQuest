@@ -23,11 +23,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import java.util.UUID
 
@@ -48,6 +50,13 @@ fun AddPlayerScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val savedPlayerId by viewModel.savedPlayerId.collectAsStateWithLifecycle()
 
+    val errorText = when (uiState.error) {
+        PlayerNameError.BLANK -> stringResource(R.string.player_name_blank)
+        PlayerNameError.DUPLICATE ->
+            stringResource(R.string.player_name_duplicate, uiState.name.trim())
+        null -> null
+    }
+
     // Navigate back (reporting the new id) once the save completes.
     LaunchedEffect(savedPlayerId) {
         savedPlayerId?.let { onDone(it) }
@@ -62,10 +71,13 @@ fun AddPlayerScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Add player") },
+                title = { Text(stringResource(R.string.add_player_title)) },
                 navigationIcon = {
                     IconButton(onClick = { onDone(null) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_back),
+                        )
                     }
                 },
             )
@@ -80,10 +92,10 @@ fun AddPlayerScreen(
             OutlinedTextField(
                 value = uiState.name,
                 onValueChange = viewModel::onNameChange,
-                label = { Text("Name") },
+                label = { Text(stringResource(R.string.add_player_name_label)) },
                 singleLine = true,
-                isError = uiState.error != null,
-                supportingText = uiState.error?.let { { Text(it) } },
+                isError = errorText != null,
+                supportingText = errorText?.let { { Text(it) } },
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Words,
                     imeAction = ImeAction.Done,
@@ -101,7 +113,7 @@ fun AddPlayerScreen(
                     .fillMaxWidth()
                     .padding(top = 16.dp),
             ) {
-                Text("Save")
+                Text(stringResource(R.string.action_save))
             }
         }
     }
