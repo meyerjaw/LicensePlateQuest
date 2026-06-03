@@ -1,6 +1,7 @@
 package com.getmecookies.licenseplatequest.domain.model
 
 import java.time.Instant
+import java.util.UUID
 
 /**
  * Bundled, static facts about a state, shown on the State Detail screen (SPEC section 6).
@@ -29,4 +30,11 @@ data class StateDetailData(
     val found: Boolean,
     val foundAt: Instant? = null,
     val foundTripName: String? = null,
+    /** The active trip's players, for the attribution multi-select (playtest note #17). */
+    val tripPlayers: List<Player> = emptyList(),
+    /**
+     * Initial attribution selection: the players already credited (when [found]), or the
+     * remembered/auto selection to pre-check when about to mark.
+     */
+    val initialAttribution: Set<UUID> = emptySet(),
 )

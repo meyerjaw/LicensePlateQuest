@@ -1,25 +1,33 @@
 package com.getmecookies.licenseplatequest.ui.screens.statedetail
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +43,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -42,11 +51,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.R
+import com.getmecookies.licenseplatequest.domain.model.Player
 import com.getmecookies.licenseplatequest.domain.model.StateDetailData
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
+import com.getmecookies.licenseplatequest.ui.PlayerColors
 import com.getmecookies.licenseplatequest.ui.components.FlagImage
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 /**
  * State Detail (SPEC section 6). Shows the state's bundled facts and plate image. When the
@@ -67,16 +79,35 @@ fun StateDetailScreen(
         if (uiState.markComplete) onBack()
     }
 
+    // Leaving with unsaved attribution edits warns first; otherwise just goes back.
+    val onBackPressed: () -> Unit = {
+        if (uiState.hasUnsavedAttribution) viewModel.onConfirmDiscardChanges() else onBack()
+    }
+    BackHandler(enabled = uiState.hasUnsavedAttribution) {
+        viewModel.onConfirmDiscardChanges()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(data?.info?.name ?: stringResource(R.string.state_detail_title_fallback)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = onBackPressed) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.cd_back),
                         )
+                    }
+                },
+                actions = {
+                    // Save (✓) edited attribution on a found state (playtest note #17).
+                    if (uiState.hasUnsavedAttribution) {
+                        IconButton(onClick = viewModel::onSaveAttribution) {
+                            Icon(
+                                Icons.Filled.Check,
+                                contentDescription = stringResource(R.string.state_detail_save_attribution),
+                            )
+                        }
                     }
                 },
             )
@@ -101,7 +132,11 @@ fun StateDetailScreen(
             when {
                 uiState.loading -> CircularProgressIndicator()
                 data == null -> Text(stringResource(R.string.state_detail_not_found))
-                else -> StateDetailContent(data = data)
+                else -> StateDetailContent(
+                    data = data,
+                    selectedPlayerIds = uiState.selectedPlayerIds,
+                    onTogglePlayer = viewModel::onTogglePlayer,
+                )
             }
         }
     }
@@ -118,12 +153,21 @@ fun StateDetailScreen(
             onConfirm = viewModel::onConfirmUnmark,
             onDismiss = viewModel::onDismissDialog,
         )
+        StateDetailDialog.CONFIRM_DISCARD -> ConfirmDialog(
+            title = stringResource(R.string.state_detail_discard_title),
+            body = stringResource(R.string.state_detail_discard_body),
+            confirmLabel = stringResource(R.string.state_detail_discard_confirm),
+            onConfirm = onBack,
+            onDismiss = viewModel::onDismissDialog,
+        )
     }
 }
 
 @Composable
 private fun StateDetailContent(
     data: StateDetailData,
+    selectedPlayerIds: Set<UUID>,
+    onTogglePlayer: (UUID) -> Unit,
 ) {
     val info = data.info
     Column(
@@ -153,6 +197,16 @@ private fun StateDetailContent(
             FoundBanner(data)
         }
 
+        // Attribution multi-select, only meaningful with 2+ players on the trip (note #17).
+        if (data.hasActiveTrip && data.tripPlayers.size >= 2) {
+            AttributionCard(
+                players = data.tripPlayers,
+                selectedIds = selectedPlayerIds,
+                found = data.found,
+                onToggle = onTogglePlayer,
+            )
+        }
+
         SectionCard(title = stringResource(R.string.state_detail_symbols)) {
             FactRow(label = stringResource(R.string.state_detail_bird), value = info.bird)
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -172,6 +226,45 @@ private fun StateDetailContent(
                         Text(fact, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
+            }
+        }
+    }
+}
+
+/** Player multi-select for crediting a find (playtest note #17). Colored chips toggle credit;
+ *  for an already-found state, each toggle persists immediately. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AttributionCard(
+    players: List<Player>,
+    selectedIds: Set<UUID>,
+    found: Boolean,
+    onToggle: (UUID) -> Unit,
+) {
+    val title = stringResource(
+        if (found) R.string.state_detail_spotted_by else R.string.state_detail_who_spotted,
+    )
+    SectionCard(title = title) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            players.forEach { player ->
+                FilterChip(
+                    selected = player.id in selectedIds,
+                    onClick = { onToggle(player.id) },
+                    label = { Text(player.name) },
+                    leadingIcon = {
+                        Box(
+                            modifier = Modifier
+                                .size(14.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    PlayerColors.resolve(player.color, player.id.toString()),
+                                ),
+                        )
+                    },
+                )
             }
         }
     }

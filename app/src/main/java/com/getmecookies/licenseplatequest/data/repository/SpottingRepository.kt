@@ -3,7 +3,9 @@ package com.getmecookies.licenseplatequest.data.repository
 import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.entity.EventLogEntity
 import com.getmecookies.licenseplatequest.data.local.entity.SpottingEntity
+import com.getmecookies.licenseplatequest.data.local.entity.SpottingPlayerEntity
 import com.getmecookies.licenseplatequest.domain.model.FoundState
+import com.getmecookies.licenseplatequest.domain.model.Player
 import com.getmecookies.licenseplatequest.domain.model.StateDetailData
 import com.getmecookies.licenseplatequest.domain.model.StateInfo
 import com.getmecookies.licenseplatequest.domain.model.StateSummary
@@ -32,6 +34,8 @@ class SpottingRepository(
     private val tripDao = database.tripDao()
     private val gameInstanceDao = database.gameInstanceDao()
     private val spottingDao = database.spottingDao()
+    private val spottingPlayerDao = database.spottingPlayerDao()
+    private val tripPlayerDao = database.tripPlayerDao()
     private val plateRegionDao = database.plateRegionDao()
     private val eventLogDao = database.eventLogDao()
 
@@ -111,13 +115,25 @@ class SpottingRepository(
         val game = gameInstanceDao.getForTrip(activeTrip.id).firstOrNull()
             ?: return StateDetailData(info = info, hasActiveTrip = true, found = false)
 
+        val tripPlayers = tripPlayerDao.getPlayersForTrip(activeTrip.id)
+            .map { Player(id = it.id, name = it.name, color = it.color) }
+
         val spotting = spottingDao.getForRegion(game.id, region.id)
+        // Pre-selection: the players already credited when found; for an unfound state, auto-credit
+        // a sole player but otherwise start empty (no cross-state memory).
+        val initialAttribution: Set<UUID> = when {
+            spotting != null -> spottingPlayerDao.getPlayerIdsForSpotting(spotting.id).toSet()
+            tripPlayers.size == 1 -> setOf(tripPlayers.first().id)
+            else -> emptySet()
+        }
         return StateDetailData(
             info = info,
             hasActiveTrip = true,
             found = spotting != null,
             foundAt = spotting?.timestamp,
             foundTripName = if (spotting != null) activeTrip.name else null,
+            tripPlayers = tripPlayers,
+            initialAttribution = initialAttribution,
         )
     }
 
@@ -127,19 +143,20 @@ class SpottingRepository(
      *
      * @return true if a new spotting was created.
      */
-    suspend fun markState(regionCode: String): Boolean {
+    suspend fun markState(regionCode: String, playerIds: List<UUID> = emptyList()): Boolean {
         val region = plateRegionDao.getByCode(COUNTRY, regionCode) ?: return false
         val activeTrip = tripDao.getByStatus(TripStatus.ACTIVE) ?: return false
         val game = gameInstanceDao.getForTrip(activeTrip.id).firstOrNull() ?: return false
         if (spottingDao.getForRegion(game.id, region.id) != null) return false
 
         val now = Instant.now()
+        val spottingId = UUID.randomUUID()
         spottingDao.insert(
             SpottingEntity(
-                id = UUID.randomUUID(),
+                id = spottingId,
                 gameInstanceId = game.id,
                 plateRegionId = region.id,
-                spotterPlayerId = null, // per-player attribution reserved for a later phase
+                spotterPlayerId = null, // attribution now lives in spotting_player (multi-select)
                 timestamp = now,
                 note = null,
                 photoPath = null,
@@ -148,8 +165,26 @@ class SpottingRepository(
                 createdAt = now,
             ),
         )
+        playerIds.distinct().forEach { playerId ->
+            spottingPlayerDao.insert(SpottingPlayerEntity(UUID.randomUUID(), spottingId, playerId))
+        }
         logEvent("state_found", activeTrip.id, region.regionCode)
         return true
+    }
+
+    /**
+     * Replace the players credited for an already-found state (playtest note #17 — edit credit).
+     * Clears existing credits and re-adds the given ones. No-ops if the state isn't found.
+     */
+    suspend fun setAttribution(regionCode: String, playerIds: List<UUID>) {
+        val region = plateRegionDao.getByCode(COUNTRY, regionCode) ?: return
+        val activeTrip = tripDao.getByStatus(TripStatus.ACTIVE) ?: return
+        val game = gameInstanceDao.getForTrip(activeTrip.id).firstOrNull() ?: return
+        val spotting = spottingDao.getForRegion(game.id, region.id) ?: return
+        spottingPlayerDao.deleteForSpotting(spotting.id)
+        playerIds.distinct().forEach { playerId ->
+            spottingPlayerDao.insert(SpottingPlayerEntity(UUID.randomUUID(), spotting.id, playerId))
+        }
     }
 
     /** Unmark a state on the active trip (SPEC: only unmark is supported, not editing). */

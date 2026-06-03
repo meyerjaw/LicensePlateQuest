@@ -99,6 +99,12 @@
     <string name="state_detail_unmark">Unmark</string>
     <string name="state_detail_mark">Mark as found</string>
     <string name="state_detail_no_trip">Start or select a trip to mark states.</string>
+    <string name="state_detail_who_spotted">Who spotted it?</string>
+    <string name="state_detail_spotted_by">Spotted by</string>
+    <string name="state_detail_save_attribution">Save who spotted it</string>
+    <string name="state_detail_discard_title">Discard changes?</string>
+    <string name="state_detail_discard_body">You haven\'t saved who spotted this state. Leave without saving?</string>
+    <string name="state_detail_discard_confirm">Discard</string>
     <string name="state_detail_symbols">State symbols</string>
     <string name="state_detail_bird">State bird</string>
     <string name="state_detail_flower">State flower</string>

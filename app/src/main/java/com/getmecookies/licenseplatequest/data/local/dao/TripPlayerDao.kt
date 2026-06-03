@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.data.local.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import com.getmecookies.licenseplatequest.data.local.entity.PlayerEntity
 import com.getmecookies.licenseplatequest.data.local.entity.TripPlayerEntity
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
@@ -31,6 +32,18 @@ interface TripPlayerDao {
     /** How many trips a player belongs to — drives the delete-with-warning flow (SPEC §6/§10). */
     @Query("SELECT COUNT(*) FROM trip_player WHERE player_id = :playerId")
     suspend fun countTripsForPlayer(playerId: UUID): Int
+
+    /** Active players on a trip (with details incl. color), in join order — for attribution. */
+    @Query(
+        """
+        SELECT p.*
+        FROM trip_player tp
+        JOIN player p ON p.id = tp.player_id
+        WHERE tp.trip_id = :tripId AND p.deleted = 0
+        ORDER BY tp.joined_at
+        """
+    )
+    suspend fun getPlayersForTrip(tripId: UUID): List<PlayerEntity>
 
     /** Names of players on a trip, in join order (for the celebration stats screen). */
     @Query(
