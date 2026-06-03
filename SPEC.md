@@ -452,4 +452,7 @@ Several of these were resolved during build (noted inline):
   - The bottom-sheet found-states list was **removed**; its content now lives in a dedicated **List** top tab, alongside a **Map** top tab.
   - The top-left "all trips" icon was replaced with a **Back** button (returns to the Trip List).
   - The selected tab (Map vs List) is **remembered across sessions** via a new `UiPreferences` (SharedPreferences) store, restored when re-entering a trip.
+- **v1.3 (2026-06-01)** — Visual refresh + full string externalization:
+  - New **"sunny road-trip" theme** (sky blue / grass green / sunny orange / coral on warm-cream neutrals), light and dark; Material You **dynamic color disabled** so the brand palette is consistent; rounder corner shapes; warm launch window background.
+  - **All user-facing strings externalized** to `res/values/strings.xml` and read via `stringResource` / `Context.getString` (i18n-ready). ViewModel validation now exposes a typed `PlayerNameError` (BLANK / DUPLICATE) that screens resolve to resources; no display strings remain in ViewModels.
 
