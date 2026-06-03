@@ -74,4 +74,14 @@ interface SpottingDao {
         """
     )
     suspend fun getStatRows(gameInstanceId: UUID): List<SpottingStatRow>
+
+    /** Spottings in a game with no credited player — the "Unattributed" leaderboard line (#18). */
+    @Query(
+        """
+        SELECT COUNT(*) FROM spotting s
+        WHERE s.game_instance_id = :gameInstanceId
+          AND NOT EXISTS (SELECT 1 FROM spotting_player sp WHERE sp.spotting_id = s.id)
+        """
+    )
+    suspend fun countUnattributedForGame(gameInstanceId: UUID): Int
 }

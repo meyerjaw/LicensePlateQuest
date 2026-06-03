@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -61,7 +62,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.CelebrationStats
+import com.getmecookies.licenseplatequest.domain.model.PlayerScore
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
+import com.getmecookies.licenseplatequest.ui.PlayerColors
 import com.getmecookies.licenseplatequest.ui.components.Confetti
 import com.getmecookies.licenseplatequest.ui.map.UsMap
 import com.getmecookies.licenseplatequest.ui.map.UsMapShapes
@@ -374,17 +377,102 @@ private fun StatsSections(stats: CelebrationStats) {
         StatSection(stringResource(R.string.celebration_section_progress), progress)
         StatSection(stringResource(R.string.celebration_section_timing), timing)
         StatSection(stringResource(R.string.celebration_section_highlights), highlights)
-        if (stats.playerNames.isNotEmpty()) {
-            StatSection(
-                stringResource(R.string.celebration_section_players),
-                listOf(
-                    Stat(
-                        stringResource(R.string.celebration_on_this_trip),
-                        stats.playerNames.joinToString(", "),
-                    ),
-                ),
+        if (stats.leaderboard.isNotEmpty()) {
+            LeaderboardSection(
+                leaderboard = stats.leaderboard,
+                unattributed = stats.unattributedCount,
             )
         }
+    }
+}
+
+/** Per-player leaderboard with a crown for the lead, plus an unattributed line (playtest #18). */
+@Composable
+private fun LeaderboardSection(leaderboard: List<PlayerScore>, unattributed: Int) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.celebration_section_leaderboard),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                leaderboard.forEachIndexed { index, player ->
+                    if (index > 0) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    }
+                    LeaderboardRow(player)
+                }
+                if (unattributed > 0) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.celebration_unattributed),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            text = unattributed.toString(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LeaderboardRow(player: PlayerScore) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(14.dp)
+                    .clip(CircleShape)
+                    .background(PlayerColors.resolve(player.colorToken, player.id.toString())),
+            )
+            Text(
+                text = player.name,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+            )
+            if (player.isLeader) {
+                Text(
+                    text = stringResource(R.string.celebration_crown),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
+        Text(
+            text = player.score.toString(),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
 

@@ -177,8 +177,9 @@
     <string name="celebration_section_progress">Progress</string>
     <string name="celebration_section_timing">Timing</string>
     <string name="celebration_section_highlights">Highlights</string>
-    <string name="celebration_section_players">Players</string>
-    <string name="celebration_on_this_trip">On this trip</string>
+    <string name="celebration_section_leaderboard">Leaderboard</string>
+    <string name="celebration_unattributed">Family Find</string>
+    <string name="celebration_crown">👑</string>
     <string name="celebration_cd_about_stat">About %1$s</string>
 
     <!-- Flag image -->

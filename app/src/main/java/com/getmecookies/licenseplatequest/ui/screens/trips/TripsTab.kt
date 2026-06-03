@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,10 +50,12 @@ fun TripsTab(
     var forceList by rememberSaveable { mutableStateOf(false) }
 
     // The map is showing when there's an active trip and the user hasn't forced the list. Report
-    // it up so the host can hide the bottom bar, and clear it when this tab leaves composition.
+    // it up so the host can hide the bottom bar. We deliberately don't reset on dispose: while a
+    // full-screen child (e.g. State Detail) is up the host hides the bar by route anyway, and the
+    // host only consults this flag on the Trips tab — so keeping it avoids a one-frame bottom-bar
+    // flash when returning to the map.
     val mapShowing = hasActiveTrip == true && !forceList
     LaunchedEffect(mapShowing) { onMapViewActiveChange(mapShowing) }
-    DisposableEffect(Unit) { onDispose { onMapViewActiveChange(false) } }
 
     // Double-back-to-exit used whenever the Trip List is what's showing.
     val exitOnDoubleBack = rememberDoubleBackToExit()

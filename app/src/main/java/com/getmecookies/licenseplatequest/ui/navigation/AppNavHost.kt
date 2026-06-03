@@ -55,7 +55,11 @@ fun AppRoot() {
     // reports up whether it's showing; the bottom bar hides while the map is up so it reads as a
     // full-screen view.
     var mapViewActive by remember { mutableStateOf(false) }
-    val showBottomBar = currentRoute !in fullScreenRoutes && !mapViewActive
+    // The map flag only hides the bar while the Trips tab itself is showing the map. Gating on the
+    // route (rather than resetting the flag on navigation) avoids a one-frame flash when returning
+    // from a full-screen child like State Detail back to the map.
+    val showBottomBar = currentRoute !in fullScreenRoutes &&
+        !(mapViewActive && currentRoute == TopDestination.Trips.route)
 
     Scaffold(
         bottomBar = {

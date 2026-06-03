@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.data.repository
 import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.dao.SpottingStatRow
 import com.getmecookies.licenseplatequest.domain.model.CelebrationStats
+import com.getmecookies.licenseplatequest.domain.model.PlayerScore
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -22,6 +23,7 @@ class CelebrationRepository(
     private val tripDao = database.tripDao()
     private val gameInstanceDao = database.gameInstanceDao()
     private val spottingDao = database.spottingDao()
+    private val spottingPlayerDao = database.spottingPlayerDao()
     private val plateRegionDao = database.plateRegionDao()
     private val tripPlayerDao = database.tripPlayerDao()
 
@@ -70,10 +72,33 @@ class CelebrationRepository(
 
         val rarestStateName = rows.maxByOrNull { it.rarityScore }?.name
 
+        // Leaderboard (note #18): each trip player's credited-plate count, highest first, with a
+        // crown for the (possibly tied) lead. Players with no credits still appear at score 0.
+        val tripPlayers = tripPlayerDao.getPlayersForTrip(tripId)
+        val creditCounts: Map<UUID, Int> = game
+            ?.let { g -> spottingPlayerDao.creditCountsForGame(g.id).associate { it.player_id to it.count } }
+            ?: emptyMap()
+        val maxScore = tripPlayers.maxOfOrNull { creditCounts[it.id] ?: 0 } ?: 0
+        val leaderboard = tripPlayers
+            .map { p ->
+                val score = creditCounts[p.id] ?: 0
+                PlayerScore(
+                    id = p.id,
+                    name = p.name,
+                    colorToken = p.color,
+                    score = score,
+                    isLeader = maxScore > 0 && score == maxScore,
+                )
+            }
+            .sortedWith(compareByDescending<PlayerScore> { it.score }.thenBy { it.name.lowercase() })
+        val unattributedCount = game?.let { spottingDao.countUnattributedForGame(it.id) } ?: 0
+
         return CelebrationStats(
             tripName = trip.name,
             foundCount = rows.size,
             foundCodes = rows.mapTo(mutableSetOf()) { it.code },
+            leaderboard = leaderboard,
+            unattributedCount = unattributedCount,
             durationText = durationText,
             averageGapText = averageGapText,
             longestGapText = longestGapText,
