@@ -2,6 +2,7 @@ package com.getmecookies.licenseplatequest.ui.screens.activetrip
 
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,8 +12,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
@@ -64,6 +67,8 @@ import com.getmecookies.licenseplatequest.ui.components.Confetti
 import com.getmecookies.licenseplatequest.ui.components.FlagImage
 import com.getmecookies.licenseplatequest.ui.map.UsMap
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 /**
@@ -185,21 +190,34 @@ fun ActiveTripScreen(
                         if (shapes == null) {
                             CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                         } else {
-                            UsMap(
-                                shapes = shapes,
-                                foundCodes = uiState.foundCodes,
-                                onStateClick = onOpenState,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(8.dp),
-                            )
-                            // At-a-glance progress while playing on the map (playtest note #2).
-                            MapStateCounter(
-                                count = uiState.foundCount,
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(16.dp),
-                            )
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxWidth(),
+                                ) {
+                                    UsMap(
+                                        shapes = shapes,
+                                        foundCodes = uiState.foundCodes,
+                                        onStateClick = onOpenState,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(8.dp),
+                                    )
+                                    // At-a-glance progress while playing on the map (note #2).
+                                    MapStateCounter(
+                                        count = uiState.foundCount,
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(16.dp),
+                                    )
+                                }
+                                // Tight stats strip beneath the map (playtest note #21).
+                                MapStatsStrip(
+                                    stats = uiState.mapStats,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
                         }
                     }
                     ActiveTripTab.LIST -> {
@@ -265,6 +283,83 @@ private fun MapStateCounter(count: Int, modifier: Modifier = Modifier) {
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
         )
+    }
+}
+
+/** A tight, horizontally-scrolling row of at-a-glance stat cards beneath the map (note #21). */
+@Composable
+private fun MapStatsStrip(stats: MapStats, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        StatCard(
+            value = stringResource(R.string.map_stat_found_value, stats.foundCount),
+            label = stringResource(R.string.map_stat_found_label),
+        )
+        StatCard(
+            value = "${stats.percent}%",
+            label = stringResource(R.string.map_stat_complete_label),
+        )
+        if (stats.lastFoundName != null) {
+            StatCard(
+                value = stats.lastFoundName,
+                label = stringResource(R.string.map_stat_last_label, relativeAgo(stats.lastFoundAt)),
+            )
+        }
+        StatCard(
+            value = stringResource(R.string.map_stat_day_value, stats.dayOfTrip),
+            label = stringResource(R.string.map_stat_day_label),
+        )
+        StatCard(
+            value = stats.foundToday.toString(),
+            label = stringResource(R.string.map_stat_today_label),
+        )
+    }
+}
+
+@Composable
+private fun StatCard(value: String, label: String) {
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceVariant,
+    ) {
+        Column(
+            modifier = Modifier
+                .widthIn(min = 72.dp)
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+/** "just now" / "12m ago" / "3h ago" / "2d ago" for the last-find card. */
+@Composable
+private fun relativeAgo(instant: Instant?): String {
+    if (instant == null) return stringResource(R.string.map_time_now)
+    val mins = ChronoUnit.MINUTES.between(instant, Instant.now())
+    return when {
+        mins < 1L -> stringResource(R.string.map_time_now)
+        mins < 60L -> stringResource(R.string.map_time_minutes, mins.toInt())
+        mins < 1440L -> stringResource(R.string.map_time_hours, (mins / 60).toInt())
+        else -> stringResource(R.string.map_time_days, (mins / 1440).toInt())
     }
 }
 

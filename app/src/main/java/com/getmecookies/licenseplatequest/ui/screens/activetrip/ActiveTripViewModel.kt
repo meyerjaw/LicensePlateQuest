@@ -21,6 +21,9 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 /** How the found-states list is ordered (SPEC section 6). */
@@ -41,6 +44,19 @@ data class StateRow(
     val found: Boolean get() = foundAt != null
 }
 
+/**
+ * At-a-glance stats shown in the strip beneath the map (playtest note #21). All derived from the
+ * found states and the active trip's start; no extra data needed.
+ */
+data class MapStats(
+    val foundCount: Int = 0,
+    val percent: Int = 0,
+    val lastFoundName: String? = null,
+    val lastFoundAt: Instant? = null,
+    val dayOfTrip: Int = 1,
+    val foundToday: Int = 0,
+)
+
 data class ActiveTripUiState(
     val loading: Boolean = true,
     val tripId: UUID? = null,
@@ -54,6 +70,8 @@ data class ActiveTripUiState(
     val showUnfound: Boolean = false,
     /** Which top tab is showing; restored from [UiPreferences] when the screen opens. */
     val selectedTab: ActiveTripTab = ActiveTripTab.MAP,
+    /** At-a-glance stats for the strip beneath the map (playtest note #21). */
+    val mapStats: MapStats = MapStats(),
     val showEndDialog: Boolean = false,
     /** One-shot: navigate to a celebration for (tripId, mode). Cleared via [ActiveTripViewModel.onCelebrationConsumed]. */
     val celebration: Celebration? = null,
@@ -131,6 +149,7 @@ class ActiveTripViewModel(
                             sort = sortMode,
                             searchQuery = query,
                             showUnfound = showUnfoundSel,
+                            mapStats = buildMapStats(trip?.createdAt, found),
                         )
                     }
                 }
@@ -161,6 +180,27 @@ class ActiveTripViewModel(
         val visible = if (showUnfound) ordered else ordered.filter { it.found }
         val q = query.trim()
         return if (q.isEmpty()) visible else visible.filter { it.name.contains(q, ignoreCase = true) }
+    }
+
+    /** Derive the at-a-glance map stats (playtest note #21) from the found states and trip start. */
+    private fun buildMapStats(startInstant: Instant?, found: List<FoundState>): MapStats {
+        val zone = ZoneId.systemDefault()
+        val today = LocalDate.now(zone)
+        val last = found.maxByOrNull { it.foundAt }
+        val dayOfTrip = if (startInstant != null) {
+            (ChronoUnit.DAYS.between(startInstant.atZone(zone).toLocalDate(), today) + 1)
+                .toInt().coerceAtLeast(1)
+        } else {
+            1
+        }
+        return MapStats(
+            foundCount = found.size,
+            percent = if (found.isEmpty()) 0 else found.size * 100 / TOTAL_STATES,
+            lastFoundName = last?.name,
+            lastFoundAt = last?.foundAt,
+            dayOfTrip = dayOfTrip,
+            foundToday = found.count { it.foundAt.atZone(zone).toLocalDate() == today },
+        )
     }
 
     /** Fire per-state confetti and the once-per-trip 50/50 celebration on real count increases. */

@@ -70,6 +70,17 @@
     <string name="active_trip_found_count">%1$d / 50 found</string>
     <string name="active_trip_map_counter">%1$d / 50</string>
     <string name="active_trip_map_counter_cd">%1$d of 50 states found</string>
+    <string name="map_stat_found_value">%1$d/50</string>
+    <string name="map_stat_found_label">found</string>
+    <string name="map_stat_complete_label">complete</string>
+    <string name="map_stat_last_label">last · %1$s</string>
+    <string name="map_stat_day_value">Day %1$d</string>
+    <string name="map_stat_day_label">of trip</string>
+    <string name="map_stat_today_label">today</string>
+    <string name="map_time_now">just now</string>
+    <string name="map_time_minutes">%1$dm ago</string>
+    <string name="map_time_hours">%1$dh ago</string>
+    <string name="map_time_days">%1$dd ago</string>
     <string name="active_trip_sort_order_found">Order found</string>
     <string name="active_trip_sort_alphabetical">A–Z</string>
     <string name="active_trip_search_placeholder">Search states</string>
