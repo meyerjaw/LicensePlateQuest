@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -45,6 +46,7 @@ import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.CelebrationStats
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.components.Confetti
+import com.getmecookies.licenseplatequest.ui.map.UsMap
 
 /**
  * Celebration screen (SPEC section 6), shared by the 50/50 and manual-end variants. Shows a
@@ -116,6 +118,28 @@ fun CelebrationScreen(
                             },
                             style = MaterialTheme.typography.titleMedium,
                             textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+
+                // The colorful filled-in map as the summary hero (playtest note #3). Shown even
+                // at 0 found (blank) — it's part of the summary's identity. Non-interactive so it
+                // sits inside the scrolling column without capturing the scroll.
+                uiState.mapShapes?.let { shapes ->
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        UsMap(
+                            shapes = shapes,
+                            foundCodes = uiState.foundCodes,
+                            onStateClick = {},
+                            interactive = false,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(shapes.width / shapes.height)
+                                .padding(12.dp),
                         )
                     }
                 }

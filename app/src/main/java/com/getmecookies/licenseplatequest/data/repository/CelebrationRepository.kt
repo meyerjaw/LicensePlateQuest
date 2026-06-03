@@ -72,6 +72,7 @@ class CelebrationRepository(
         return CelebrationStats(
             tripName = trip.name,
             foundCount = rows.size,
+            foundCodes = rows.mapTo(mutableSetOf()) { it.code },
             durationText = durationText,
             averageGapText = averageGapText,
             longestGapText = longestGapText,

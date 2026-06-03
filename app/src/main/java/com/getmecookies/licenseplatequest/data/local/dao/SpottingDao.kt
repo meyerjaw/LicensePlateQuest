@@ -61,7 +61,8 @@ interface SpottingDao {
      */
     @Query(
         """
-        SELECT pr.name AS name,
+        SELECT pr.region_code AS region_code,
+               pr.name AS name,
                pr.center_lat AS center_lat,
                pr.center_lng AS center_lng,
                pr.rarity_score AS rarity_score,

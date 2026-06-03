@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
@@ -45,6 +46,7 @@ fun UsMap(
     foundCodes: Set<String>,
     onStateClick: (String) -> Unit,
     modifier: Modifier = Modifier,
+    interactive: Boolean = true,
     unfoundColor: Color = Color(0xFF33486A),
     outlineColor: Color = Color(0xFF0F1B2D),
     labelColor: Color = Color(0xFFEAF1FB),
@@ -105,6 +107,10 @@ fun UsMap(
     Canvas(
         modifier = modifier
             .semantics { contentDescription = mapDescription }
+            // Pan/zoom + tap only when interactive; the display-only summary map must let the
+            // parent scroll pass through (playtest note #3).
+            .then(
+                if (!interactive) Modifier else Modifier
             .pointerInput(shapes) {
                 detectTransformGestures { centroid, pan, zoom, _ ->
                     if (scale <= 0f) return@detectTransformGestures
@@ -143,6 +149,7 @@ fun UsMap(
                     },
                 )
             },
+            ),
     ) {
         canvasSize = IntSize(size.width.toInt(), size.height.toInt())
         ensureInitialized(canvasSize)
@@ -173,21 +180,42 @@ fun UsMap(
             // Only on the real shapes map; the tile-grid placeholder shows its code label instead.
             if (!shapes.showLabels) {
                 shapes.states.forEach { state ->
-                    if (state.code !in foundCodes) return@forEach
                     val anchor = state.labelAnchor ?: return@forEach
-                    // Pick a dark or light check per state so it stays legible on any fill color.
-                    val checkStyle = TextStyle(
-                        color = checkColorOn(foundColorFor(state.code)),
-                        fontSize = (13f / scale).sp,
-                    )
-                    val measured = textMeasurer.measure("✓", checkStyle)
-                    drawText(
-                        textLayoutResult = measured,
-                        topLeft = Offset(
-                            x = anchor.x - measured.size.width / 2f,
-                            y = anchor.y - measured.size.height / 2f,
-                        ),
-                    )
+                    if (state.code in foundCodes) {
+                        // Found: a dark/light check per state so it reads on any fill color.
+                        val checkStyle = TextStyle(
+                            color = checkColorOn(foundColorFor(state.code)),
+                            fontSize = (13f / scale).sp,
+                        )
+                        val measured = textMeasurer.measure("✓", checkStyle)
+                        drawText(
+                            textLayoutResult = measured,
+                            topLeft = Offset(
+                                x = anchor.x - measured.size.width / 2f,
+                                y = anchor.y - measured.size.height / 2f,
+                            ),
+                        )
+                    } else {
+                        // Unfound: the USPS abbreviation at the state's visual center, sized to the
+                        // state's bounding box so big states read large and tiny ones stay
+                        // contained (playtest note #10). Shares the anchor with the check, so on
+                        // mark-as-found the code visually swaps to a check in the same spot.
+                        val bounds = state.path.getBounds()
+                        val sizeVb = (minOf(bounds.width, bounds.height) * 0.16f).coerceIn(2f, 9f)
+                        val abbrStyle = TextStyle(
+                            color = labelColor,
+                            fontSize = sizeVb.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        val measured = textMeasurer.measure(state.code, abbrStyle)
+                        drawText(
+                            textLayoutResult = measured,
+                            topLeft = Offset(
+                                x = anchor.x - measured.size.width / 2f,
+                                y = anchor.y - measured.size.height / 2f,
+                            ),
+                        )
+                    }
                 }
             }
 
@@ -224,9 +252,31 @@ private val FOUND_PALETTE = listOf(
     Color(0xFFFFB703), // amber
 )
 
-/** Stable per-state fill color (same state code always yields the same palette entry). */
-private fun foundColorFor(code: String): Color =
-    FOUND_PALETTE[(code.hashCode() and 0x7fffffff) % FOUND_PALETTE.size]
+/**
+ * Per-state palette index, precomputed by graph-coloring the US state adjacency graph so that no
+ * two bordering states share a color (four-color theorem; playtest note #6). This keeps the
+ * vibrant fill-in mosaic but guarantees neighboring found states never blur together. AK and HI
+ * have no land neighbors, so their colors are free.
+ */
+private val STATE_COLOR_INDEX: Map<String, Int> = mapOf(
+    "AK" to 1, "AL" to 3, "AR" to 7, "AZ" to 6, "CA" to 0, "CO" to 4, "CT" to 3, "DE" to 6,
+    "FL" to 6, "GA" to 1, "HI" to 0, "IA" to 7, "ID" to 4, "IL" to 4, "IN" to 5, "KS" to 2,
+    "KY" to 2, "LA" to 2, "MA" to 2, "MD" to 0, "ME" to 7, "MI" to 6, "MN" to 2, "MO" to 1,
+    "MS" to 1, "MT" to 0, "NC" to 2, "ND" to 1, "NE" to 3, "NH" to 5, "NJ" to 0, "NM" to 5,
+    "NV" to 5, "NY" to 1, "OH" to 4, "OK" to 0, "OR" to 7, "PA" to 7, "RI" to 4, "SC" to 4,
+    "SD" to 6, "TN" to 0, "TX" to 6, "UT" to 3, "VA" to 1, "VT" to 7, "WA" to 5, "WI" to 3,
+    "WV" to 3, "WY" to 5,
+)
+
+/**
+ * Stable per-state fill color. Neighboring states are guaranteed different via
+ * [STATE_COLOR_INDEX]; any code outside the bundled 50 (e.g. future DC/territories) falls back to
+ * a hash so it still gets a stable color.
+ */
+private fun foundColorFor(code: String): Color {
+    val index = STATE_COLOR_INDEX[code] ?: ((code.hashCode() and 0x7fffffff) % FOUND_PALETTE.size)
+    return FOUND_PALETTE[index]
+}
 
 /** A dark or light check mark depending on the fill's brightness, so it always reads clearly. */
 private fun checkColorOn(fill: Color): Color {

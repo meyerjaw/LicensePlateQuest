@@ -8,6 +8,7 @@ import java.time.Instant
  * name, geographic center, and rarity score, plus when it was found.
  */
 data class SpottingStatRow(
+    @ColumnInfo(name = "region_code") val code: String,
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "center_lat") val centerLat: Double,
     @ColumnInfo(name = "center_lng") val centerLng: Double,

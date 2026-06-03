@@ -3,9 +3,11 @@ package com.getmecookies.licenseplatequest.ui.screens.celebration
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.getmecookies.licenseplatequest.data.map.MapRepository
 import com.getmecookies.licenseplatequest.data.repository.CelebrationRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.domain.model.CelebrationStats
+import com.getmecookies.licenseplatequest.ui.map.UsMapShapes
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode.FIFTY_FIFTY
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode.MANUAL_END
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode.SUMMARY
@@ -28,6 +30,10 @@ data class CelebrationUiState(
     val loading: Boolean = true,
     val mode: CelebrationMode = CelebrationMode.FIFTY_FIFTY,
     val stats: CelebrationStats? = null,
+    /** Bundled US map shapes for the filled summary map; null until loaded (playtest note #3). */
+    val mapShapes: UsMapShapes? = null,
+    /** Region codes found on this trip, to fill the summary map. */
+    val foundCodes: Set<String> = emptySet(),
     /** Set true after a manual-end trip is finalized, so the screen can exit to the list. */
     val finished: Boolean = false,
 )
@@ -40,6 +46,7 @@ class CelebrationViewModel(
     savedStateHandle: SavedStateHandle,
     private val celebrationRepository: CelebrationRepository,
     private val tripRepository: TripRepository,
+    private val mapRepository: MapRepository,
 ) : ViewModel() {
 
     private val tripId: UUID = UUID.fromString(checkNotNull(savedStateHandle[ARG_TRIP_ID]))
@@ -53,7 +60,18 @@ class CelebrationViewModel(
     init {
         viewModelScope.launch {
             val stats = celebrationRepository.getStats(tripId)
-            _uiState.update { it.copy(loading = false, stats = stats) }
+            _uiState.update {
+                it.copy(
+                    loading = false,
+                    stats = stats,
+                    foundCodes = stats?.foundCodes ?: emptySet(),
+                )
+            }
+        }
+        // Load the bundled map shapes on the side for the filled summary map (playtest note #3).
+        viewModelScope.launch {
+            val shapes = mapRepository.loadShapes()
+            _uiState.update { it.copy(mapShapes = shapes) }
         }
     }
 

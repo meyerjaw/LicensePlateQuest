@@ -46,6 +46,7 @@ object AppViewModelProvider {
                 savedStateHandle = createSavedStateHandle(),
                 celebrationRepository = lpqApp().container.celebrationRepository,
                 tripRepository = lpqApp().container.tripRepository,
+                mapRepository = lpqApp().container.mapRepository,
             )
         }
         initializer {

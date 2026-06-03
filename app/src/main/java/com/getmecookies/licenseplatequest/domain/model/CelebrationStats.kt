@@ -8,6 +8,8 @@ package com.getmecookies.licenseplatequest.domain.model
 data class CelebrationStats(
     val tripName: String,
     val foundCount: Int,
+    /** Region codes found on this trip, for the filled summary map (playtest note #3). */
+    val foundCodes: Set<String>,
     val durationText: String,
     val averageGapText: String?,
     val longestGapText: String?,
