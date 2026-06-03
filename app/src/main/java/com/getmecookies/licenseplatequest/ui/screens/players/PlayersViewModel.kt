@@ -35,7 +35,15 @@ class PlayersViewModel(
     // --- Dialog open/close -------------------------------------------------
 
     fun onEditClick(player: Player) {
-        _uiState.update { it.copy(dialog = PlayerDialog.Edit(player = player, name = player.name)) }
+        _uiState.update {
+            it.copy(
+                dialog = PlayerDialog.Edit(
+                    player = player,
+                    name = player.name,
+                    colorToken = player.color,
+                ),
+            )
+        }
     }
 
     fun onDismissDialog() {
@@ -64,6 +72,15 @@ class PlayersViewModel(
         }
     }
 
+    fun onDialogColorSelected(token: String) {
+        _uiState.update { state ->
+            when (val dialog = state.dialog) {
+                is PlayerDialog.Edit -> state.copy(dialog = dialog.copy(colorToken = token))
+                else -> state
+            }
+        }
+    }
+
     // --- Confirm actions ---------------------------------------------------
 
     fun onConfirmEdit() {
@@ -84,6 +101,7 @@ class PlayersViewModel(
                 return@launch
             }
             playerRepository.renamePlayer(dialog.player.id, trimmed)
+            playerRepository.setPlayerColor(dialog.player.id, dialog.colorToken)
             _uiState.update { it.copy(dialog = PlayerDialog.None) }
         }
     }

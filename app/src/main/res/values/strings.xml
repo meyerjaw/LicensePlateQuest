@@ -119,8 +119,11 @@
     <string name="players_stats_not_played">%1$s - not played yet</string>
     <string name="players_stats_last_played">%1$s - last played %2$s</string>
     <string name="players_trip_count">%1$d %2$s</string>
-    <string name="players_edit_title">Edit name</string>
+    <string name="players_edit_title">Edit player</string>
     <string name="players_name_label">Name</string>
+    <string name="player_color_label">Color</string>
+    <string name="player_color_cd">%1$s color</string>
+    <string name="player_color_selected_cd">%1$s color, selected</string>
     <string name="players_deleted_snackbar">Deleted \"%1$s\"</string>
 
     <!-- Add player -->

@@ -33,7 +33,7 @@ class PlayerRepository(
     fun observePlayersWithStats(): Flow<List<PlayerListItem>> =
         playerDao.observeActiveWithStats().map { rows -> rows.map { it.toListItem() } }
 
-    suspend fun addPlayer(name: String): UUID {
+    suspend fun addPlayer(name: String, color: String? = null): UUID {
         val now = Instant.now()
         val id = UUID.randomUUID()
         playerDao.insert(
@@ -43,6 +43,7 @@ class PlayerRepository(
                 createdAt = now,
                 updatedAt = now,
                 deleted = false,
+                color = color,
             ),
         )
         logEvent("player_added", id, name.trim())
@@ -57,6 +58,12 @@ class PlayerRepository(
                 updatedAt = Instant.now(),
             ),
         )
+    }
+
+    /** Update a player's chosen color token (playtest note #19). */
+    suspend fun setPlayerColor(id: UUID, color: String?) {
+        val existing = playerDao.getById(id) ?: return
+        playerDao.update(existing.copy(color = color, updatedAt = Instant.now()))
     }
 
     /** Soft-delete: keeps the row (and any TripPlayer history) but hides it from the roster. */
@@ -106,7 +113,7 @@ class PlayerRepository(
         return "\"$escaped\""
     }
 
-    private fun PlayerEntity.toDomain(): Player = Player(id = id, name = name)
+    private fun PlayerEntity.toDomain(): Player = Player(id = id, name = name, color = color)
 
     private fun PlayerWithStats.toListItem(): PlayerListItem = PlayerListItem(
         player = player.toDomain(),

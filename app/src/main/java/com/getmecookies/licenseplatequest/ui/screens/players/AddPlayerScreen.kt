@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -31,6 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
+import com.getmecookies.licenseplatequest.ui.components.PlayerColorPicker
 import java.util.UUID
 
 /**
@@ -104,6 +106,17 @@ fun AddPlayerScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester),
+            )
+
+            Text(
+                text = stringResource(R.string.player_color_label),
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
+            )
+            PlayerColorPicker(
+                selectedToken = uiState.colorToken,
+                onSelect = viewModel::onColorSelected,
+                modifier = Modifier.fillMaxWidth(),
             )
 
             Button(

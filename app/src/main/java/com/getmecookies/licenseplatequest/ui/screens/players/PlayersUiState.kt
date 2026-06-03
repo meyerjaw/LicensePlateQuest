@@ -19,10 +19,11 @@ data class PlayersUiState(
 sealed interface PlayerDialog {
     data object None : PlayerDialog
 
-    /** Edit-name dialog for an existing player. */
+    /** Edit dialog (name + color) for an existing player. */
     data class Edit(
         val player: Player,
         val name: String,
+        val colorToken: String?,
         val error: PlayerNameError? = null,
     ) : PlayerDialog
 }

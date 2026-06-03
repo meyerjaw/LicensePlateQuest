@@ -9,4 +9,6 @@ import java.util.UUID
 data class Player(
     val id: UUID,
     val name: String,
+    /** Chosen palette color token (e.g. "teal"), or null to fall back to a stable per-id color. */
+    val color: String? = null,
 )

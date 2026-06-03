@@ -1,16 +1,21 @@
 package com.getmecookies.licenseplatequest.ui.screens.players
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -31,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
@@ -42,6 +48,8 @@ import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.Player
 import com.getmecookies.licenseplatequest.domain.model.PlayerListItem
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
+import com.getmecookies.licenseplatequest.ui.PlayerColors
+import com.getmecookies.licenseplatequest.ui.components.PlayerColorPicker
 import com.getmecookies.licenseplatequest.ui.components.SwipeToDeleteRow
 import com.getmecookies.licenseplatequest.ui.theme.LicensePlateQuestTheme
 import java.time.format.DateTimeFormatter
@@ -89,8 +97,10 @@ fun PlayersScreen(
 
         is PlayerDialog.Edit -> EditPlayerDialog(
             name = dialog.name,
+            colorToken = dialog.colorToken,
             error = dialog.error,
             onNameChange = viewModel::onDialogNameChange,
+            onColorChange = viewModel::onDialogColorSelected,
             onConfirm = viewModel::onConfirmEdit,
             onDismiss = viewModel::onDismissDialog,
         )
@@ -147,6 +157,14 @@ private fun PlayerRow(
                 .padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // Decorative color dot; the player's name conveys identity for screen readers.
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(CircleShape)
+                    .background(PlayerColors.resolve(item.player.color, item.player.id.toString())),
+            )
+            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = item.player.name,
@@ -190,8 +208,10 @@ private val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("MMM d,
 @Composable
 private fun EditPlayerDialog(
     name: String,
+    colorToken: String?,
     error: PlayerNameError?,
     onNameChange: (String) -> Unit,
+    onColorChange: (String) -> Unit,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -205,15 +225,26 @@ private fun EditPlayerDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.players_edit_title)) },
         text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = onNameChange,
-                singleLine = true,
-                label = { Text(stringResource(R.string.players_name_label)) },
-                isError = errorText != null,
-                supportingText = errorText?.let { { Text(it) } },
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = onNameChange,
+                    singleLine = true,
+                    label = { Text(stringResource(R.string.players_name_label)) },
+                    isError = errorText != null,
+                    supportingText = errorText?.let { { Text(it) } },
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                )
+                Text(
+                    text = stringResource(R.string.player_color_label),
+                    style = MaterialTheme.typography.titleSmall,
+                )
+                PlayerColorPicker(
+                    selectedToken = colorToken,
+                    onSelect = onColorChange,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         },
         confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.action_save)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },

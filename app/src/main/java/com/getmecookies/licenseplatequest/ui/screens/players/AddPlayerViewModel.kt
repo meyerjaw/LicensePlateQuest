@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.ui.screens.players
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
+import com.getmecookies.licenseplatequest.ui.PlayerColors
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,6 +25,8 @@ data class AddPlayerUiState(
     val name: String = "",
     val error: PlayerNameError? = null,
     val saving: Boolean = false,
+    /** Chosen color token; defaults to the first palette color not already used (note #19). */
+    val colorToken: String? = null,
 )
 
 /**
@@ -41,8 +44,27 @@ class AddPlayerViewModel(
     private val _savedPlayerId = MutableStateFlow<UUID?>(null)
     val savedPlayerId: StateFlow<UUID?> = _savedPlayerId.asStateFlow()
 
+    private var colorPicked = false
+
+    init {
+        // Default the color to the first one not already used, until the user picks their own.
+        viewModelScope.launch {
+            playerRepository.observePlayers().collect { players ->
+                if (!colorPicked) {
+                    val token = PlayerColors.firstUnusedToken(players.map { it.color })
+                    _uiState.update { it.copy(colorToken = token) }
+                }
+            }
+        }
+    }
+
     fun onNameChange(value: String) {
         _uiState.update { it.copy(name = value, error = null) }
+    }
+
+    fun onColorSelected(token: String) {
+        colorPicked = true
+        _uiState.update { it.copy(colorToken = token) }
     }
 
     fun onSave() {
@@ -59,7 +81,7 @@ class AddPlayerViewModel(
                 _uiState.update { it.copy(saving = false, error = PlayerNameError.DUPLICATE) }
                 return@launch
             }
-            val id = playerRepository.addPlayer(name)
+            val id = playerRepository.addPlayer(name, current.colorToken)
             _savedPlayerId.value = id
         }
     }

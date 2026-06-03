@@ -17,4 +17,6 @@ data class PlayerEntity(
     @ColumnInfo(name = "created_at") val createdAt: Instant,
     @ColumnInfo(name = "updated_at") val updatedAt: Instant,
     val deleted: Boolean = false,
+    /** Chosen palette color token (e.g. "teal"); null falls back to a stable per-id color. */
+    val color: String? = null,
 )
