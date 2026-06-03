@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
 import com.getmecookies.licenseplatequest.domain.model.Player
+import com.getmecookies.licenseplatequest.domain.model.PlayerListItem
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,17 +38,19 @@ class PlayersViewModel(
         _uiState.update { it.copy(dialog = PlayerDialog.Edit(player = player, name = player.name)) }
     }
 
-    fun onDeleteClick(player: Player) {
-        viewModelScope.launch {
-            val count = playerRepository.tripCountForPlayer(player.id)
-            _uiState.update {
-                it.copy(dialog = PlayerDialog.ConfirmDelete(player = player, tripCount = count))
-            }
-        }
-    }
-
     fun onDismissDialog() {
         _uiState.update { it.copy(dialog = PlayerDialog.None) }
+    }
+
+    // --- Swipe-to-delete (playtest note #16) -------------------------------
+
+    /**
+     * Commit a swipe-delete. The row's in-place undo window has already elapsed (handled by the
+     * shared `SwipeToDeleteRow`), so this just performs the soft-delete; trip history is kept and
+     * the observed roster then drops the player.
+     */
+    fun onSwipeDeleteCommit(player: Player) {
+        viewModelScope.launch { playerRepository.deletePlayer(player.id) }
     }
 
     // --- Text editing ------------------------------------------------------
@@ -81,14 +84,6 @@ class PlayersViewModel(
                 return@launch
             }
             playerRepository.renamePlayer(dialog.player.id, trimmed)
-            _uiState.update { it.copy(dialog = PlayerDialog.None) }
-        }
-    }
-
-    fun onConfirmDelete() {
-        val dialog = _uiState.value.dialog as? PlayerDialog.ConfirmDelete ?: return
-        viewModelScope.launch {
-            playerRepository.deletePlayer(dialog.player.id)
             _uiState.update { it.copy(dialog = PlayerDialog.None) }
         }
     }

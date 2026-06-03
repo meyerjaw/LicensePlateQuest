@@ -67,6 +67,15 @@ class NewTripViewModel(
         _uiState.update { it.copy(destinationRegionId = id).withPrefilledName() }
     }
 
+    /** Quick-clear both subfields of a section at once (playtest note #9). */
+    fun onClearOrigin() {
+        _uiState.update { it.copy(originCity = "", originRegionId = null).withPrefilledName() }
+    }
+
+    fun onClearDestination() {
+        _uiState.update { it.copy(destinationCity = "", destinationRegionId = null).withPrefilledName() }
+    }
+
     fun onStartDateChange(date: LocalDate) {
         _uiState.update { it.copy(startDate = date).withPrefilledName() }
     }

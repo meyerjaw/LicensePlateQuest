@@ -10,6 +10,7 @@
     <string name="action_ok">OK</string>
     <string name="action_got_it">Got it</string>
     <string name="action_add_player">Add player</string>
+    <string name="action_undo">Undo</string>
     <string name="cd_back">Back</string>
     <string name="cd_more">More</string>
 
@@ -24,7 +25,6 @@
     <string name="trip_list_cd_delete">Delete</string>
     <string name="trip_list_cd_completed">All 50 states found</string>
     <string name="trip_list_deleted_snackbar">Deleted \"%1$s\"</string>
-    <string name="trip_list_undo">Undo</string>
     <string name="trip_list_delete_title">Delete trip?</string>
     <string name="trip_list_delete_body">Delete \"%1$s\"? This can\'t be undone.</string>
     <string name="trip_list_section_active">Active</string>
@@ -46,6 +46,8 @@
     <string name="new_trip_name_error">Give the trip a name</string>
     <string name="new_trip_from">From</string>
     <string name="new_trip_to">To</string>
+    <string name="new_trip_clear_origin_cd">Clear origin city and state</string>
+    <string name="new_trip_clear_destination_cd">Clear destination city and state</string>
     <string name="new_trip_city_label">City</string>
     <string name="new_trip_state_label">State</string>
     <string name="new_trip_start_date">Start date</string>
@@ -66,6 +68,8 @@
     <string name="active_trip_end_title">End this trip?</string>
     <string name="active_trip_end_body">End \"%1$s\"? You can still view it afterward, but it\'ll move to your completed trips.</string>
     <string name="active_trip_found_count">%1$d / 50 found</string>
+    <string name="active_trip_map_counter">%1$d / 50</string>
+    <string name="active_trip_map_counter_cd">%1$d of 50 states found</string>
     <string name="active_trip_sort_order_found">Order found</string>
     <string name="active_trip_sort_alphabetical">A–Z</string>
     <string name="active_trip_search_placeholder">Search states</string>
@@ -106,9 +110,7 @@
     <string name="players_trip_count">%1$d %2$s</string>
     <string name="players_edit_title">Edit name</string>
     <string name="players_name_label">Name</string>
-    <string name="players_delete_title">Delete %1$s?</string>
-    <string name="players_delete_on_trips">%1$s is on %2$d %3$s. Deleting keeps that trip history but removes them from the roster.</string>
-    <string name="players_delete_no_trips">This removes %1$s from your roster.</string>
+    <string name="players_deleted_snackbar">Deleted \"%1$s\"</string>
 
     <!-- Add player -->
     <string name="add_player_title">Add player</string>

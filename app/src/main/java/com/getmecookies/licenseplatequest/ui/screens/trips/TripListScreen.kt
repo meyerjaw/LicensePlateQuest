@@ -1,7 +1,6 @@
 package com.getmecookies.licenseplatequest.ui.screens.trips
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -27,24 +25,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -55,6 +44,7 @@ import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.TripListItem
 import com.getmecookies.licenseplatequest.domain.model.TripStatus
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
+import com.getmecookies.licenseplatequest.ui.components.SwipeToDeleteRow
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -75,28 +65,9 @@ fun TripListScreen(
     viewModel: TripListViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val context = LocalContext.current
-    val undoLabel = stringResource(R.string.trip_list_undo)
-
-    // Show an undo snackbar whenever a trip is swiped away; commit the delete if not undone.
-    LaunchedEffect(uiState.pendingDelete?.id) {
-        val pending = uiState.pendingDelete ?: return@LaunchedEffect
-        val result = snackbarHostState.showSnackbar(
-            message = context.getString(R.string.trip_list_deleted_snackbar, pending.name),
-            actionLabel = undoLabel,
-            withDismissAction = true,
-        )
-        if (result == SnackbarResult.ActionPerformed) {
-            viewModel.onUndoDelete()
-        } else {
-            viewModel.onPendingDeleteCommit()
-        }
-    }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.trip_list_title)) }) },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(onClick = onNewTrip) {
                 Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.trip_list_cd_new_trip))
@@ -131,7 +102,7 @@ fun TripListScreen(
                         }
                     },
                     onDelete = viewModel::onDeleteRequest,
-                    onSwipeDelete = viewModel::onSwipeDelete,
+                    onCommitDelete = viewModel::onSwipeDeleteCommit,
                 )
             }
         }
@@ -153,7 +124,7 @@ private fun TripSections(
     uiState: TripListUiState,
     onSelect: (TripListItem) -> Unit,
     onDelete: (TripListItem) -> Unit,
-    onSwipeDelete: (TripListItem) -> Unit,
+    onCommitDelete: (TripListItem) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -163,68 +134,44 @@ private fun TripSections(
         uiState.active?.let { active ->
             item(key = "header-active") { SectionHeader(stringResource(R.string.trip_list_section_active)) }
             item(key = active.id) {
-                SwipeableTripRow(active, onSelect, onDelete, onSwipeDelete)
+                SwipeableTripRow(active, onSelect, onDelete, onCommitDelete, Modifier.animateItem())
             }
         }
 
         if (uiState.inProgress.isNotEmpty()) {
             item(key = "header-in-progress") { SectionHeader(stringResource(R.string.trip_list_section_in_progress)) }
             items(uiState.inProgress, key = { it.id }) { item ->
-                SwipeableTripRow(item, onSelect, onDelete, onSwipeDelete)
+                SwipeableTripRow(item, onSelect, onDelete, onCommitDelete, Modifier.animateItem())
             }
         }
 
         if (uiState.completed.isNotEmpty()) {
             item(key = "header-completed") { SectionHeader(stringResource(R.string.trip_list_section_completed)) }
             items(uiState.completed, key = { it.id }) { item ->
-                SwipeableTripRow(item, onSelect, onDelete, onSwipeDelete)
+                SwipeableTripRow(item, onSelect, onDelete, onCommitDelete, Modifier.animateItem())
             }
         }
     }
 }
 
 /**
- * A trip row that can be swiped (either direction) to delete, revealing a red backdrop with a
- * trash icon. The actual deletion is deferred — the screen shows an undo snackbar — so
- * dismissing here just notifies [onSwipeDelete].
+ * A trip row that can be swiped (either direction) to delete. The swipe flips the row into an
+ * in-place undo bar for a few seconds (handled by [SwipeToDeleteRow]); only if it isn't undone
+ * does [onCommitDelete] fire to perform the real deletion.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SwipeableTripRow(
     item: TripListItem,
     onSelect: (TripListItem) -> Unit,
     onDelete: (TripListItem) -> Unit,
-    onSwipeDelete: (TripListItem) -> Unit,
+    onCommitDelete: (TripListItem) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value != SwipeToDismissBoxValue.Settled) {
-                onSwipeDelete(item)
-                true
-            } else {
-                false
-            }
-        },
-    )
-
-    SwipeToDismissBox(
-        state = dismissState,
-        backgroundContent = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.errorContainer)
-                    .padding(horizontal = 20.dp),
-                contentAlignment = Alignment.CenterStart,
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Delete,
-                    contentDescription = stringResource(R.string.trip_list_cd_delete),
-                    tint = MaterialTheme.colorScheme.onErrorContainer,
-                )
-            }
-        },
+    SwipeToDeleteRow(
+        onDelete = { onCommitDelete(item) },
+        deletedMessage = stringResource(R.string.trip_list_deleted_snackbar, item.name),
+        deleteContentDescription = stringResource(R.string.trip_list_cd_delete),
+        modifier = modifier,
     ) {
         TripRow(item = item, onSelect = onSelect, onDelete = onDelete)
     }

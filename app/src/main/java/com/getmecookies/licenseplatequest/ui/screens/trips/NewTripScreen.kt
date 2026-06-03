@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
@@ -41,6 +42,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -129,7 +131,10 @@ fun NewTripScreen(
 
             // --- Origin -------------------------------------------------
             Text(stringResource(R.string.new_trip_from), style = MaterialTheme.typography.titleSmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 OutlinedTextField(
                     value = uiState.originCity,
                     onValueChange = viewModel::onOriginCityChange,
@@ -150,11 +155,25 @@ fun NewTripScreen(
                     onSelected = viewModel::onOriginRegionSelected,
                     modifier = Modifier.width(130.dp),
                 )
+                // Always-present clear ✕ so the row never reflows; disabled when nothing's set
+                // (playtest note #9).
+                IconButton(
+                    onClick = viewModel::onClearOrigin,
+                    enabled = uiState.hasOrigin,
+                ) {
+                    Icon(
+                        Icons.Filled.Close,
+                        contentDescription = stringResource(R.string.new_trip_clear_origin_cd),
+                    )
+                }
             }
 
             // --- Destination --------------------------------------------
             Text(stringResource(R.string.new_trip_to), style = MaterialTheme.typography.titleSmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 OutlinedTextField(
                     value = uiState.destinationCity,
                     onValueChange = viewModel::onDestinationCityChange,
@@ -175,6 +194,15 @@ fun NewTripScreen(
                     onSelected = viewModel::onDestinationRegionSelected,
                     modifier = Modifier.width(130.dp),
                 )
+                IconButton(
+                    onClick = viewModel::onClearDestination,
+                    enabled = uiState.hasDestination,
+                ) {
+                    Icon(
+                        Icons.Filled.Close,
+                        contentDescription = stringResource(R.string.new_trip_clear_destination_cd),
+                    )
+                }
             }
 
             // --- Start date ---------------------------------------------

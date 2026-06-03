@@ -15,8 +15,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
@@ -31,6 +33,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -48,6 +51,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -149,15 +154,21 @@ fun ActiveTripScreen(
                         },
                     )
                     TabRow(selectedTabIndex = uiState.selectedTab.ordinal) {
+                        val mapSelected = uiState.selectedTab == ActiveTripTab.MAP
+                        val listSelected = uiState.selectedTab == ActiveTripTab.LIST
                         Tab(
-                            selected = uiState.selectedTab == ActiveTripTab.MAP,
+                            selected = mapSelected,
                             onClick = { viewModel.onTabSelected(ActiveTripTab.MAP) },
                             text = { Text(stringResource(R.string.active_trip_tab_map)) },
+                            // The label and the TabRow's selected indicator already cue the active
+                            // tab; the icon is a recognizability aid (playtest note #23).
+                            icon = { Icon(Icons.Filled.Map, contentDescription = null) },
                         )
                         Tab(
-                            selected = uiState.selectedTab == ActiveTripTab.LIST,
+                            selected = listSelected,
                             onClick = { viewModel.onTabSelected(ActiveTripTab.LIST) },
                             text = { Text(stringResource(R.string.active_trip_tab_list)) },
+                            icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
                         )
                     }
                 }
@@ -181,6 +192,13 @@ fun ActiveTripScreen(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(8.dp),
+                            )
+                            // At-a-glance progress while playing on the map (playtest note #2).
+                            MapStateCounter(
+                                count = uiState.foundCount,
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(16.dp),
                             )
                         }
                     }
@@ -224,6 +242,28 @@ fun ActiveTripScreen(
             text = { Text(stringResource(R.string.active_trip_end_body, uiState.tripName)) },
             confirmButton = { TextButton(onClick = viewModel::onConfirmEndTrip) { Text(stringResource(R.string.active_trip_end)) } },
             dismissButton = { TextButton(onClick = viewModel::onDismissEndDialog) { Text(stringResource(R.string.action_cancel)) } },
+        )
+    }
+}
+
+/** A small "X / 50" progress pill overlaid on the Map tab. The number animates on change and
+ *  the whole pill reads as one accessible announcement (playtest note #2). */
+@Composable
+private fun MapStateCounter(count: Int, modifier: Modifier = Modifier) {
+    val animatedCount by animateIntAsState(targetValue = count, label = "mapFoundCount")
+    val description = stringResource(R.string.active_trip_map_counter_cd, animatedCount)
+    Surface(
+        modifier = modifier.clearAndSetSemantics { contentDescription = description },
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        shadowElevation = 3.dp,
+    ) {
+        Text(
+            text = stringResource(R.string.active_trip_map_counter, animatedCount),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
         )
     }
 }

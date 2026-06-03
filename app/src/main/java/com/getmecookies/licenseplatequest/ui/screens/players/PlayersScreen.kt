@@ -1,7 +1,6 @@
 package com.getmecookies.licenseplatequest.ui.screens.players
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,7 +14,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -44,6 +42,7 @@ import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.Player
 import com.getmecookies.licenseplatequest.domain.model.PlayerListItem
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
+import com.getmecookies.licenseplatequest.ui.components.SwipeToDeleteRow
 import com.getmecookies.licenseplatequest.ui.theme.LicensePlateQuestTheme
 import java.time.format.DateTimeFormatter
 
@@ -79,7 +78,7 @@ fun PlayersScreen(
                 PlayerList(
                     players = uiState.players,
                     onEdit = viewModel::onEditClick,
-                    onDelete = viewModel::onDeleteClick,
+                    onCommitDelete = viewModel::onSwipeDeleteCommit,
                 )
             }
         }
@@ -93,13 +92,6 @@ fun PlayersScreen(
             error = dialog.error,
             onNameChange = viewModel::onDialogNameChange,
             onConfirm = viewModel::onConfirmEdit,
-            onDismiss = viewModel::onDismissDialog,
-        )
-
-        is PlayerDialog.ConfirmDelete -> DeletePlayerDialog(
-            player = dialog.player,
-            tripCount = dialog.tripCount,
-            onConfirm = viewModel::onConfirmDelete,
             onDismiss = viewModel::onDismissDialog,
         )
     }
@@ -119,7 +111,7 @@ private fun EmptyPlayers(modifier: Modifier = Modifier) {
 private fun PlayerList(
     players: List<PlayerListItem>,
     onEdit: (Player) -> Unit,
-    onDelete: (Player) -> Unit,
+    onCommitDelete: (Player) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -127,29 +119,27 @@ private fun PlayerList(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(players, key = { it.player.id }) { item ->
-            PlayerRow(
-                item = item,
-                onEdit = { onEdit(item.player) },
-                onDelete = { onDelete(item.player) },
-            )
+            SwipeToDeleteRow(
+                onDelete = { onCommitDelete(item.player) },
+                deletedMessage = stringResource(R.string.players_deleted_snackbar, item.player.name),
+                deleteContentDescription = stringResource(R.string.players_cd_delete, item.player.name),
+                modifier = Modifier.animateItem(),
+            ) {
+                PlayerRow(item = item, onEdit = { onEdit(item.player) })
+            }
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PlayerRow(
     item: PlayerListItem,
     onEdit: () -> Unit,
-    onDelete: () -> Unit,
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .combinedClickable(
-                onClick = onEdit,
-                onLongClick = onDelete,
-            ),
+            .clickable(onClick = onEdit),
     ) {
         Row(
             modifier = Modifier
@@ -172,12 +162,6 @@ private fun PlayerRow(
                 Icon(
                     Icons.Filled.Edit,
                     contentDescription = stringResource(R.string.players_cd_edit, item.player.name),
-                )
-            }
-            IconButton(onClick = onDelete) {
-                Icon(
-                    Icons.Filled.Delete,
-                    contentDescription = stringResource(R.string.players_cd_delete, item.player.name),
                 )
             }
         }
@@ -232,34 +216,6 @@ private fun EditPlayerDialog(
             )
         },
         confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.action_save)) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
-    )
-}
-
-@Composable
-private fun DeletePlayerDialog(
-    player: Player,
-    tripCount: Int,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.players_delete_title, player.name)) },
-        text = {
-            val message = if (tripCount > 0) {
-                val tripWord = if (tripCount == 1) {
-                    stringResource(R.string.players_trip_singular)
-                } else {
-                    stringResource(R.string.players_trip_plural)
-                }
-                stringResource(R.string.players_delete_on_trips, player.name, tripCount, tripWord)
-            } else {
-                stringResource(R.string.players_delete_no_trips, player.name)
-            }
-            Text(message)
-        },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.action_delete)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }

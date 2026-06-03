@@ -175,6 +175,11 @@ class ActiveTripViewModel(
         prevCount = count
         if (tripId == null || previous == null || count <= previous) return
 
+        // A new state was just marked found. Clear any active list search so the freshly found
+        // state is visible and the box is ready for the next spot (only on a find, never on an
+        // unmark, since count only rises here). Playtest note #1.
+        if (searchQuery.value.isNotEmpty()) searchQuery.value = ""
+
         if (count >= TOTAL_STATES && !celebrationTracker.hasCelebratedFifty(tripId)) {
             celebrationTracker.markFiftyCelebrated(tripId)
             _uiState.update {

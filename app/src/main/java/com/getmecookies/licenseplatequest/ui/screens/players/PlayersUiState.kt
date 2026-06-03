@@ -5,7 +5,9 @@ import com.getmecookies.licenseplatequest.domain.model.PlayerListItem
 
 /**
  * UI state for the Players roster screen. Adding a player is now a full screen
- * (AddPlayerScreen); the dialogs here cover only in-place edit and delete-confirm.
+ * (AddPlayerScreen); the only dialog here is in-place name editing. Deletion is swipe-to-delete
+ * with an in-place undo window handled by the shared `SwipeToDeleteRow`, so it needs no state
+ * here — the commit just soft-deletes and the observed roster drops the player.
  */
 data class PlayersUiState(
     val players: List<PlayerListItem> = emptyList(),
@@ -22,11 +24,5 @@ sealed interface PlayerDialog {
         val player: Player,
         val name: String,
         val error: PlayerNameError? = null,
-    ) : PlayerDialog
-
-    /** Delete confirmation. [tripCount] > 0 triggers the "on existing trips" warning. */
-    data class ConfirmDelete(
-        val player: Player,
-        val tripCount: Int,
     ) : PlayerDialog
 }
