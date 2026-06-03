@@ -217,8 +217,10 @@ class ActiveTripViewModel(
     }
 
     /**
-     * Confirming "End trip" routes to the manual-end celebration; the trip is finalized there
-     * (so the celebration can still read its stats while the trip is intact).
+     * Confirming "End trip" finalizes the trip immediately — so it survives the app being closed
+     * before the celebration's "Done" is tapped — and routes to the manual-end celebration, which
+     * reads its stats from the now-completed trip. [TripRepository.endTrip] is idempotent, so the
+     * celebration's own finalize on "Done" is a harmless no-op.
      */
     fun onConfirmEndTrip() {
         val tripId = _uiState.value.tripId
@@ -227,6 +229,9 @@ class ActiveTripViewModel(
                 showEndDialog = false,
                 celebration = tripId?.let { id -> Celebration(id, CelebrationMode.MANUAL_END) },
             )
+        }
+        if (tripId != null) {
+            viewModelScope.launch { tripRepository.endTrip(tripId) }
         }
     }
 

@@ -138,6 +138,10 @@
     <string name="celebration_congrats">Congratulations, %1$s!</string>
     <string name="celebration_continue">Continue</string>
     <string name="celebration_done">Done</string>
+    <string name="share_button">Share</string>
+    <string name="share_chooser_title">Share your trip</string>
+    <string name="share_states_found">%1$d / 50 states found</string>
+    <string name="share_footer">Made with License Plate Quest · %1$s</string>
     <string name="celebration_states_found">%1$d / 50</string>
     <string name="celebration_stat_states_found">States found</string>
     <string name="celebration_stat_trip_duration">Trip duration</string>

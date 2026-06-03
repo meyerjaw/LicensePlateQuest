@@ -5,7 +5,6 @@ import com.getmecookies.licenseplatequest.data.local.dao.SpottingStatRow
 import com.getmecookies.licenseplatequest.domain.model.CelebrationStats
 import java.time.Duration
 import java.time.Instant
-import java.time.ZoneId
 import java.util.UUID
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -32,8 +31,10 @@ class CelebrationRepository(
         val rows: List<SpottingStatRow> = game?.let { spottingDao.getStatRows(it.id) } ?: emptyList()
         val players = tripPlayerDao.getPlayerNamesForTrip(tripId)
 
-        // Trip duration: start of the start date to the trip's end (or now if still active).
-        val startInstant = trip.startDate.atStartOfDay(ZoneId.systemDefault()).toInstant()
+        // Trip duration: from when the trip was actually started (the moment "Start trip" was
+        // tapped, i.e. createdAt) to its end — or now if still active. Using createdAt rather than
+        // the start date's midnight keeps short trips from reading as a full day or more.
+        val startInstant = trip.createdAt
         val endInstant = trip.endedAt ?: Instant.now()
         val durationText = formatDuration(Duration.between(startInstant, endInstant))
 

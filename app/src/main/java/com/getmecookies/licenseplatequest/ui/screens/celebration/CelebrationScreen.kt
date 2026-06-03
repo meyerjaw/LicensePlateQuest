@@ -13,8 +13,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -25,6 +32,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,12 +42,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.R
@@ -47,6 +64,10 @@ import com.getmecookies.licenseplatequest.domain.model.CelebrationStats
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.components.Confetti
 import com.getmecookies.licenseplatequest.ui.map.UsMap
+import com.getmecookies.licenseplatequest.ui.map.UsMapShapes
+import com.getmecookies.licenseplatequest.ui.share.shareTripImage
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 /**
  * Celebration screen (SPEC section 6), shared by the 50/50 and manual-end variants. Shows a
@@ -71,6 +92,19 @@ fun CelebrationScreen(
     val isFifty = uiState.mode == CelebrationMode.FIFTY_FIFTY
     val isSummary = uiState.mode == CelebrationMode.SUMMARY
     val stats = uiState.stats
+
+    val context = LocalContext.current
+    val shareChooserTitle = stringResource(R.string.share_chooser_title)
+    val graphicsLayer = rememberGraphicsLayer()
+    var shareRequested by remember { mutableStateOf(false) }
+    // The launcher icon, rendered to a bitmap for the share watermark. Via the package manager so
+    // the adaptive icon is flattened correctly (painterResource can't render adaptive icons).
+    val appIcon: ImageBitmap? = remember {
+        runCatching {
+            context.packageManager.getApplicationIcon(context.packageName)
+                .toBitmap(96, 96).asImageBitmap()
+        }.getOrNull()
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (uiState.loading || stats == null) {
@@ -163,6 +197,21 @@ fun CelebrationScreen(
                         },
                     )
                 }
+
+                // Share a long-screenshot image of this summary (playtest note #4).
+                OutlinedButton(
+                    onClick = { shareRequested = true },
+                    enabled = uiState.mapShapes != null && !shareRequested,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Share,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.share_button))
+                }
             }
         }
 
@@ -172,6 +221,118 @@ fun CelebrationScreen(
                 trigger = "celebration",
                 particleCount = if (isFifty) 160 else 90,
                 modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        // Off-screen capture for sharing (playtest note #4): render the share card at full size,
+        // record it into a graphics layer, snapshot it to a bitmap, and hand off to the share
+        // sheet. Offset off the visible area so there's no on-screen flash.
+        val shareShapes = uiState.mapShapes
+        if (shareRequested && stats != null && shareShapes != null) {
+            Box(
+                modifier = Modifier
+                    .width(360.dp)
+                    // Unbounded so the full card is measured/captured even when it's taller than
+                    // the screen; otherwise the parent clamps it and the bottom is cut off.
+                    .wrapContentHeight(align = Alignment.Top, unbounded = true)
+                    .offset(x = 5000.dp)
+                    .drawWithContent {
+                        // Record the (off-screen) card into the layer for capture, then draw it
+                        // normally so the draw pass runs. It's positioned off the visible area, so
+                        // nothing shows on screen; drawLayer isn't needed.
+                        graphicsLayer.record { this@drawWithContent.drawContent() }
+                        drawContent()
+                    },
+            ) {
+                ShareableSummary(
+                    stats = stats,
+                    shapes = shareShapes,
+                    foundCodes = uiState.foundCodes,
+                    appIcon = appIcon,
+                )
+            }
+            LaunchedEffect(Unit) {
+                // Wait for the off-screen card to lay out and draw before snapshotting.
+                withFrameNanos { }
+                withFrameNanos { }
+                val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
+                shareTripImage(context, bitmap, shareChooserTitle)
+                shareRequested = false
+            }
+        }
+    }
+}
+
+private val SHARE_DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("MMMM d, yyyy")
+
+/**
+ * The non-scrolling card captured for sharing (playtest note #4): trip name, found count, the
+ * filled map, the full stats, and a footer. Laid out at a fixed width on an opaque background so
+ * the exported PNG looks right.
+ */
+@Composable
+private fun ShareableSummary(
+    stats: CelebrationStats,
+    shapes: UsMapShapes,
+    foundCodes: Set<String>,
+    appIcon: ImageBitmap?,
+) {
+    val date = remember { LocalDate.now().format(SHARE_DATE_FORMAT) }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = stats.tripName,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = stringResource(R.string.share_states_found, stats.foundCount),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            UsMap(
+                shapes = shapes,
+                foundCodes = foundCodes,
+                onStateClick = {},
+                interactive = false,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(shapes.width / shapes.height)
+                    .padding(12.dp),
+            )
+        }
+        StatsSections(stats)
+        // Branded watermark footer: app icon + "Made with License Plate Quest · {date}".
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(top = 4.dp),
+        ) {
+            if (appIcon != null) {
+                Image(
+                    bitmap = appIcon,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(RoundedCornerShape(6.dp)),
+                )
+            }
+            Text(
+                text = stringResource(R.string.share_footer, date),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }

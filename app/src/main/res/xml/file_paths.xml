@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Generated trip share PNGs live in cacheDir/shared/ (playtest note #4). -->
+    <cache-path
+        name="shared_images"
+        path="shared/" />
+</paths>

@@ -70,6 +70,9 @@ class TripRepository(
      */
     suspend fun endTrip(tripId: UUID) {
         val trip = tripDao.getById(tripId) ?: return
+        // Idempotent: a trip is finalized as soon as the user confirms the end, so re-finalizing
+        // from the celebration's "Done" keeps the original end time and logs no duplicate.
+        if (trip.status == TripStatus.COMPLETED) return
         val now = Instant.now()
         tripDao.update(trip.copy(status = TripStatus.COMPLETED, endedAt = now, updatedAt = now))
         eventLogDao.insert(
