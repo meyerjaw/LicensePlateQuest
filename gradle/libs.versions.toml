@@ -12,8 +12,10 @@ activityCompose = "1.13.0"
 composeBom = "2026.05.01"
 navigationCompose = "2.9.8"
 room = "2.8.4"
-kotlinxSerializationJson = "1.11.0"
-coroutines = "1.11.0"
+# Pinned to the Kotlin 2.1.0-era releases — serialization 1.8.x requires Kotlin 2.1.0 and
+# coroutines 1.10.x targets it; the 1.11.0 line expects a much newer Kotlin (~2.3.x).
+kotlinxSerializationJson = "1.8.0"
+coroutines = "1.10.2"
 workManager = "2.11.2"
 
 [libraries]
