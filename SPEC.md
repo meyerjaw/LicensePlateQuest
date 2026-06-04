@@ -1,9 +1,9 @@
-# Road Trip Games — MVP Specification
+# License Plate Quest — MVP Specification
 
-**Project:** Family Road Trip Games (working title)
+**Project:** License Plate Quest (launcher label "LP Quest")
 **Platform:** Android (Native, Kotlin + Jetpack Compose)
-**Document version:** 1.0
-**Status:** MVP scope locked
+**Document version:** 1.4
+**Status:** MVP shipped; in active post-MVP iteration
 
 ---
 
@@ -50,9 +50,14 @@ The architecture is deliberately built to grow into a multi-game platform — sl
 - Trip list with three sections: Active, In Progress, Completed
 - Special visual treatment for completed (50/50) trips in the list
 - Active Trip view with **Map** and **List** top tabs (selection remembered across sessions); the List tab shows found states — sortable (order found, alphabetical), searchable, with a toggle to also show unfound states
-- Found states fill the map in a palette of several vibrant colors (one per state)
-- Delete trips
+- Found states fill the map in a graph-colored vibrant palette (no two bordering states share a color), with 2-letter abbreviations on unfound states and check marks at each state's visual center
+- A bottom stats strip under the map (found X/50, percent, last find, day of trip, found today)
+- Delete trips; swipe-to-delete with an in-place 3-second undo on the Trip List and Player roster
 - Manage an in-progress trip's players — add existing, add brand-new, and remove — from the Active Trip overflow menu
+- **Per-player attribution:** each player has a chosen color; a find can be credited to one or more players; the summary shows a leaderboard ranking players (crown for the lead) plus a "Family Find" line for unattributed plates
+- **Share a finished trip** as an image (filled map + stats with app watermark) via the system share sheet
+- **Settings screen** (reached from a top-right icon): theme (light / dark / system) and a vibration toggle
+- **Default home location** that pre-fills the New Trip origin
 
 ### Explicitly out of scope (deferred to future phases)
 
@@ -60,14 +65,14 @@ The architecture is deliberately built to grow into a multi-game platform — sl
 - Photo capture
 - GPS permission flow and GPS-based features (trip auto-end, per-spotting location, distance-from-current-location)
 - Other road trip games (slug bug, alphabet, padiddle, trivia, etc.)
-- Sharing or exporting trips
-- Canadian provinces, DC, U.S. territories
+- Canadian provinces, DC, U.S. territories, and the full-screen multi-country region selector
 - Achievements and badges
-- Editing spotting details after the fact (only unmark is supported)
-- Settings screen (including sound mute toggle, theme, etc.)
+- Editing spotting details after the fact beyond who's credited (note, photo, time — only unmark and editing attribution are supported)
+- Trip start/end dates beyond a single start date, and overdue-trip reminders
 - Detailed read-only summary for completed trips beyond the celebration screens
-- Per-player score tracking (each player's running tally across trips)
+- Per-player score tracking across trips (running tally beyond the per-trip leaderboard)
 - Complex rarity calculations based on telemetry
+- A sound mute toggle (deferred with the celebration sound itself)
 - Push notifications
 - Widgets
 
@@ -235,8 +240,10 @@ All entity IDs are UUIDs (java.util.UUID). All timestamps are stored as UTC ISO 
 **Player**
 - `id` (UUID, PK)
 - `name` (text)
+- `color` (text, nullable) — chosen palette color token (e.g. "teal"); null falls back to a stable per-id color
 - `created_at` (timestamp)
 - `updated_at` (timestamp)
+- `deleted` (boolean) — soft-delete flag (preserves trip/attribution history)
 
 **PlateRegion**
 - `id` (UUID, PK)
@@ -291,13 +298,19 @@ All entity IDs are UUIDs (java.util.UUID). All timestamps are stored as UTC ISO 
 - `id` (UUID, PK)
 - `game_instance_id` (UUID, FK → GameInstance)
 - `plate_region_id` (UUID, FK → PlateRegion)
-- `spotter_player_id` (UUID, FK → Player, nullable) — always null in MVP, reserved for future per-player attribution
+- `spotter_player_id` (UUID, FK → Player, nullable) — retained but unused; per-player attribution now lives in the **SpottingPlayer** junction (a find can credit multiple players)
 - `timestamp` (timestamp)
 - `note` (text, nullable)
 - `photo_path` (text, nullable) — reserved for future photo capture
 - `gps_lat` (numeric, nullable) — reserved for future
 - `gps_lng` (numeric, nullable) — reserved for future
 - `created_at` (timestamp)
+
+**SpottingPlayer** (junction — per-player attribution, added v1.4)
+- `id` (UUID, PK)
+- `spotting_id` (UUID, FK → Spotting, cascade delete)
+- `player_id` (UUID, FK → Player)
+- Credits a find to one or more players. Unique on (`spotting_id`, `player_id`); cleared/rewritten when attribution is edited, and removed via cascade when a spotting is unmarked.
 
 **EventLog**
 - `id` (UUID, PK)
@@ -455,4 +468,16 @@ Several of these were resolved during build (noted inline):
 - **v1.3 (2026-06-01)** — Visual refresh + full string externalization:
   - New **"sunny road-trip" theme** (sky blue / grass green / sunny orange / coral on warm-cream neutrals), light and dark; Material You **dynamic color disabled** so the brand palette is consistent; rounder corner shapes; warm launch window background.
   - **All user-facing strings externalized** to `res/values/strings.xml` and read via `stringResource` / `Context.getString` (i18n-ready). ViewModel validation now exposes a typed `PlayerNameError` (BLANK / DUPLICATE) that screens resolve to resources; no display strings remain in ViewModels.
+- **v1.4 (2026-06-04)** — Large feature drop from a round of play-testing (items tagged with their playtest-note number where applicable):
+  - **Per-player attribution (flagship).** Players now have a **color** (curated palette, chosen on add/edit, shown as roster dots and colored chips). A find can be credited to **one or more players** via a multi-select on State Detail (shown for 2+ player trips; a solo trip auto-credits its one player; edits are committed via a top-bar ✓, with a discard-changes warning on back). The summary gained a **leaderboard**: each player's credited-plate count, sorted, with a 👑 crown for the (possibly tied) lead, plus a **"Family Find"** line for unattributed plates. *Schema: added `Player.color` and a new `SpottingPlayer` junction; DB bumped to **v2** with the first Room migration.*
+  - **Settings screen** (reached from a top-right gear on the Trip List and Players top bars): **theme** (Light / Dark / System, applied live) and a **vibration** toggle (gates the per-find haptic), backed by a reactive `SettingsRepository` (SharedPreferences). Moved from out-of-scope to in-scope (sound toggle still deferred with the celebration sound).
+  - **Default home location** (#8): set a home city + state in Settings; the New Trip "From" field pre-fills from it (a suggestion — editable, and clearing doesn't re-populate).
+  - **Share a finished trip** (#4): exports a long-screenshot image of the summary (filled map + stats) with an app-icon + name + date watermark, via the system share sheet (FileProvider). Moved from out-of-scope to in-scope.
+  - **Filled summary map** (#3): the colorful filled-in US map is now the hero on the celebration/summary screen (and in the shared image), via a non-interactive map mode.
+  - **Map polish:** marks/labels sit at each state's **visual center** (pole of inaccessibility, #5); **2-letter abbreviations** show on unfound states (#10); found-state colors are **graph-colored so no two bordering states share a color** while keeping the vibrant mosaic (#6).
+  - **Map stats strip** (#21): a tight row of at-a-glance cards under the map (found X/50, percent, last find + how long ago, day of trip, found today).
+  - **Quick wins:** an **X/50 counter** on the map tab (#2); **Map/List tab icons** (#23); the list **search clears after a find** (#1); persistent **clear (✕)** controls on the New Trip From/To and trip-name fields (#9); **swipe-to-delete with an in-place 3-second undo** on both the Trip List (#15) and Player roster (#16) via a shared component.
+  - **New Trip form:** From/To moved above the trip-name field; the auto-filled name now reads `<From City> to <Dest City>, <ST> - <Month Year>` (includes the destination state; dash before the date) and stays open as `<From City> to ` until a destination is filled.
+  - **Bug fixes:** ending a trip now **persists on confirm** (survives app close before the summary's Done; `endTrip` made idempotent); trip **duration measures from the actual "Start trip" tap** (`createdAt`) rather than the start date's midnight; fixed a one-frame **bottom-nav flash** when leaving State Detail.
+  - **Still deferred:** trip end dates (#12) and overdue-trip reminders (#13); the full-screen multi-country region selector (#7); multi-leg pit stops (#11); the celebration sound.
 
