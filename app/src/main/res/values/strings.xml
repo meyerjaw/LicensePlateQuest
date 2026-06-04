@@ -53,6 +53,8 @@
     <string name="trip_list_states_count">%1$d / %2$d states</string>
     <string name="trip_list_started">Started %1$s</string>
     <string name="trip_list_started_lasted">Started %1$s · lasted %2$s</string>
+    <string name="trip_list_date_range">%1$s – %2$s</string>
+    <string name="trip_list_overdue">Overdue</string>
     <string name="trip_list_relative_today">today</string>
     <string name="trip_list_relative_yesterday">yesterday</string>
     <string name="trip_list_relative_days_ago">%1$d days ago</string>
@@ -70,6 +72,9 @@
     <string name="new_trip_city_label">City</string>
     <string name="new_trip_state_label">State</string>
     <string name="new_trip_start_date">Start date</string>
+    <string name="new_trip_end_date">End date (optional)</string>
+    <string name="new_trip_end_date_add">Add end date</string>
+    <string name="new_trip_clear_end_date_cd">Clear end date</string>
     <string name="new_trip_players">Players</string>
     <string name="new_trip_add_new">+ Add new</string>
     <string name="new_trip_players_error">Pick at least one player</string>

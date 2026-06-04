@@ -123,6 +123,7 @@ class TripRepository(
         name = trip.name,
         status = trip.status,
         startDate = trip.startDate,
+        endDate = trip.endDate,
         endedAt = trip.endedAt,
         createdAt = trip.createdAt,
         foundCount = foundCount,
@@ -141,6 +142,7 @@ class TripRepository(
         destinationCity: String,
         destinationRegionId: UUID,
         startDate: LocalDate,
+        endDate: LocalDate? = null,
         playerIds: List<UUID>,
     ): UUID = database.withTransaction {
         val now = Instant.now()
@@ -160,6 +162,7 @@ class TripRepository(
                 destinationCity = destinationCity.trim(),
                 destinationRegionId = destinationRegionId,
                 startDate = startDate,
+                endDate = endDate,
                 status = TripStatus.ACTIVE,
                 endedAt = null,
                 createdAt = now,

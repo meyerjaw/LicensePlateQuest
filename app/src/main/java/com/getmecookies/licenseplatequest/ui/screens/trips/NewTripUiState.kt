@@ -20,6 +20,7 @@ data class NewTripUiState(
     val destinationCity: String = "",
     val destinationRegionId: java.util.UUID? = null,
     val startDate: LocalDate = LocalDate.now(),
+    val endDate: LocalDate? = null,
     val regionOptions: List<RegionOption> = emptyList(),
     val allPlayers: List<Player> = emptyList(),
     val selectedPlayerIds: Set<java.util.UUID> = emptySet(),

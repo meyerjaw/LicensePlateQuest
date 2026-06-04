@@ -91,7 +91,22 @@ class NewTripViewModel(
     }
 
     fun onStartDateChange(date: LocalDate) {
-        _uiState.update { it.copy(startDate = date).withPrefilledName() }
+        _uiState.update { state ->
+            // Keep end >= start: if the new start passes the end date, push the end forward.
+            val end = state.endDate?.let { if (it.isBefore(date)) date else it }
+            state.copy(startDate = date, endDate = end).withPrefilledName()
+        }
+    }
+
+    fun onEndDateChange(date: LocalDate) {
+        _uiState.update { state ->
+            val clamped = if (date.isBefore(state.startDate)) state.startDate else date
+            state.copy(endDate = clamped)
+        }
+    }
+
+    fun onClearEndDate() {
+        _uiState.update { it.copy(endDate = null) }
     }
 
     // --- Players -----------------------------------------------------------
@@ -132,6 +147,7 @@ class NewTripViewModel(
                 destinationCity = state.destinationCity,
                 destinationRegionId = state.destinationRegionId!!,
                 startDate = state.startDate,
+                endDate = state.endDate,
                 playerIds = state.selectedPlayerIds.toList(),
             )
             _saved.value = true

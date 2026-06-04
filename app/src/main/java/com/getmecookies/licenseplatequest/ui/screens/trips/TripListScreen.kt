@@ -244,6 +244,9 @@ private fun TripRow(
                     modifier = Modifier.weight(1f),
                 )
                 StatusChip(item.status)
+                if (item.isOverdue) {
+                    OverdueBadge(modifier = Modifier.padding(start = 6.dp))
+                }
                 if (item.isComplete) {
                     Icon(
                         imageVector = Icons.Filled.Star,
@@ -255,9 +258,17 @@ private fun TripRow(
             }
 
             val startLabel = relativeStartLabel(item.startDate)
-            val subtitle = item.durationLabel
-                ?.let { stringResource(R.string.trip_list_started_lasted, startLabel, it) }
-                ?: stringResource(R.string.trip_list_started, startLabel)
+            val endDate = item.endDate
+            val duration = item.durationLabel
+            val subtitle = when {
+                endDate != null -> stringResource(
+                    R.string.trip_list_date_range,
+                    item.startDate.format(DATE_FORMAT),
+                    endDate.format(DATE_FORMAT),
+                )
+                duration != null -> stringResource(R.string.trip_list_started_lasted, startLabel, duration)
+                else -> stringResource(R.string.trip_list_started, startLabel)
+            }
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.bodySmall,
@@ -282,6 +293,23 @@ private fun TripRow(
                 modifier = Modifier.padding(top = 4.dp),
             )
         }
+    }
+}
+
+/** A small "Overdue" pill for trips past their end date that haven't been ended (#12/#13). */
+@Composable
+private fun OverdueBadge(modifier: Modifier = Modifier) {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        shape = RoundedCornerShape(50),
+        modifier = modifier,
+    ) {
+        Text(
+            text = stringResource(R.string.trip_list_overdue),
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+        )
     }
 }
 

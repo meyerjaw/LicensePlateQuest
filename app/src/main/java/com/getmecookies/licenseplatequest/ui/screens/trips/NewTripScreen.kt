@@ -93,6 +93,7 @@ fun NewTripScreen(
     }
 
     var showDatePicker by remember { mutableStateOf(false) }
+    var showEndDatePicker by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -230,6 +231,31 @@ fun NewTripScreen(
                 label = { Text(uiState.startDate.format(DATE_FORMAT)) },
             )
 
+            // --- End date (optional) ------------------------------------
+            Text(stringResource(R.string.new_trip_end_date), style = MaterialTheme.typography.titleSmall)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                AssistChip(
+                    onClick = { showEndDatePicker = true },
+                    label = {
+                        Text(
+                            uiState.endDate?.format(DATE_FORMAT)
+                                ?: stringResource(R.string.new_trip_end_date_add),
+                        )
+                    },
+                )
+                if (uiState.endDate != null) {
+                    IconButton(onClick = viewModel::onClearEndDate) {
+                        Icon(
+                            Icons.Filled.Close,
+                            contentDescription = stringResource(R.string.new_trip_clear_end_date_cd),
+                        )
+                    }
+                }
+            }
+
             HorizontalDivider()
 
             // --- Players ------------------------------------------------
@@ -286,6 +312,17 @@ fun NewTripScreen(
                 showDatePicker = false
             },
             onDismiss = { showDatePicker = false },
+        )
+    }
+
+    if (showEndDatePicker) {
+        TripDatePicker(
+            initial = uiState.endDate ?: uiState.startDate,
+            onPicked = {
+                viewModel.onEndDateChange(it)
+                showEndDatePicker = false
+            },
+            onDismiss = { showEndDatePicker = false },
         )
     }
 }

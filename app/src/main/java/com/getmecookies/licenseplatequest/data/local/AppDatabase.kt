@@ -64,7 +64,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun eventLogDao(): EventLogDao
 
     companion object {
-        const val VERSION = 2
+        const val VERSION = 3
         const val NAME = "license_plate_quest.db"
     }
 }
@@ -96,6 +96,16 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
 }
 
 /**
+ * v2 → v3 (playtest note #12): add the optional trip [TripEntity.endDate]. Stored as an ISO-8601
+ * date string (nullable), matching Room's generated schema.
+ */
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `trip` ADD COLUMN `end_date` TEXT")
+    }
+}
+
+/**
  * Process-wide singleton holder for [AppDatabase]. Manual DI (no Hilt in MVP) — the single
  * instance is created lazily and shared via [com.getmecookies.licenseplatequest.di.AppContainer].
  */
@@ -115,6 +125,6 @@ object DatabaseProvider {
             AppDatabase::class.java,
             AppDatabase.NAME,
         )
-            .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
             .build()
 }

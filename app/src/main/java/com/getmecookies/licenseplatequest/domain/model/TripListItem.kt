@@ -20,11 +20,18 @@ data class TripListItem(
     val name: String,
     val status: TripStatus,
     val startDate: LocalDate,
+    val endDate: LocalDate?,
     val endedAt: Instant?,
     val createdAt: Instant,
     val foundCount: Int,
 ) {
     val isComplete: Boolean get() = foundCount >= TOTAL_STATES
+
+    /** Past its end date and not yet ended — shows an "Overdue" hint (playtest notes #12/#13). */
+    val isOverdue: Boolean
+        get() = endDate != null &&
+            status != TripStatus.COMPLETED &&
+            endDate.isBefore(LocalDate.now())
 
     /**
      * Human-readable trip length for completed trips (createdAt → endedAt), or null when the

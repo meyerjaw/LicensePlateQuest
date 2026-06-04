@@ -1,0 +1,786 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 3,
+    "identityHash": "dcd1ce74316b32fe34e8c1611c3d1cea",
+    "entities": [
+      {
+        "tableName": "player",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `created_at` TEXT NOT NULL, `updated_at` TEXT NOT NULL, `deleted` INTEGER NOT NULL, `color` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deleted",
+            "columnName": "deleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "color",
+            "columnName": "color",
+            "affinity": "TEXT",
+            "notNull": false
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "plate_region",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `country_code` TEXT NOT NULL, `region_code` TEXT NOT NULL, `name` TEXT NOT NULL, `bird` TEXT NOT NULL, `motto` TEXT NOT NULL, `flower` TEXT NOT NULL, `fun_facts` TEXT NOT NULL, `plate_image_path` TEXT NOT NULL, `rarity_score` REAL NOT NULL, `center_lat` REAL NOT NULL, `center_lng` REAL NOT NULL, `display_order` INTEGER NOT NULL, `additional_info` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "countryCode",
+            "columnName": "country_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "regionCode",
+            "columnName": "region_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bird",
+            "columnName": "bird",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "motto",
+            "columnName": "motto",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "flower",
+            "columnName": "flower",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "funFacts",
+            "columnName": "fun_facts",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "plateImagePath",
+            "columnName": "plate_image_path",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rarityScore",
+            "columnName": "rarity_score",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "centerLat",
+            "columnName": "center_lat",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "centerLng",
+            "columnName": "center_lng",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "displayOrder",
+            "columnName": "display_order",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "additionalInfo",
+            "columnName": "additional_info",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_plate_region_country_code_region_code",
+            "unique": true,
+            "columnNames": [
+              "country_code",
+              "region_code"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_plate_region_country_code_region_code` ON `${TABLE_NAME}` (`country_code`, `region_code`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "trip",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `origin_city` TEXT NOT NULL, `origin_region_id` TEXT NOT NULL, `destination_city` TEXT NOT NULL, `destination_region_id` TEXT NOT NULL, `start_date` TEXT NOT NULL, `end_date` TEXT, `status` TEXT NOT NULL, `ended_at` TEXT, `created_at` TEXT NOT NULL, `updated_at` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`origin_region_id`) REFERENCES `plate_region`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`destination_region_id`) REFERENCES `plate_region`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "originCity",
+            "columnName": "origin_city",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "originRegionId",
+            "columnName": "origin_region_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "destinationCity",
+            "columnName": "destination_city",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "destinationRegionId",
+            "columnName": "destination_region_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startDate",
+            "columnName": "start_date",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endDate",
+            "columnName": "end_date",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endedAt",
+            "columnName": "ended_at",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_trip_origin_region_id",
+            "unique": false,
+            "columnNames": [
+              "origin_region_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_trip_origin_region_id` ON `${TABLE_NAME}` (`origin_region_id`)"
+          },
+          {
+            "name": "index_trip_destination_region_id",
+            "unique": false,
+            "columnNames": [
+              "destination_region_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_trip_destination_region_id` ON `${TABLE_NAME}` (`destination_region_id`)"
+          },
+          {
+            "name": "index_trip_status",
+            "unique": false,
+            "columnNames": [
+              "status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_trip_status` ON `${TABLE_NAME}` (`status`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "plate_region",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "origin_region_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "plate_region",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "destination_region_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "trip_player",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `trip_id` TEXT NOT NULL, `player_id` TEXT NOT NULL, `joined_at` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`trip_id`) REFERENCES `trip`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`player_id`) REFERENCES `player`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tripId",
+            "columnName": "trip_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "playerId",
+            "columnName": "player_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "joinedAt",
+            "columnName": "joined_at",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_trip_player_trip_id",
+            "unique": false,
+            "columnNames": [
+              "trip_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_trip_player_trip_id` ON `${TABLE_NAME}` (`trip_id`)"
+          },
+          {
+            "name": "index_trip_player_player_id",
+            "unique": false,
+            "columnNames": [
+              "player_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_trip_player_player_id` ON `${TABLE_NAME}` (`player_id`)"
+          },
+          {
+            "name": "index_trip_player_trip_id_player_id",
+            "unique": true,
+            "columnNames": [
+              "trip_id",
+              "player_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_trip_player_trip_id_player_id` ON `${TABLE_NAME}` (`trip_id`, `player_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "trip",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "trip_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "player",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "player_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "game_type",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `code` TEXT NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "code",
+            "columnName": "code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_game_type_code",
+            "unique": true,
+            "columnNames": [
+              "code"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_game_type_code` ON `${TABLE_NAME}` (`code`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "game_instance",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `trip_id` TEXT NOT NULL, `game_type_id` TEXT NOT NULL, `created_at` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`trip_id`) REFERENCES `trip`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`game_type_id`) REFERENCES `game_type`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tripId",
+            "columnName": "trip_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gameTypeId",
+            "columnName": "game_type_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_game_instance_trip_id",
+            "unique": false,
+            "columnNames": [
+              "trip_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_game_instance_trip_id` ON `${TABLE_NAME}` (`trip_id`)"
+          },
+          {
+            "name": "index_game_instance_game_type_id",
+            "unique": false,
+            "columnNames": [
+              "game_type_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_game_instance_game_type_id` ON `${TABLE_NAME}` (`game_type_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "trip",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "trip_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "game_type",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "game_type_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "spotting",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `game_instance_id` TEXT NOT NULL, `plate_region_id` TEXT NOT NULL, `spotter_player_id` TEXT, `timestamp` TEXT NOT NULL, `note` TEXT, `photo_path` TEXT, `gps_lat` REAL, `gps_lng` REAL, `created_at` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`game_instance_id`) REFERENCES `game_instance`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`plate_region_id`) REFERENCES `plate_region`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`spotter_player_id`) REFERENCES `player`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "gameInstanceId",
+            "columnName": "game_instance_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "plateRegionId",
+            "columnName": "plate_region_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spotterPlayerId",
+            "columnName": "spotter_player_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "photoPath",
+            "columnName": "photo_path",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "gpsLat",
+            "columnName": "gps_lat",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "gpsLng",
+            "columnName": "gps_lng",
+            "affinity": "REAL",
+            "notNull": false
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_spotting_game_instance_id",
+            "unique": false,
+            "columnNames": [
+              "game_instance_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_spotting_game_instance_id` ON `${TABLE_NAME}` (`game_instance_id`)"
+          },
+          {
+            "name": "index_spotting_plate_region_id",
+            "unique": false,
+            "columnNames": [
+              "plate_region_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_spotting_plate_region_id` ON `${TABLE_NAME}` (`plate_region_id`)"
+          },
+          {
+            "name": "index_spotting_spotter_player_id",
+            "unique": false,
+            "columnNames": [
+              "spotter_player_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_spotting_spotter_player_id` ON `${TABLE_NAME}` (`spotter_player_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "game_instance",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "game_instance_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "plate_region",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "plate_region_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "player",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "spotter_player_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "spotting_player",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `spotting_id` TEXT NOT NULL, `player_id` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`spotting_id`) REFERENCES `spotting`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`player_id`) REFERENCES `player`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spottingId",
+            "columnName": "spotting_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "playerId",
+            "columnName": "player_id",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_spotting_player_spotting_id",
+            "unique": false,
+            "columnNames": [
+              "spotting_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_spotting_player_spotting_id` ON `${TABLE_NAME}` (`spotting_id`)"
+          },
+          {
+            "name": "index_spotting_player_player_id",
+            "unique": false,
+            "columnNames": [
+              "player_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_spotting_player_player_id` ON `${TABLE_NAME}` (`player_id`)"
+          },
+          {
+            "name": "index_spotting_player_spotting_id_player_id",
+            "unique": true,
+            "columnNames": [
+              "spotting_id",
+              "player_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_spotting_player_spotting_id_player_id` ON `${TABLE_NAME}` (`spotting_id`, `player_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "spotting",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "spotting_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "player",
+            "onDelete": "NO ACTION",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "player_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "event_log",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `event_type` TEXT NOT NULL, `payload` TEXT NOT NULL, `timestamp` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "eventType",
+            "columnName": "event_type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "payload",
+            "columnName": "payload",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'dcd1ce74316b32fe34e8c1611c3d1cea')"
+    ]
+  }
+}

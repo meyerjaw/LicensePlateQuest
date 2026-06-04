@@ -42,6 +42,7 @@ data class TripEntity(
     @ColumnInfo(name = "destination_city") val destinationCity: String,
     @ColumnInfo(name = "destination_region_id") val destinationRegionId: UUID,
     @ColumnInfo(name = "start_date") val startDate: LocalDate,
+    @ColumnInfo(name = "end_date") val endDate: LocalDate? = null,
     val status: TripStatus,
     @ColumnInfo(name = "ended_at") val endedAt: Instant?,
     @ColumnInfo(name = "created_at") val createdAt: Instant,
