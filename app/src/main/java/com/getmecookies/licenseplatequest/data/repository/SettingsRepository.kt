@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.UUID
+import androidx.core.content.edit
 
 /**
  * Reactive store for user settings, backed by SharedPreferences (survives process death). Values
@@ -23,29 +24,37 @@ class SettingsRepository(context: Context) {
     private val _hapticsEnabled = MutableStateFlow(prefs.getBoolean(KEY_HAPTICS, true))
     val hapticsEnabled: StateFlow<Boolean> = _hapticsEnabled.asStateFlow()
 
+    private val _tripRemindersEnabled = MutableStateFlow(prefs.getBoolean(KEY_TRIP_REMINDERS, true))
+    val tripRemindersEnabled: StateFlow<Boolean> = _tripRemindersEnabled.asStateFlow()
+
     private val _home = MutableStateFlow(loadHome())
     val home: StateFlow<HomeLocation?> = _home.asStateFlow()
 
     fun setThemeMode(mode: ThemeMode) {
-        prefs.edit().putString(KEY_THEME, mode.name).apply()
+        prefs.edit { putString(KEY_THEME, mode.name) }
         _themeMode.value = mode
     }
 
     fun setHapticsEnabled(enabled: Boolean) {
-        prefs.edit().putBoolean(KEY_HAPTICS, enabled).apply()
+        prefs.edit { putBoolean(KEY_HAPTICS, enabled) }
         _hapticsEnabled.value = enabled
     }
 
+    fun setTripRemindersEnabled(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_TRIP_REMINDERS, enabled) }
+        _tripRemindersEnabled.value = enabled
+    }
+
     fun setHome(regionId: UUID, city: String) {
-        prefs.edit()
-            .putString(KEY_HOME_REGION, regionId.toString())
-            .putString(KEY_HOME_CITY, city)
-            .apply()
+        prefs.edit {
+            putString(KEY_HOME_REGION, regionId.toString())
+                .putString(KEY_HOME_CITY, city)
+        }
         _home.value = HomeLocation(regionId, city)
     }
 
     fun clearHome() {
-        prefs.edit().remove(KEY_HOME_REGION).remove(KEY_HOME_CITY).apply()
+        prefs.edit { remove(KEY_HOME_REGION).remove(KEY_HOME_CITY) }
         _home.value = null
     }
 
@@ -66,6 +75,7 @@ class SettingsRepository(context: Context) {
         const val PREFS = "settings_prefs"
         const val KEY_THEME = "theme_mode"
         const val KEY_HAPTICS = "haptics_enabled"
+        const val KEY_TRIP_REMINDERS = "trip_reminders_enabled"
         const val KEY_HOME_REGION = "home_region_id"
         const val KEY_HOME_CITY = "home_city"
     }

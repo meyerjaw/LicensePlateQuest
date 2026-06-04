@@ -59,6 +59,7 @@ fun SettingsScreen(
 ) {
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val hapticsEnabled by viewModel.hapticsEnabled.collectAsStateWithLifecycle()
+    val tripRemindersEnabled by viewModel.tripRemindersEnabled.collectAsStateWithLifecycle()
     val home by viewModel.home.collectAsStateWithLifecycle()
     val regionOptions by viewModel.regionOptions.collectAsStateWithLifecycle()
     val homeDialog by viewModel.homeDialog.collectAsStateWithLifecycle()
@@ -122,6 +123,29 @@ fun SettingsScreen(
                     )
                 }
                 Switch(checked = hapticsEnabled, onCheckedChange = viewModel::onHapticsToggled)
+            }
+
+            // Trip reminders (#13): overdue-trip nudge notifications.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.settings_trip_reminders),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_trip_reminders_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(
+                    checked = tripRemindersEnabled,
+                    onCheckedChange = viewModel::onTripRemindersToggled,
+                )
             }
 
             // Home location (#8): pre-fills the New Trip "From" field.

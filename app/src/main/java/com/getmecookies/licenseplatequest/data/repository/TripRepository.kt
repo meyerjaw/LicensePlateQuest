@@ -10,6 +10,7 @@ import com.getmecookies.licenseplatequest.data.local.entity.TripPlayerEntity
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
 import com.getmecookies.licenseplatequest.domain.model.TripListItem
 import com.getmecookies.licenseplatequest.domain.model.TripStatus
+import com.getmecookies.licenseplatequest.notifications.ReminderScheduler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Instant
@@ -25,6 +26,7 @@ import java.util.UUID
  */
 class TripRepository(
     private val database: AppDatabase,
+    private val reminderScheduler: ReminderScheduler,
 ) {
     private val tripDao = database.tripDao()
     private val tripPlayerDao = database.tripPlayerDao()
@@ -41,6 +43,9 @@ class TripRepository(
 
     /** The current active trip (or null), observed so the Active Trip View reacts to changes. */
     fun observeActiveTrip(): Flow<TripEntity?> = tripDao.observeByStatus(TripStatus.ACTIVE)
+
+    /** A single trip by id, or null. Used by the reminder worker to re-check state at fire time. */
+    suspend fun getTrip(tripId: UUID): TripEntity? = tripDao.getById(tripId)
 
     /** Player ids on a trip (join order), observed for the manage-players screen. */
     fun observePlayerIdsForTrip(tripId: UUID): Flow<List<UUID>> =
@@ -83,6 +88,8 @@ class TripRepository(
                 timestamp = now,
             ),
         )
+        // The trip is wrapped up — drop any pending overdue reminder (playtest #13).
+        reminderScheduler.cancelForTrip(tripId)
     }
 
     /**
@@ -116,6 +123,8 @@ class TripRepository(
                 timestamp = Instant.now(),
             ),
         )
+        // No trip, no reminder (playtest #13).
+        reminderScheduler.cancelForTrip(tripId)
     }
 
     private fun TripListRow.toListItem(): TripListItem = TripListItem(
@@ -144,7 +153,8 @@ class TripRepository(
         startDate: LocalDate,
         endDate: LocalDate? = null,
         playerIds: List<UUID>,
-    ): UUID = database.withTransaction {
+    ): UUID {
+        val createdTripId = database.withTransaction {
         val now = Instant.now()
 
         // Demote any currently-active trip (SPEC section 7 invariant).
@@ -203,5 +213,10 @@ class TripRepository(
         )
 
         tripId
+        }
+        // Schedule the overdue reminder outside the transaction (playtest #13). Only trips with an
+        // end date get one; WorkManager persists it across process death and reboot.
+        endDate?.let { reminderScheduler.scheduleForTrip(createdTripId, it) }
+        return createdTripId
     }
 }

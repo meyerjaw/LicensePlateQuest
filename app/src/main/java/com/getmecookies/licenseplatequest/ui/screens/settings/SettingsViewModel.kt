@@ -26,6 +26,7 @@ class SettingsViewModel(
 
     val themeMode: StateFlow<ThemeMode> = settingsRepository.themeMode
     val hapticsEnabled: StateFlow<Boolean> = settingsRepository.hapticsEnabled
+    val tripRemindersEnabled: StateFlow<Boolean> = settingsRepository.tripRemindersEnabled
     val home: StateFlow<HomeLocation?> = settingsRepository.home
 
     val regionOptions: StateFlow<List<RegionOption>> =
@@ -38,6 +39,9 @@ class SettingsViewModel(
     fun onThemeModeSelected(mode: ThemeMode) = settingsRepository.setThemeMode(mode)
 
     fun onHapticsToggled(enabled: Boolean) = settingsRepository.setHapticsEnabled(enabled)
+
+    fun onTripRemindersToggled(enabled: Boolean) =
+        settingsRepository.setTripRemindersEnabled(enabled)
 
     fun onEditHome() {
         val current = home.value

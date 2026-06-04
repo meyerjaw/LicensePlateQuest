@@ -79,6 +79,9 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
 
+    // WorkManager (overdue-trip reminder scheduling — playtest #13)
+    implementation(libs.androidx.work.runtime.ktx)
+
     // Test
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

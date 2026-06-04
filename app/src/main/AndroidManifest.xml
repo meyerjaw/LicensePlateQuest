@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Overdue-trip reminder notifications (playtest #13). Runtime-requested on Android 13+. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:name=".LicensePlateQuestApp"
         android:allowBackup="true"
@@ -11,13 +14,13 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.LicensePlateQuest"
-        tools:targetApi="31">
+        android:theme="@style/Theme.LicensePlateQuest">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name_short"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.LicensePlateQuest">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
