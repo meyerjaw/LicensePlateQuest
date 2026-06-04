@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.getmecookies.licenseplatequest"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.getmecookies.licenseplatequest"
