@@ -8,6 +8,7 @@ package com.getmecookies.licenseplatequest.ui.navigation
 object Routes {
     const val ADD_PLAYER = "players/add"
     const val NEW_TRIP = "trips/new"
+    const val SETTINGS = "settings"
 
     /** State Detail, parameterized by 2-letter state code. */
     const val STATE_DETAIL = "state/{code}"

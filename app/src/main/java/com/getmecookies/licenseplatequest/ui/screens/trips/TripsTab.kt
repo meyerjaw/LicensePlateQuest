@@ -42,6 +42,7 @@ fun TripsTab(
     onCelebrate: (UUID, CelebrationMode) -> Unit,
     onManagePlayers: (UUID) -> Unit = {},
     onMapViewActiveChange: (Boolean) -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     viewModel: TripsTabViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val hasActiveTrip by viewModel.hasActiveTrip.collectAsStateWithLifecycle()
@@ -75,6 +76,7 @@ fun TripsTab(
                     // Selecting a trip activates it; return to the active view.
                     onOpenTrip = { forceList = false },
                     onOpenSummary = { tripId -> onCelebrate(tripId, CelebrationMode.SUMMARY) },
+                    onOpenSettings = onOpenSettings,
                 )
             } else {
                 // Active Trip View (the map): back returns to the full Trip List.
@@ -97,6 +99,7 @@ fun TripsTab(
                 onNewTrip = onNewTrip,
                 onOpenTrip = { /* selection activates the trip; gateway switches to active view */ },
                 onOpenSummary = { tripId -> onCelebrate(tripId, CelebrationMode.SUMMARY) },
+                onOpenSettings = onOpenSettings,
             )
         }
     }

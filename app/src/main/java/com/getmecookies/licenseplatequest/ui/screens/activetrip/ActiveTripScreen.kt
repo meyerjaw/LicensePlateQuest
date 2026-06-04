@@ -113,7 +113,9 @@ fun ActiveTripScreen(
     LaunchedEffect(Unit) {
         viewModel.confettiEvents.collect {
             confettiKey++
-            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            if (viewModel.hapticsEnabled.value) {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            }
         }
     }
 

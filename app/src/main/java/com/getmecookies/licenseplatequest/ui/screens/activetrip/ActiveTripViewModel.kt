@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.ui.screens.activetrip
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.getmecookies.licenseplatequest.data.map.MapRepository
+import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.domain.CelebrationTracker
@@ -96,7 +97,11 @@ class ActiveTripViewModel(
     spottingRepository: SpottingRepository,
     private val celebrationTracker: CelebrationTracker,
     private val uiPreferences: UiPreferences,
+    settingsRepository: SettingsRepository,
 ) : ViewModel() {
+
+    /** Whether the per-find haptic should fire (Settings toggle). */
+    val hapticsEnabled: StateFlow<Boolean> = settingsRepository.hapticsEnabled
 
     private val sort = MutableStateFlow(FoundSort.ORDER_FOUND)
     private val searchQuery = MutableStateFlow("")

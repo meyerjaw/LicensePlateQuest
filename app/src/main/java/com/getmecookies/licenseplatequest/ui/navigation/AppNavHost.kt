@@ -27,6 +27,7 @@ import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationScre
 import com.getmecookies.licenseplatequest.ui.screens.manageplayers.ManagePlayersScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersScreen
+import com.getmecookies.licenseplatequest.ui.screens.settings.SettingsScreen
 import com.getmecookies.licenseplatequest.ui.screens.statedetail.StateDetailScreen
 import com.getmecookies.licenseplatequest.ui.screens.trips.NewTripScreen
 import com.getmecookies.licenseplatequest.ui.screens.trips.TripsTab
@@ -50,6 +51,7 @@ fun AppRoot() {
         Routes.STATE_DETAIL,
         Routes.CELEBRATION,
         Routes.MANAGE_PLAYERS,
+        Routes.SETTINGS,
     )
     // The Active Trip (map) view lives inside the Trips tab rather than on its own route, so it
     // reports up whether it's showing; the bottom bar hides while the map is up so it reads as a
@@ -112,6 +114,7 @@ fun AppRoot() {
                         navController.navigate(Routes.managePlayers(tripId.toString()))
                     },
                     onMapViewActiveChange = { mapViewActive = it },
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                 )
             }
             composable(TopDestination.Players.route) {
@@ -126,6 +129,7 @@ fun AppRoot() {
                 }
                 PlayersScreen(
                     onAddPlayer = { navController.navigate(Routes.ADD_PLAYER) },
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                 )
             }
             composable(Routes.ADD_PLAYER) {
@@ -179,6 +183,9 @@ fun AppRoot() {
                 ManagePlayersScreen(
                     onBack = { navController.popBackStack() },
                 )
+            }
+            composable(Routes.SETTINGS) {
+                SettingsScreen(onBack = { navController.popBackStack() })
             }
         }
     }

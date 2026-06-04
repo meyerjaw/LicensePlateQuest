@@ -7,6 +7,7 @@ import com.getmecookies.licenseplatequest.data.map.MapRepository
 import com.getmecookies.licenseplatequest.data.repository.CelebrationRepository
 import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
+import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
@@ -39,6 +40,8 @@ class AppContainer(context: Context) {
     val celebrationTracker: CelebrationTracker = CelebrationTracker(context.applicationContext)
 
     val uiPreferences: UiPreferences = UiPreferences(context.applicationContext)
+
+    val settingsRepository: SettingsRepository = SettingsRepository(context.applicationContext)
 
     val mapRepository: MapRepository = MapRepository(context.applicationContext)
 

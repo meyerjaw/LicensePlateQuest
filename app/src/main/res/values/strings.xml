@@ -18,6 +18,23 @@
     <string name="nav_trips">Trips</string>
     <string name="nav_players">Players</string>
 
+    <string name="settings_title">Settings</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System default</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_haptics">Vibration</string>
+    <string name="settings_haptics_desc">Buzz when you find a state</string>
+    <string name="settings_home">Home location</string>
+    <string name="settings_home_none">Not set</string>
+    <string name="settings_home_value">%1$s, %2$s</string>
+    <string name="settings_home_set">Set home</string>
+    <string name="settings_home_change">Change</string>
+    <string name="settings_home_clear">Clear</string>
+    <string name="settings_home_dialog_title">Home location</string>
+    <string name="settings_home_city">City</string>
+    <string name="settings_home_state">State</string>
+
     <!-- Trip list / home -->
     <string name="trip_list_title">Trips</string>
     <string name="trip_list_empty">No trips yet — tap + to start your first one.</string>
@@ -43,11 +60,13 @@
     <!-- New trip -->
     <string name="new_trip_title">New trip</string>
     <string name="new_trip_name_label">Trip name</string>
+    <string name="new_trip_name_placeholder">Name your trip</string>
     <string name="new_trip_name_error">Give the trip a name</string>
     <string name="new_trip_from">From</string>
     <string name="new_trip_to">To</string>
     <string name="new_trip_clear_origin_cd">Clear origin city and state</string>
     <string name="new_trip_clear_destination_cd">Clear destination city and state</string>
+    <string name="new_trip_clear_name_cd">Clear trip name</string>
     <string name="new_trip_city_label">City</string>
     <string name="new_trip_state_label">State</string>
     <string name="new_trip_start_date">Start date</string>

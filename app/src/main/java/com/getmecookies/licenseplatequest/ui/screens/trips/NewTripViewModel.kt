@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
+import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +25,7 @@ class NewTripViewModel(
     private val tripRepository: TripRepository,
     regionRepository: RegionRepository,
     private val playerRepository: PlayerRepository,
+    settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NewTripUiState())
@@ -33,6 +35,13 @@ class NewTripViewModel(
     val saved: StateFlow<Boolean> = _saved.asStateFlow()
 
     init {
+        // Pre-fill the "From" field from the saved home location (a suggestion; the user can edit
+        // or clear it, and clearing won't re-populate). Playtest note #8.
+        settingsRepository.home.value?.let { home ->
+            _uiState.update {
+                it.copy(originCity = home.city, originRegionId = home.regionId).withPrefilledName()
+            }
+        }
         viewModelScope.launch {
             regionRepository.observeRegionOptions().collect { options ->
                 _uiState.update { it.copy(regionOptions = options).withPrefilledName() }
@@ -49,6 +58,11 @@ class NewTripViewModel(
 
     fun onNameChange(value: String) {
         _uiState.update { it.copy(name = value, nameManuallyEdited = true) }
+    }
+
+    /** Clear the trip name; stays empty (auto-prefill won't re-populate) for the user to retype. */
+    fun onClearName() {
+        _uiState.update { it.copy(name = "", nameManuallyEdited = true) }
     }
 
     fun onOriginCityChange(value: String) {
@@ -131,12 +145,22 @@ class NewTripViewModel(
     private fun NewTripUiState.withPrefilledName(): NewTripUiState {
         if (nameManuallyEdited) return this
         val origin = originCity.trim().ifBlank { originRegion?.code ?: "" }
-        val destination = destinationCity.trim().ifBlank { destinationRegion?.code ?: "" }
+        // Destination includes its state, e.g. "Cincinnati, OH".
+        val destCity = destinationCity.trim()
+        val destCode = destinationRegion?.code
+        val destination = when {
+            destCity.isNotBlank() && !destCode.isNullOrBlank() -> "$destCity, $destCode"
+            destCity.isNotBlank() -> destCity
+            !destCode.isNullOrBlank() -> destCode
+            else -> ""
+        }
         val monthYear = startDate.format(MONTH_YEAR)
         val prefilled = when {
-            origin.isNotBlank() && destination.isNotBlank() -> "$origin to $destination, $monthYear"
-            origin.isNotBlank() -> "$origin trip, $monthYear"
-            destination.isNotBlank() -> "Trip to $destination, $monthYear"
+            origin.isNotBlank() && destination.isNotBlank() -> "$origin to $destination - $monthYear"
+            // Origin only (e.g. pre-filled from home): leave it open as "X to " so it completes to
+            // the full name the moment a destination is filled in (playtest follow-up).
+            origin.isNotBlank() -> "$origin to "
+            destination.isNotBlank() -> "Trip to $destination - $monthYear"
             else -> ""
         }
         return copy(name = prefilled)

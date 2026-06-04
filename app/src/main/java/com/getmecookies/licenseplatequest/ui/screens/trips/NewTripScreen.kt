@@ -117,19 +117,6 @@ fun NewTripScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            OutlinedTextField(
-                value = uiState.name,
-                onValueChange = viewModel::onNameChange,
-                label = { Text(stringResource(R.string.new_trip_name_label)) },
-                singleLine = true,
-                isError = uiState.showErrors && !uiState.nameValid,
-                supportingText = if (uiState.showErrors && !uiState.nameValid) {
-                    { Text(stringResource(R.string.new_trip_name_error)) }
-                } else null,
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
-                modifier = Modifier.fillMaxWidth(),
-            )
-
             // --- Origin -------------------------------------------------
             Text(stringResource(R.string.new_trip_from), style = MaterialTheme.typography.titleSmall)
             Row(
@@ -205,6 +192,36 @@ fun NewTripScreen(
                     )
                 }
             }
+
+            // --- Trip name (auto-fills from From/To above) --------------
+            Text(
+                stringResource(R.string.new_trip_name_label),
+                style = MaterialTheme.typography.titleSmall,
+            )
+            OutlinedTextField(
+                value = uiState.name,
+                onValueChange = viewModel::onNameChange,
+                placeholder = { Text(stringResource(R.string.new_trip_name_placeholder)) },
+                singleLine = true,
+                isError = uiState.showErrors && !uiState.nameValid,
+                supportingText = if (uiState.showErrors && !uiState.nameValid) {
+                    { Text(stringResource(R.string.new_trip_name_error)) }
+                } else null,
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
+                trailingIcon = if (uiState.name.isNotEmpty()) {
+                    {
+                        IconButton(onClick = viewModel::onClearName) {
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = stringResource(R.string.new_trip_clear_name_cd),
+                            )
+                        }
+                    }
+                } else {
+                    null
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
 
             // --- Start date ---------------------------------------------
             Text(stringResource(R.string.new_trip_start_date), style = MaterialTheme.typography.titleSmall)

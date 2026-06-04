@@ -11,6 +11,7 @@ import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationView
 import com.getmecookies.licenseplatequest.ui.screens.manageplayers.ManagePlayersViewModel
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerViewModel
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersViewModel
+import com.getmecookies.licenseplatequest.ui.screens.settings.SettingsViewModel
 import com.getmecookies.licenseplatequest.ui.screens.statedetail.StateDetailViewModel
 import com.getmecookies.licenseplatequest.ui.screens.trips.NewTripViewModel
 import com.getmecookies.licenseplatequest.ui.screens.trips.TripListViewModel
@@ -39,6 +40,7 @@ object AppViewModelProvider {
                 spottingRepository = lpqApp().container.spottingRepository,
                 celebrationTracker = lpqApp().container.celebrationTracker,
                 uiPreferences = lpqApp().container.uiPreferences,
+                settingsRepository = lpqApp().container.settingsRepository,
             )
         }
         initializer {
@@ -60,6 +62,7 @@ object AppViewModelProvider {
                 tripRepository = lpqApp().container.tripRepository,
                 regionRepository = lpqApp().container.regionRepository,
                 playerRepository = lpqApp().container.playerRepository,
+                settingsRepository = lpqApp().container.settingsRepository,
             )
         }
         initializer {
@@ -73,6 +76,12 @@ object AppViewModelProvider {
                 savedStateHandle = createSavedStateHandle(),
                 tripRepository = lpqApp().container.tripRepository,
                 playerRepository = lpqApp().container.playerRepository,
+            )
+        }
+        initializer {
+            SettingsViewModel(
+                settingsRepository = lpqApp().container.settingsRepository,
+                regionRepository = lpqApp().container.regionRepository,
             )
         }
     }

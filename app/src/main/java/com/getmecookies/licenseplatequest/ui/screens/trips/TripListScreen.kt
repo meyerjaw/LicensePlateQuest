@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -22,6 +23,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -62,12 +64,25 @@ fun TripListScreen(
     onNewTrip: () -> Unit,
     onOpenTrip: () -> Unit,
     onOpenSummary: (UUID) -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     viewModel: TripListViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.trip_list_title)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.trip_list_title)) },
+                actions = {
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(
+                            Icons.Filled.Settings,
+                            contentDescription = stringResource(R.string.settings_title),
+                        )
+                    }
+                },
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = onNewTrip) {
                 Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.trip_list_cd_new_trip))

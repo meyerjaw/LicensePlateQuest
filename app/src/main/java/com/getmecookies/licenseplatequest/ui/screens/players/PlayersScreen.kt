@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -63,12 +64,25 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun PlayersScreen(
     onAddPlayer: () -> Unit,
+    onOpenSettings: () -> Unit = {},
     viewModel: PlayersViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.players_title)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.players_title)) },
+                actions = {
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(
+                            Icons.Filled.Settings,
+                            contentDescription = stringResource(R.string.settings_title),
+                        )
+                    }
+                },
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddPlayer) {
                 Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.players_cd_add))
