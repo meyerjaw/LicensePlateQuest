@@ -2,8 +2,9 @@
 
 **Project:** License Plate Quest (launcher label "LP Quest")
 **Platform:** Android (Native, Kotlin + Jetpack Compose)
-**Document version:** 1.4
+**Document version:** 1.5
 **Status:** MVP shipped; in active post-MVP iteration
+**Development approach:** Test-Driven Development (TDD) — see §9 "Testing & development approach". New behavior starts with a failing test.
 
 ---
 
@@ -56,8 +57,12 @@ The architecture is deliberately built to grow into a multi-game platform — sl
 - Manage an in-progress trip's players — add existing, add brand-new, and remove — from the Active Trip overflow menu
 - **Per-player attribution:** each player has a chosen color; a find can be credited to one or more players; the summary shows a leaderboard ranking players (crown for the lead) plus a "Family Find" line for unattributed plates
 - **Share a finished trip** as an image (filled map + stats with app watermark) via the system share sheet
-- **Settings screen** (reached from a top-right icon): theme (light / dark / system) and a vibration toggle
+- **Settings screen** (reached from a top-right icon): theme (light / dark / system), a vibration toggle, and a trip-reminders toggle
 - **Default home location** that pre-fills the New Trip origin
+- **Trip start + optional end date.** Trips can carry an optional end date (end ≥ start); the trip list shows the date range and flags **overdue** trips (past end, not yet ended)
+- **Overdue-trip reminders:** local notifications (no server) fire ~1 day after the end date with a +3-day follow-up; the notification has **End trip / Remind later / Extend** action buttons, requests notification permission contextually, and is governed by the Settings toggle
+- **Manage trip (edit):** edit a trip's name, dates, origin/destination, and players after creation (from the Active Trip overflow menu); player editing is folded in as a section (it replaces the standalone Manage Players screen). Saving a past end date prompts "End trip now, or keep it active?"
+- **Shared region (state) picker:** a searchable bottom-sheet selector (search by name/abbreviation) used for the New Trip and Manage trip origin/destination and the Settings home location, replacing the old dropdowns
 
 ### Explicitly out of scope (deferred to future phases)
 
@@ -65,10 +70,10 @@ The architecture is deliberately built to grow into a multi-game platform — sl
 - Photo capture
 - GPS permission flow and GPS-based features (trip auto-end, per-spotting location, distance-from-current-location)
 - Other road trip games (slug bug, alphabet, padiddle, trivia, etc.)
-- Canadian provinces, DC, U.S. territories, and the full-screen multi-country region selector
+- Canadian provinces, DC, U.S. territories — and the region picker's country-filter chips and per-row flags, which depend on that multi-country data
 - Achievements and badges
 - Editing spotting details after the fact beyond who's credited (note, photo, time — only unmark and editing attribution are supported)
-- Trip start/end dates beyond a single start date, and overdue-trip reminders
+- Multi-leg trips / pit stops (a single origin + destination only), and one-way vs round-trip handling
 - Detailed read-only summary for completed trips beyond the celebration screens
 - Per-player score tracking across trips (running tally beyond the per-trip leaderboard)
 - Complex rarity calculations based on telemetry
@@ -114,13 +119,13 @@ The architecture is deliberately built to grow into a multi-game platform — sl
 | # | Screen | Purpose |
 |---|--------|---------|
 | 1 | Trip List (Home) | List of all trips, grouped into Active / In Progress / Completed. Entry point if no active trip. |
-| 2 | Active Trip View | Standalone full-screen view (no bottom nav) with a Back button and two top tabs — **Map** and **List**. Trip name + overflow menu (Manage players, End trip). Entry point if an active trip exists. |
+| 2 | Active Trip View | Standalone full-screen view (no bottom nav) with a Back button and two top tabs — **Map** and **List**. Trip name + overflow menu (Manage trip, End trip). Entry point if an active trip exists. |
 | 3 | State Detail | Shown on map tap. Displays state info; "Mark as found" or "Unmark" depending on status. |
-| 4 | New Trip Creation | Form: trip name (prefilled), origin city + state, destination city + state, start date, players. |
+| 4 | New Trip Creation | Form: trip name (prefilled), origin city + state, destination city + state, start date, optional end date, players. |
 | 5 | Players Management | Full CRUD for player roster, accessible from bottom nav. |
 | 6 | 50/50 Celebration | Big celebration + stats screen when the 50th state is found. Trip continues afterward. |
 | 7 | Manual-End Celebration | "You made it home!" celebration + stats screen when user manually ends a trip. |
-| 8 | Manage Players | Add/remove the current trip's players — pick existing roster members or create a brand-new player. Reached from the Active Trip overflow menu. |
+| 8 | Manage Trip (edit) | Edit an existing trip's name, dates, origin/destination, and players (players as one section). Reached from the Active Trip overflow menu. Replaces the former standalone Manage Players screen. |
 
 ### Navigation
 
@@ -154,7 +159,7 @@ The architecture is deliberately built to grow into a multi-game platform — sl
 
 A standalone, full-screen view (the app's bottom navigation is hidden while it's showing).
 
-- **Top bar:** Back button (returns to the Trip List), trip name, and an overflow (⋯) menu with **Manage players** and **End trip** (the latter with a confirmation dialog).
+- **Top bar:** Back button (returns to the Trip List), trip name, and an overflow (⋯) menu with **Manage trip** (the full edit screen) and **End trip** (the latter with a confirmation dialog).
 - **Top tabs:** **Map** and **List**. The selected tab is persisted (via `UiPreferences`) and restored the next time the user opens a trip.
 - **Map tab:** Bundled vector U.S. map. Unfound states show outline only; found states are filled with a per-state color drawn from a vibrant palette (stable per state code), so the map fills in as a colorful mosaic; a newly found state animates its fill. Found states also carry a check mark (color-blind-safe cue). Pinch-to-zoom and pan supported. Tapping a state opens State Detail.
 - **List tab:** Header with the persistent **X/50 counter** and sort chips ("Order found" — default, newest first — or "Alphabetical"); a **search box** (filter by name); a **"Show unfound states"** toggle; then the scrolling list. Each row shows the state flag thumbnail and name; unfound rows are dimmed and labelled "Not found yet." Tapping a row opens State Detail.
@@ -177,9 +182,10 @@ When tapping a **found** state:
 
 Fields:
 - **Trip name:** Required. Prefilled with `{Origin City} → {Destination City}, {Month Year}` (updates live as origin/destination/date change).
-- **Origin:** City (text input) + State (dropdown). Both required.
-- **Destination:** City (text input) + State (dropdown). Both required.
+- **Origin:** City (text input) + State (shared region picker — a searchable bottom sheet). Both required.
+- **Destination:** City (text input) + State (shared region picker; excludes the origin state). Both required.
 - **Start date:** Date picker. Defaults to today.
+- **End date:** Optional date picker (end ≥ start; moving the start past the end pushes the end forward). Setting one requests notification permission and schedules the overdue reminder.
 - **Players:** Multi-select from roster. At least one required. "+ Add new player" quick-add inline.
 
 Save creates the trip, makes it active, navigates to Active Trip View.
@@ -193,14 +199,13 @@ This is the **global roster** (Players tab):
 - Tap a player to edit name.
 - Swipe or long-press to delete (with confirmation, warning if player is on any trips). Delete is a soft-delete.
 
-### Manage Trip Players
+### Manage Trip (edit)
 
-Per-trip roster editing, reached from the Active Trip overflow menu (separate from the global roster above):
+A single full-screen editor for an existing trip, reached from the Active Trip overflow menu. It mirrors the New Trip form (same fields, validation, and region picker) but is prefilled from the trip and **commits on Save** (with an unsaved-changes warning if the user backs out). It replaces the former standalone Manage Players screen — player management is now one section of it.
 
-- **On this trip:** lists the trip's current players (join order); each has a remove (✕) action. Removing only unlinks the player from this trip — it never deletes them from the global roster.
-- **Add from your players:** lists active roster members not yet on the trip; each has an add (＋) action. Hidden when everyone is already on the trip.
-- **Add a new player:** an inline name field that creates a brand-new roster player and adds them to the trip in one step, with the same blank/duplicate-name validation as the global Add Player flow.
-- Changes apply live (no separate save); removal is immediate (no confirmation, since re-adding is trivial).
+- **Fields:** name, origin/destination (city + region picker), start date, optional end date, and players (multi-select chips + "+ Add new"). All edits are staged until **Save changes**.
+- **Players** are reconciled on save (added/removed as a diff against the trip's current roster); removal only unlinks the player from this trip, never from the global roster.
+- **Date edits** re-validate end ≥ start and reschedule (or cancel) the overdue reminder. Saving a **past end date** on a still-running trip prompts **"End date is in the past — end the trip now, or keep it active?"** ("End trip" finalizes it; "Keep active" saves it as overdue).
 
 ### 50/50 Celebration Screen
 
@@ -269,6 +274,7 @@ All entity IDs are UUIDs (java.util.UUID). All timestamps are stored as UTC ISO 
 - `destination_city` (text)
 - `destination_region_id` (UUID, FK → PlateRegion)
 - `start_date` (date)
+- `end_date` (date, nullable) — optional planned end; drives the trip-list date range, the derived "overdue" flag, and the reminder schedule (added v1.5, DB v3)
 - `status` (enum: `active`, `in_progress`, `completed`)
 - `ended_at` (timestamp, nullable)
 - `created_at` (timestamp)
@@ -387,6 +393,19 @@ The bundled JSON has a `version` field. On app start, compare bundled version to
 - Use cases for non-trivial business logic (start trip, mark state, compute celebration stats).
 - Strict separation of bundled static data (state info, state flags) and user-generated data (trips, spottings).
 - Manual dependency injection via an `AppContainer` (no DI framework in MVP); ViewModels built by a `viewModelFactory`.
+- **Notifications/scheduling:** overdue-trip reminders are scheduled with **WorkManager** (per-trip unique work; survives reboot/process death). The scheduler is behind a `ReminderScheduler` **interface** so it can be faked in tests; action buttons route through a `BroadcastReceiver`.
+
+### Testing & development approach
+
+**This project is built test-first (TDD).** New behavior begins with a failing test; we implement the minimum to pass, then refactor with the suite as a safety net. Treat this as a default expectation for all future work, not an afterthought.
+
+- **Layers & where tests live** (full detail in `TESTING.md`):
+  - **Pure domain logic** → plain JVM unit tests (no Android), e.g. derived `UiState`/model properties.
+  - **Repositories & ViewModels** → JVM unit tests under **Robolectric** with an in-memory Room database (fast loop, no emulator; run via `./gradlew testDebugUnitTest`). The emulated SDK is pinned (see `robolectric.properties`) so tests stay on the project JDK.
+  - **Compose UI** → instrumented tests in `androidTest/` (run on a device/emulator).
+- **Testability seams:** when production code needs an Android/system dependency that's awkward in tests (WorkManager, etc.), extract a small **interface** and provide a fake (e.g. `ReminderScheduler` → `FakeReminderScheduler`). Prefer pushing logic into pure/derived properties so it's testable without Robolectric.
+- **Coverage baseline:** the trip lifecycle (one-active-trip invariant, end/delete, update + player diff), spotting/attribution, the once-per-trip 50/50 rule (tracker + ViewModel wiring), players, settings, the edit flow, plus initial Compose UI tests are all under test. Keep this green; extend it as features land.
+- **Not unit-testable here:** notification *posting* and action buttons are device-verified (the scheduling/dedup logic around them is unit-tested via the interface seam).
 
 ### Forward-compatibility checklist
 
@@ -406,7 +425,8 @@ The following are baked into MVP to avoid rework later:
 
 ## 10. Validation and Edge Cases
 
-- New trip requires: name (auto-prefilled), origin city + state, destination city + state, start date (defaults today), at least one player.
+- New trip requires: name (auto-prefilled), origin city + state, destination city + state, start date (defaults today), at least one player. End date is optional but, if set, must be ≥ start (moving start past it pushes it forward).
+- A trip is **overdue** when it has an end date in the past and isn't completed (derived, not a stored status). Editing a trip to a past end date prompts "end now, or keep active?".
 - Marking a state commits immediately on the explicit "Mark as found" tap (no extra dialog); unmarking requires a confirmation dialog.
 - Ending a trip requires confirmation dialog.
 - Deleting a trip requires confirmation dialog.
@@ -444,6 +464,7 @@ Several of these were resolved during build (noted inline):
 - Exact "completed trip" visual treatment in the trip list (still as designed in §6).
 - ~~Whether 50/50 celebration re-triggers if user unmarks and re-marks the 50th state.~~ **Resolved:** fires once per trip (tracked by `CelebrationTracker`).
 - ~~Accessibility: color-blind-safe found-state styling.~~ **Resolved:** found states carry a check mark in addition to color.
+- ~~Region selector UX (clunky state dropdowns).~~ **Resolved:** a shared searchable bottom-sheet picker; country-filter/flags wait on multi-country data.
 
 ---
 
@@ -480,4 +501,12 @@ Several of these were resolved during build (noted inline):
   - **New Trip form:** From/To moved above the trip-name field; the auto-filled name now reads `<From City> to <Dest City>, <ST> - <Month Year>` (includes the destination state; dash before the date) and stays open as `<From City> to ` until a destination is filled.
   - **Bug fixes:** ending a trip now **persists on confirm** (survives app close before the summary's Done; `endTrip` made idempotent); trip **duration measures from the actual "Start trip" tap** (`createdAt`) rather than the start date's midnight; fixed a one-frame **bottom-nav flash** when leaving State Detail.
   - **Still deferred:** trip end dates (#12) and overdue-trip reminders (#13); the full-screen multi-country region selector (#7); multi-leg pit stops (#11); the celebration sound.
+- **v1.5 (2026-06-05)** — Post-MVP feature drop + a shift to test-driven development:
+  - **Trip end dates (#12):** trips carry an optional end date (end ≥ start). The trip list shows the date range and an **Overdue** badge (past end, not completed — a derived flag, not a stored status). *Schema: `Trip.end_date`; DB bumped to **v3**.*
+  - **Overdue-trip reminders (#13):** local notifications via **WorkManager**, fired ~1 day after the end date with a **+3-day follow-up**, one-nudge-per-end-date dedup, and a **"Trip reminders" Settings toggle**. `POST_NOTIFICATIONS` is requested contextually the first time an end date is set. The notification has **End trip / Remind later / Extend** action buttons (a `BroadcastReceiver` handles End/Remind; Extend deep-links into Manage trip); tapping the body opens the trip. The `ReminderScheduler` is an interface (impl `WorkManagerReminderScheduler`) so it's fakeable in tests.
+  - **Manage trip / edit trip (#14):** a single edit screen (from the Active Trip overflow) for name, dates, origin/destination, and players, prefilled and **committed on Save** with an unsaved-changes warning. It **replaces the standalone Manage Players screen** (player editing is now a section, reconciled as a diff on save). Saving a **past end date** prompts "end now, or keep active?". Date edits reschedule/cancel the reminder.
+  - **Shared region picker (#7):** the clunky origin/destination **State dropdowns** are replaced by a reusable searchable **bottom-sheet** picker (search by name/abbreviation, exclude-the-other-endpoint), now used on New Trip, Manage trip, and the Settings home dialog. Country-filter chips, per-row flags, and a recently-used section are deferred until multi-country data exists.
+  - **Toolchain upgrade (via the IDE):** AGP 9.1, Gradle 9.5, Kotlin 2.1, Compose BOM 2026.05, and other AndroidX bumps; Java 17 toolchain. Kotlin-coupled libraries (coroutines 1.10.2, serialization 1.8.0) pinned to the Kotlin 2.1 line.
+  - **Testing & TDD (new discipline):** introduced a **Robolectric**-based JVM test suite plus initial **Compose UI** tests, and adopted **test-first development** going forward (see the new §9 "Testing & development approach" and `TESTING.md`). Baseline coverage spans the trip lifecycle invariants, spotting/attribution, the 50/50-once rule, players, settings, and the edit flow. Extracted the `ReminderScheduler` interface seam to make trip logic testable without WorkManager.
+  - **Still deferred:** celebration sound; pre-permission priming for notifications; multi-leg pit stops (#11); one-way trips (#22); deferred-celebration animation queue (#20); broader polish (empty states, completed-trip styling, onboarding); expanding beyond the US 50.
 
