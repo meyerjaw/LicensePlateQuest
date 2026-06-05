@@ -83,7 +83,7 @@ import java.util.UUID
  * @param onOpenState open a state's detail (map tap or list row).
  * @param onBack return to the Trip List.
  * @param onCelebrate launch the celebration screen for (tripId, mode).
- * @param onManagePlayers open the manage-players screen for the trip.
+ * @param onManageTrip open the Manage trip (edit) screen for the trip.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,7 +91,7 @@ fun ActiveTripScreen(
     onOpenState: (String) -> Unit,
     onBack: () -> Unit,
     onCelebrate: (UUID, CelebrationMode) -> Unit,
-    onManagePlayers: (UUID) -> Unit,
+    onManageTrip: (UUID) -> Unit,
     viewModel: ActiveTripViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -143,10 +143,10 @@ fun ActiveTripScreen(
                                     onDismissRequest = { menuOpen = false },
                                 ) {
                                     DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.active_trip_manage_players)) },
+                                        text = { Text(stringResource(R.string.active_trip_manage_trip)) },
                                         onClick = {
                                             menuOpen = false
-                                            uiState.tripId?.let(onManagePlayers)
+                                            uiState.tripId?.let(onManageTrip)
                                         },
                                     )
                                     DropdownMenuItem(

@@ -93,8 +93,16 @@
     <!-- Active trip -->
     <string name="active_trip_title_fallback">Active trip</string>
     <string name="active_trip_cd_back">Back to trips</string>
-    <string name="active_trip_manage_players">Manage players</string>
+    <string name="active_trip_manage_trip">Manage trip</string>
     <string name="active_trip_end">End trip</string>
+
+    <!-- Manage trip (edit) screen (playtest #14) -->
+    <string name="manage_trip_title">Manage trip</string>
+    <string name="manage_trip_save">Save changes</string>
+    <string name="manage_trip_discard_title">Discard changes?</string>
+    <string name="manage_trip_discard_body">You have unsaved changes. Leave without saving?</string>
+    <string name="manage_trip_discard_confirm">Discard</string>
+    <string name="manage_trip_keep_editing">Keep editing</string>
     <string name="active_trip_tab_map">Map</string>
     <string name="active_trip_tab_list">List</string>
     <string name="active_trip_end_title">End this trip?</string>
@@ -171,17 +179,6 @@
     <!-- Shared player-name validation -->
     <string name="player_name_blank">Name can\'t be empty</string>
     <string name="player_name_duplicate">A player named “%1$s” already exists</string>
-
-    <!-- Manage players -->
-    <string name="manage_players_title">Players</string>
-    <string name="manage_players_add_new_section">Add a new player</string>
-    <string name="manage_players_name_label">Player name</string>
-    <string name="manage_players_add_button">Add player</string>
-    <string name="manage_players_on_trip">On this trip (%1$d)</string>
-    <string name="manage_players_none_yet">No players on this trip yet. Add some below.</string>
-    <string name="manage_players_add_from_roster">Add from your players</string>
-    <string name="manage_players_cd_remove">Remove %1$s from this trip</string>
-    <string name="manage_players_cd_add">Add %1$s to this trip</string>
 
     <!-- Celebration -->
     <string name="celebration_all_fifty">All 50!</string>

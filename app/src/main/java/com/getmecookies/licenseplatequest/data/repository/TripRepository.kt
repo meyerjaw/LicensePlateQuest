@@ -93,6 +93,47 @@ class TripRepository(
     }
 
     /**
+     * Update an existing trip's editable fields — name, origin/destination, and start/end dates
+     * (playtest #14, Manage trip). Players are synced separately via [addPlayerToTrip] /
+     * [removePlayerFromTrip]. When the end date changes, the overdue reminder (playtest #13) is
+     * re-armed for a remaining future end date on a non-completed trip, or cancelled otherwise.
+     */
+    suspend fun updateTrip(
+        tripId: UUID,
+        name: String,
+        originCity: String,
+        originRegionId: UUID,
+        destinationCity: String,
+        destinationRegionId: UUID,
+        startDate: LocalDate,
+        endDate: LocalDate?,
+    ) {
+        val existing = tripDao.getById(tripId) ?: return
+        val now = Instant.now()
+        tripDao.update(
+            existing.copy(
+                name = name.trim(),
+                originCity = originCity.trim(),
+                originRegionId = originRegionId,
+                destinationCity = destinationCity.trim(),
+                destinationRegionId = destinationRegionId,
+                startDate = startDate,
+                endDate = endDate,
+                updatedAt = now,
+            ),
+        )
+        // Only touch the reminder when the end date actually moved (keyed-on-date dedup in the
+        // scheduler then allows a fresh nudge for the new date).
+        if (existing.endDate != endDate) {
+            if (endDate != null && existing.status != TripStatus.COMPLETED) {
+                reminderScheduler.scheduleForTrip(tripId, endDate)
+            } else {
+                reminderScheduler.cancelForTrip(tripId)
+            }
+        }
+    }
+
+    /**
      * Make [tripId] the active trip (SPEC: selecting a trip activates it). Demotes any other
      * active trip to IN_PROGRESS in the same transaction. A COMPLETED trip stays completed.
      */

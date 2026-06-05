@@ -40,7 +40,7 @@ fun TripsTab(
     onNewTrip: () -> Unit,
     onOpenState: (String) -> Unit,
     onCelebrate: (UUID, CelebrationMode) -> Unit,
-    onManagePlayers: (UUID) -> Unit = {},
+    onManageTrip: (UUID) -> Unit = {},
     onMapViewActiveChange: (Boolean) -> Unit = {},
     onOpenSettings: () -> Unit = {},
     viewModel: TripsTabViewModel = viewModel(factory = AppViewModelProvider.Factory),
@@ -85,7 +85,7 @@ fun TripsTab(
                     onOpenState = onOpenState,
                     onBack = { forceList = true },
                     onCelebrate = onCelebrate,
-                    onManagePlayers = onManagePlayers,
+                    onManageTrip = onManageTrip,
                 )
             }
         }

@@ -18,9 +18,9 @@ object Routes {
     const val CELEBRATION = "celebration/{tripId}/{mode}"
     fun celebration(tripId: String, mode: String) = "celebration/$tripId/$mode"
 
-    /** Manage-players screen for a trip, parameterized by trip id. */
-    const val MANAGE_PLAYERS = "trips/{tripId}/players"
-    fun managePlayers(tripId: String) = "trips/$tripId/players"
+    /** Manage/edit-trip screen for a trip, parameterized by trip id (playtest #14). */
+    const val EDIT_TRIP = "trips/{tripId}/edit"
+    fun editTrip(tripId: String) = "trips/$tripId/edit"
 
     /** savedStateHandle key: id of a player created via the shared Add Player screen. */
     const val RESULT_NEW_PLAYER_ID = "new_player_id"

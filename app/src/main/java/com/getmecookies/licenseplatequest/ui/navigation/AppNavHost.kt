@@ -24,11 +24,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationScreen
-import com.getmecookies.licenseplatequest.ui.screens.manageplayers.ManagePlayersScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersScreen
 import com.getmecookies.licenseplatequest.ui.screens.settings.SettingsScreen
 import com.getmecookies.licenseplatequest.ui.screens.statedetail.StateDetailScreen
+import com.getmecookies.licenseplatequest.ui.screens.trips.ManageTripScreen
 import com.getmecookies.licenseplatequest.ui.screens.trips.NewTripScreen
 import com.getmecookies.licenseplatequest.ui.screens.trips.TripsTab
 
@@ -50,7 +50,7 @@ fun AppRoot() {
         Routes.NEW_TRIP,
         Routes.STATE_DETAIL,
         Routes.CELEBRATION,
-        Routes.MANAGE_PLAYERS,
+        Routes.EDIT_TRIP,
         Routes.SETTINGS,
     )
     // The Active Trip (map) view lives inside the Trips tab rather than on its own route, so it
@@ -110,8 +110,8 @@ fun AppRoot() {
                     onCelebrate = { tripId, mode ->
                         navController.navigate(Routes.celebration(tripId.toString(), mode.name))
                     },
-                    onManagePlayers = { tripId ->
-                        navController.navigate(Routes.managePlayers(tripId.toString()))
+                    onManageTrip = { tripId ->
+                        navController.navigate(Routes.editTrip(tripId.toString()))
                     },
                     onMapViewActiveChange = { mapViewActive = it },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
@@ -177,11 +177,19 @@ fun AppRoot() {
                 )
             }
             composable(
-                route = Routes.MANAGE_PLAYERS,
+                route = Routes.EDIT_TRIP,
                 arguments = listOf(navArgument("tripId") { type = NavType.StringType }),
-            ) {
-                ManagePlayersScreen(
-                    onBack = { navController.popBackStack() },
+            ) { entry ->
+                val newPlayerId by entry.savedStateHandle
+                    .getStateFlow<String?>(Routes.RESULT_NEW_PLAYER_ID, null)
+                    .collectAsStateWithLifecycle()
+                ManageTripScreen(
+                    onDone = { navController.popBackStack() },
+                    onAddPlayer = { navController.navigate(Routes.ADD_PLAYER) },
+                    addedPlayerId = newPlayerId,
+                    onAddedPlayerConsumed = {
+                        entry.savedStateHandle[Routes.RESULT_NEW_PLAYER_ID] = null
+                    },
                 )
             }
             composable(Routes.SETTINGS) {

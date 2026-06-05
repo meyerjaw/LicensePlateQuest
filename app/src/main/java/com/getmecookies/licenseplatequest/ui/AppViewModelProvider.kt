@@ -8,11 +8,11 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.getmecookies.licenseplatequest.LicensePlateQuestApp
 import com.getmecookies.licenseplatequest.ui.screens.activetrip.ActiveTripViewModel
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationViewModel
-import com.getmecookies.licenseplatequest.ui.screens.manageplayers.ManagePlayersViewModel
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerViewModel
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersViewModel
 import com.getmecookies.licenseplatequest.ui.screens.settings.SettingsViewModel
 import com.getmecookies.licenseplatequest.ui.screens.statedetail.StateDetailViewModel
+import com.getmecookies.licenseplatequest.ui.screens.trips.ManageTripViewModel
 import com.getmecookies.licenseplatequest.ui.screens.trips.NewTripViewModel
 import com.getmecookies.licenseplatequest.ui.screens.trips.TripListViewModel
 import com.getmecookies.licenseplatequest.ui.screens.trips.TripsTabViewModel
@@ -72,9 +72,10 @@ object AppViewModelProvider {
             )
         }
         initializer {
-            ManagePlayersViewModel(
+            ManageTripViewModel(
                 savedStateHandle = createSavedStateHandle(),
                 tripRepository = lpqApp().container.tripRepository,
+                regionRepository = lpqApp().container.regionRepository,
                 playerRepository = lpqApp().container.playerRepository,
             )
         }
