@@ -28,6 +28,11 @@
             </intent-filter>
         </activity>
 
+        <!-- Handles the overdue-trip notification action buttons (End trip / Remind later). -->
+        <receiver
+            android:name=".notifications.ReminderActionReceiver"
+            android:exported="false" />
+
         <!-- Shares generated trip images from the cache via a content URI (playtest note #4). -->
         <provider
             android:name="androidx.core.content.FileProvider"

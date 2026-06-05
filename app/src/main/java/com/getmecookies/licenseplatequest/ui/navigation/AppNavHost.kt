@@ -8,6 +8,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,9 +39,20 @@ import com.getmecookies.licenseplatequest.ui.screens.trips.TripsTab
  * come from [Routes] and hide the bottom bar so they read as their own screen.
  */
 @Composable
-fun AppRoot() {
+fun AppRoot(
+    editTripRequest: String? = null,
+    onEditTripRequestConsumed: () -> Unit = {},
+) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
+
+    // A notification's "Extend" action requests opening the Manage trip screen for a trip.
+    LaunchedEffect(editTripRequest) {
+        if (editTripRequest != null) {
+            navController.navigate(Routes.editTrip(editTripRequest))
+            onEditTripRequestConsumed()
+        }
+    }
     val currentDestination = backStackEntry?.destination
     val currentRoute = currentDestination?.route
 

@@ -20,16 +20,22 @@ import java.util.concurrent.TimeUnit
  * the production implementation is [WorkManagerReminderScheduler].
  */
 interface ReminderScheduler {
-    /** Enqueue (or replace) the reminder for [tripId], firing after [endDate]. */
+    /** Enqueue (or replace) the primary reminder for [tripId], firing ~1 day after [endDate]. */
     fun scheduleForTrip(tripId: UUID, endDate: LocalDate, replace: Boolean = true)
 
-    /** Cancel any scheduled reminder for [tripId] and forget its notified state. */
+    /** Enqueue the +3-day follow-up nudge (scheduled by the worker after the primary fires). */
+    fun scheduleFollowUp(tripId: UUID, endDate: LocalDate)
+
+    /** Snooze: clear the notified flag and re-fire the primary reminder a couple of days out. */
+    fun remindLater(tripId: UUID)
+
+    /** Cancel both the primary and follow-up reminders for [tripId] and forget notified state. */
     fun cancelForTrip(tripId: UUID)
 
-    /** True if a reminder was already posted for [tripId] at its current [endDate]. */
+    /** True if the primary reminder was already posted for [tripId] at its current [endDate]. */
     fun wasNotifiedFor(tripId: UUID, endDate: LocalDate): Boolean
 
-    /** Record that a reminder was posted for [tripId] at [endDate] so it won't fire again. */
+    /** Record that the primary reminder was posted for [tripId] at [endDate]. */
     fun markNotified(tripId: UUID, endDate: LocalDate)
 
     /** Create (idempotently) the notification channel. */
@@ -55,29 +61,40 @@ class WorkManagerReminderScheduler(private val appContext: Context) : ReminderSc
         appContext.getSharedPreferences(NOTIFIED_PREFS, Context.MODE_PRIVATE)
 
     override fun scheduleForTrip(tripId: UUID, endDate: LocalDate, replace: Boolean) {
-        val fireAtMillis = endDate
-            .plusDays(TripReminders.DAYS_AFTER_END)
-            .atTime(TripReminders.REMINDER_HOUR, 0)
-            .atZone(ZoneId.systemDefault())
-            .toInstant()
-            .toEpochMilli()
-        val delay = (fireAtMillis - System.currentTimeMillis()).coerceAtLeast(0L)
+        enqueue(
+            workName = TripReminders.workName(tripId),
+            tripId = tripId,
+            delayMillis = delayUntil(endDate, TripReminders.DAYS_AFTER_END),
+            isFollowUp = false,
+            policy = if (replace) ExistingWorkPolicy.REPLACE else ExistingWorkPolicy.KEEP,
+        )
+    }
 
-        val request = OneTimeWorkRequestBuilder<ReminderWorker>()
-            .setInitialDelay(delay, TimeUnit.MILLISECONDS)
-            .setInputData(workDataOf(TripReminders.INPUT_TRIP_ID to tripId.toString()))
-            .addTag(TripReminders.WORK_TAG)
-            .build()
+    override fun scheduleFollowUp(tripId: UUID, endDate: LocalDate) {
+        enqueue(
+            workName = TripReminders.followUpWorkName(tripId),
+            tripId = tripId,
+            delayMillis = delayUntil(endDate, TripReminders.DAYS_AFTER_END_FOLLOWUP),
+            isFollowUp = true,
+            policy = ExistingWorkPolicy.REPLACE,
+        )
+    }
 
-        workManager.enqueueUniqueWork(
-            TripReminders.workName(tripId),
-            if (replace) ExistingWorkPolicy.REPLACE else ExistingWorkPolicy.KEEP,
-            request,
+    override fun remindLater(tripId: UUID) {
+        // Clear the notified flag so the rescheduled primary is allowed to post again.
+        notifiedPrefs.edit { remove(tripId.toString()) }
+        enqueue(
+            workName = TripReminders.workName(tripId),
+            tripId = tripId,
+            delayMillis = TimeUnit.DAYS.toMillis(TripReminders.REMIND_LATER_DAYS),
+            isFollowUp = false,
+            policy = ExistingWorkPolicy.REPLACE,
         )
     }
 
     override fun cancelForTrip(tripId: UUID) {
         workManager.cancelUniqueWork(TripReminders.workName(tripId))
+        workManager.cancelUniqueWork(TripReminders.followUpWorkName(tripId))
         notifiedPrefs.edit { remove(tripId.toString()) }
     }
 
@@ -98,6 +115,36 @@ class WorkManagerReminderScheduler(private val appContext: Context) : ReminderSc
         }
         appContext.getSystemService(NotificationManager::class.java)
             .createNotificationChannel(channel)
+    }
+
+    private fun enqueue(
+        workName: String,
+        tripId: UUID,
+        delayMillis: Long,
+        isFollowUp: Boolean,
+        policy: ExistingWorkPolicy,
+    ) {
+        val request = OneTimeWorkRequestBuilder<ReminderWorker>()
+            .setInitialDelay(delayMillis, TimeUnit.MILLISECONDS)
+            .setInputData(
+                workDataOf(
+                    TripReminders.INPUT_TRIP_ID to tripId.toString(),
+                    TripReminders.INPUT_IS_FOLLOWUP to isFollowUp,
+                ),
+            )
+            .addTag(TripReminders.WORK_TAG)
+            .build()
+        workManager.enqueueUniqueWork(workName, policy, request)
+    }
+
+    private fun delayUntil(endDate: LocalDate, daysAfter: Long): Long {
+        val fireAtMillis = endDate
+            .plusDays(daysAfter)
+            .atTime(TripReminders.REMINDER_HOUR, 0)
+            .atZone(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+        return (fireAtMillis - System.currentTimeMillis()).coerceAtLeast(0L)
     }
 
     private companion object {

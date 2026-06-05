@@ -42,6 +42,9 @@
     <string name="reminder_channel_desc">Nudges when a trip is past its end date</string>
     <string name="reminder_title">Still on the road?</string>
     <string name="reminder_text">\"%1$s\" passed its end date. Tap to wrap it up or keep spotting.</string>
+    <string name="reminder_action_end">End trip</string>
+    <string name="reminder_action_remind_later">Remind later</string>
+    <string name="reminder_action_extend">Extend</string>
 
     <!-- Trip list / home -->
     <string name="trip_list_title">Trips</string>

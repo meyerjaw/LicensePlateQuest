@@ -7,6 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.getmecookies.licenseplatequest.domain.model.ThemeMode
@@ -21,6 +22,11 @@ import java.util.UUID
  * navigation graph in [AppRoot]. The theme follows the user's Settings choice (live).
  */
 class MainActivity : ComponentActivity() {
+
+    // Set when a notification's "Extend" action launches us; consumed by AppRoot to open the
+    // Manage trip screen for that trip.
+    private val pendingEditTripId = mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -34,7 +40,10 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.DARK -> true
             }
             LicensePlateQuestTheme(darkTheme = darkTheme) {
-                AppRoot()
+                AppRoot(
+                    editTripRequest = pendingEditTripId.value,
+                    onEditTripRequestConsumed = { pendingEditTripId.value = null },
+                )
             }
         }
     }
@@ -47,17 +56,24 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * If launched from an overdue-trip reminder (playtest #13), make that trip the active one so
-     * it surfaces on the Trips tab. Consume the extra so it isn't re-applied on recreation.
+     * Handle an overdue-trip reminder launch (playtest #13/#14). The "Extend" action opens the
+     * Manage trip screen; a plain tap makes the trip active so it surfaces on the Trips tab.
+     * Consume the extras so they aren't re-applied on recreation.
      */
     private fun handleReminderIntent(intent: Intent?) {
-        val tripId = intent?.getStringExtra(TripReminders.EXTRA_TRIP_ID)
-            ?.let { runCatching { UUID.fromString(it) }.getOrNull() }
-            ?: return
+        val tripIdString = intent?.getStringExtra(TripReminders.EXTRA_TRIP_ID) ?: return
+        val tripId = runCatching { UUID.fromString(tripIdString) }.getOrNull() ?: return
+        val openEdit = intent.getBooleanExtra(TripReminders.EXTRA_OPEN_EDIT, false)
         intent.removeExtra(TripReminders.EXTRA_TRIP_ID)
-        val container = (application as LicensePlateQuestApp).container
-        lifecycleScope.launch {
-            container.tripRepository.setActiveTrip(tripId)
+        intent.removeExtra(TripReminders.EXTRA_OPEN_EDIT)
+
+        if (openEdit) {
+            pendingEditTripId.value = tripIdString
+        } else {
+            val container = (application as LicensePlateQuestApp).container
+            lifecycleScope.launch {
+                container.tripRepository.setActiveTrip(tripId)
+            }
         }
     }
 }

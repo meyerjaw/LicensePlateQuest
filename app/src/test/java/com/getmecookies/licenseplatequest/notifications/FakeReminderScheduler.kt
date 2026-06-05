@@ -13,8 +13,20 @@ class FakeReminderScheduler : ReminderScheduler {
     val cancelled = mutableListOf<UUID>()
     private val notified = mutableMapOf<UUID, LocalDate>()
 
+    val followUps = mutableListOf<Pair<UUID, LocalDate>>()
+    val remindedLater = mutableListOf<UUID>()
+
     override fun scheduleForTrip(tripId: UUID, endDate: LocalDate, replace: Boolean) {
         scheduled += tripId to endDate
+    }
+
+    override fun scheduleFollowUp(tripId: UUID, endDate: LocalDate) {
+        followUps += tripId to endDate
+    }
+
+    override fun remindLater(tripId: UUID) {
+        remindedLater += tripId
+        notified.remove(tripId)
     }
 
     override fun cancelForTrip(tripId: UUID) {
