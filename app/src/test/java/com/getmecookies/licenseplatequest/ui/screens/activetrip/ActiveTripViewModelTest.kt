@@ -1,0 +1,167 @@
+package com.getmecookies.licenseplatequest.ui.screens.activetrip
+
+import android.content.Context
+import android.os.Looper
+import androidx.room.Room
+import androidx.test.core.app.ApplicationProvider
+import com.getmecookies.licenseplatequest.data.local.AppDatabase
+import com.getmecookies.licenseplatequest.data.local.entity.GameTypeEntity
+import com.getmecookies.licenseplatequest.data.local.entity.PlateRegionEntity
+import com.getmecookies.licenseplatequest.data.map.MapRepository
+import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
+import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
+import com.getmecookies.licenseplatequest.data.repository.TripRepository
+import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
+import com.getmecookies.licenseplatequest.domain.CelebrationTracker
+import com.getmecookies.licenseplatequest.domain.UiPreferences
+import com.getmecookies.licenseplatequest.domain.model.TripStatus
+import com.getmecookies.licenseplatequest.notifications.FakeReminderScheduler
+import com.getmecookies.licenseplatequest.testutil.MainDispatcherRule
+import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode
+import kotlinx.coroutines.runBlocking
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
+import java.time.LocalDate
+import java.util.UUID
+
+/**
+ * Tests the celebration logic on the Active Trip ViewModel: the once-per-trip 50/50 (SPEC §6/§8)
+ * and the manual-end flow. Driven through the real reactive pipeline (in-memory Room), awaiting
+ * the async state updates.
+ */
+@RunWith(RobolectricTestRunner::class)
+class ActiveTripViewModelTest {
+
+    @get:Rule
+    val mainDispatcherRule = MainDispatcherRule()
+
+    private lateinit var db: AppDatabase
+    private lateinit var trips: TripRepository
+    private lateinit var spotting: SpottingRepository
+    private lateinit var celebrationTracker: CelebrationTracker
+    private lateinit var mapRepository: MapRepository
+    private lateinit var uiPreferences: UiPreferences
+    private lateinit var settings: SettingsRepository
+    private lateinit var regions: List<PlateRegionEntity>
+
+    @Before
+    fun setUp() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
+            .allowMainThreadQueries()
+            .build()
+        trips = TripRepository(db, FakeReminderScheduler())
+        spotting = SpottingRepository(db)
+        celebrationTracker = CelebrationTracker(context)
+        mapRepository = MapRepository(context)
+        uiPreferences = UiPreferences(context)
+        settings = SettingsRepository(context)
+
+        regions = (0 until 50).map { i -> region(code = "S%02d".format(i), order = i) }
+        db.plateRegionDao().upsertAll(regions)
+        db.gameTypeDao().upsert(
+            GameTypeEntity(UUID.randomUUID(), RegionSeeder.LICENSE_PLATE_CODE, "License Plate", ""),
+        )
+    }
+
+    @After
+    fun tearDown() = db.close()
+
+    @Test
+    fun markingOneState_doesNotFireFiftyCelebration() = runBlocking {
+        createActiveTrip()
+        val vm = loadedViewModel()
+
+        spotting.markState(regions[0].regionCode)
+        awaitUntil { vm.uiState.value.foundCount == 1 }
+
+        assertNull(vm.uiState.value.celebration)
+    }
+
+    @Test
+    fun markingAllStates_firesFiftyCelebrationOnce_andSetsTracker() = runBlocking {
+        val tripId = createActiveTrip()
+        val vm = loadedViewModel()
+
+        regions.forEach { spotting.markState(it.regionCode) }
+        awaitUntil { vm.uiState.value.foundCount == 50 }
+
+        val celebration = vm.uiState.value.celebration
+        assertTrue(celebration != null && celebration.mode == CelebrationMode.FIFTY_FIFTY)
+        assertTrue(celebrationTracker.hasCelebratedFifty(tripId))
+    }
+
+    @Test
+    fun confirmEndTrip_firesManualEnd_andCompletesTrip() = runBlocking {
+        val tripId = createActiveTrip()
+        val vm = loadedViewModel()
+
+        vm.onConfirmEndTrip()
+        // Ending the trip clears it from ACTIVE, so the VM's active-trip id goes null.
+        awaitUntil { vm.uiState.value.tripId == null }
+
+        assertEquals(TripStatus.COMPLETED, trips.getTrip(tripId)!!.status)
+        val celebration = vm.uiState.value.celebration
+        assertTrue(celebration != null && celebration.mode == CelebrationMode.MANUAL_END)
+    }
+
+    private fun loadedViewModel(): ActiveTripViewModel {
+        val vm = ActiveTripViewModel(
+            mapRepository = mapRepository,
+            tripRepository = trips,
+            spottingRepository = spotting,
+            celebrationTracker = celebrationTracker,
+            uiPreferences = uiPreferences,
+            settingsRepository = settings,
+        )
+        // Wait for the first pipeline emission (active trip loaded) so the celebration baseline
+        // is established before we mark states.
+        awaitUntil { !vm.uiState.value.loading && vm.uiState.value.tripId != null }
+        return vm
+    }
+
+    private suspend fun createActiveTrip(): UUID = trips.createTrip(
+        name = "Trip",
+        originCity = "Austin",
+        originRegionId = regions[0].id,
+        destinationCity = "Denver",
+        destinationRegionId = regions[1].id,
+        startDate = LocalDate.now(),
+        endDate = null,
+        playerIds = emptyList(),
+    )
+
+    private fun awaitUntil(timeoutMs: Long = 5000, condition: () -> Boolean) {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (!condition() && System.currentTimeMillis() < deadline) {
+            shadowOf(Looper.getMainLooper()).idle()
+            Thread.sleep(5)
+        }
+        assertTrue("Condition not met within ${timeoutMs}ms", condition())
+    }
+
+    private fun region(code: String, order: Int) = PlateRegionEntity(
+        id = UUID.randomUUID(),
+        countryCode = "US",
+        regionCode = code,
+        name = code,
+        bird = "",
+        motto = "",
+        flower = "",
+        funFacts = "[]",
+        plateImagePath = "",
+        rarityScore = 0.0,
+        centerLat = 0.0,
+        centerLng = 0.0,
+        displayOrder = order,
+        additionalInfo = "{}",
+    )
+}
