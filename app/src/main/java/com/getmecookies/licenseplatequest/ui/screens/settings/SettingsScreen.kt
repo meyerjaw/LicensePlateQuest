@@ -2,7 +2,6 @@ package com.getmecookies.licenseplatequest.ui.screens.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,12 +14,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,6 +44,7 @@ import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.RegionOption
 import com.getmecookies.licenseplatequest.domain.model.ThemeMode
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
+import com.getmecookies.licenseplatequest.ui.components.RegionPickerField
 import java.util.UUID
 
 /** Settings screen (reached from the top-right icon): theme choice and the haptics toggle. */
@@ -220,7 +217,8 @@ private fun HomeDialog(
                     keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words),
                     modifier = Modifier.fillMaxWidth(),
                 )
-                HomeStateDropdown(
+                RegionPickerField(
+                    label = stringResource(R.string.settings_home_state),
                     options = regionOptions,
                     selectedId = dialog.regionId,
                     onSelected = onRegionSelected,
@@ -237,43 +235,6 @@ private fun HomeDialog(
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         },
     )
-}
-
-@Composable
-private fun HomeStateDropdown(
-    options: List<RegionOption>,
-    selectedId: UUID?,
-    onSelected: (UUID) -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    val selected = options.firstOrNull { it.id == selectedId }
-    Box(modifier = Modifier.fillMaxWidth()) {
-        OutlinedTextField(
-            value = selected?.let { "${it.code} — ${it.name}" } ?: "",
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(stringResource(R.string.settings_home_state)) },
-            trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        // A read-only field doesn't reliably take clicks, so an invisible overlay opens the menu.
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .clickable { expanded = true },
-        )
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text("${option.code} — ${option.name}") },
-                    onClick = {
-                        onSelected(option.id)
-                        expanded = false
-                    },
-                )
-            }
-        }
-    }
 }
 
 @Composable
