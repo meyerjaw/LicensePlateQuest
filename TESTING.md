@@ -27,6 +27,26 @@ Run the unit suite:
   so `viewModelScope` works. Drive the synchronous handlers and assert on `uiState.value`. See
   `NewTripViewModelTest`.
 
+## Compose UI tests (instrumented)
+
+These live in `app/src/androidTest/` and run on an emulator or device:
+
+```
+./gradlew connectedDebugAndroidTest      # or run from the gutter with a device attached
+```
+
+Patterns in place:
+
+- **Pure component** — host the composable directly and assert on rendered nodes. See
+  `RegionPickerSheetTest` (search filtering, exclude, selection callback).
+- **Screen + real ViewModel** — build an in-memory `AppDatabase` from the instrumentation
+  context, construct the real ViewModel (using `NoopReminderScheduler`), and drive the UI. See
+  `NewTripScreenTest`. `createComposeRule()` hosts on a `ComponentActivity`, so screens that
+  register an activity-result launcher (the notification permission) compose fine.
+
+Still to add: the full create-trip → mark-state → celebrate navigation flow (the most involved;
+left until the harness above is proven on a device).
+
 ## Test doubles
 
 - `FakeReminderScheduler` implements the `ReminderScheduler` interface in-memory (records
