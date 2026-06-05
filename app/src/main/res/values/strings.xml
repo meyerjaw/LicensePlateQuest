@@ -88,7 +88,12 @@
     <string name="new_trip_players_error">Pick at least one player</string>
     <string name="new_trip_no_players">No players yet - add one to get started.</string>
     <string name="new_trip_start">Start trip</string>
-    <string name="new_trip_region_option">%1$s - %2$s</string>
+    <!-- Shared region (state) picker (playtest #7) -->
+    <string name="region_picker_title">Choose a state</string>
+    <string name="region_picker_search">Search states</string>
+    <string name="region_picker_clear_search">Clear search</string>
+    <string name="region_picker_no_match">No state matches “%1$s”.</string>
+    <string name="region_picker_selected_cd">Selected</string>
 
     <!-- Active trip -->
     <string name="active_trip_title_fallback">Active trip</string>

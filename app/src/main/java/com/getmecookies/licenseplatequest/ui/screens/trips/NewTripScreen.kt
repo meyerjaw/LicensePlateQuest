@@ -5,9 +5,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -21,14 +19,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -57,10 +52,10 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.R
-import com.getmecookies.licenseplatequest.domain.model.RegionOption
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.PlayerColors
 import com.getmecookies.licenseplatequest.ui.components.PlayerSelectChip
+import com.getmecookies.licenseplatequest.ui.components.RegionPickerField
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -158,12 +153,13 @@ fun NewTripScreen(
                     ),
                     modifier = Modifier.weight(1f),
                 )
-                StateDropdown(
+                RegionPickerField(
                     label = stringResource(R.string.new_trip_state_label),
                     options = uiState.regionOptions,
-                    selected = uiState.originRegion,
-                    isError = uiState.showErrors && !uiState.originRegionValid,
+                    selectedId = uiState.originRegionId,
                     onSelected = viewModel::onOriginRegionSelected,
+                    excludeId = uiState.destinationRegionId,
+                    isError = uiState.showErrors && !uiState.originRegionValid,
                     modifier = Modifier.width(130.dp),
                 )
                 // Always-present clear ✕ so the row never reflows; disabled when nothing's set
@@ -197,12 +193,13 @@ fun NewTripScreen(
                     ),
                     modifier = Modifier.weight(1f),
                 )
-                StateDropdown(
+                RegionPickerField(
                     label = stringResource(R.string.new_trip_state_label),
                     options = uiState.regionOptions,
-                    selected = uiState.destinationRegion,
-                    isError = uiState.showErrors && !uiState.destinationRegionValid,
+                    selectedId = uiState.destinationRegionId,
                     onSelected = viewModel::onDestinationRegionSelected,
+                    excludeId = uiState.originRegionId,
+                    isError = uiState.showErrors && !uiState.destinationRegionValid,
                     modifier = Modifier.width(130.dp),
                 )
                 IconButton(
@@ -347,50 +344,6 @@ fun NewTripScreen(
             },
             onDismiss = { showEndDatePicker = false },
         )
-    }
-}
-
-@Composable
-private fun StateDropdown(
-    label: String,
-    options: List<RegionOption>,
-    selected: RegionOption?,
-    isError: Boolean,
-    onSelected: (UUID) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Box(modifier = modifier) {
-        OutlinedTextField(
-            value = selected?.code ?: "",
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(label) },
-            isError = isError,
-            trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth(),
-        )
-        // A readOnly text field doesn't reliably receive clicks, so an invisible overlay
-        // opens the menu when tapped.
-        Box(
-            modifier = Modifier
-                .matchParentSize()
-                .clickable { expanded = true },
-        )
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.new_trip_region_option, option.code, option.name)) },
-                    onClick = {
-                        onSelected(option.id)
-                        expanded = false
-                    },
-                )
-            }
-        }
     }
 }
 

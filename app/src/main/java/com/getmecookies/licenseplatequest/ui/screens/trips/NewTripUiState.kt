@@ -27,9 +27,6 @@ data class NewTripUiState(
     val saving: Boolean = false,
     val showErrors: Boolean = false,
 ) {
-    val originRegion: RegionOption? get() = regionOptions.firstOrNull { it.id == originRegionId }
-    val destinationRegion: RegionOption? get() = regionOptions.firstOrNull { it.id == destinationRegionId }
-
     // Whether a section has anything to clear (city text or a picked state) — drives the
     // quick-clear control on each section header (playtest note #9).
     val hasOrigin: Boolean get() = originCity.isNotBlank() || originRegionId != null

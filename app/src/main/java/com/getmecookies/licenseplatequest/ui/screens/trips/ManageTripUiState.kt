@@ -25,9 +25,6 @@ data class ManageTripUiState(
     val saving: Boolean = false,
     val showErrors: Boolean = false,
 ) {
-    val originRegion: RegionOption? get() = regionOptions.firstOrNull { it.id == originRegionId }
-    val destinationRegion: RegionOption? get() = regionOptions.firstOrNull { it.id == destinationRegionId }
-
     val hasOrigin: Boolean get() = originCity.isNotBlank() || originRegionId != null
     val hasDestination: Boolean get() = destinationCity.isNotBlank() || destinationRegionId != null
 
