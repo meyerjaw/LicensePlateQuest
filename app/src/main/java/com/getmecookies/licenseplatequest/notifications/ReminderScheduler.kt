@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.notifications
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import androidx.core.content.edit
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -12,18 +13,38 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.UUID
 import java.util.concurrent.TimeUnit
-import androidx.core.content.edit
 
 /**
- * Schedules and cancels the per-trip overdue reminder (playtest #13) via WorkManager. Backed by
- * unique work keyed on the trip id so create/edit/end/delete map cleanly to enqueue/replace/cancel.
- * WorkManager persists the queue across process death and reboot, so a scheduled reminder survives
- * without any boot receiver of our own.
- *
- * minSdk is 31, so the notification channel and exact-enough deferred work are always available;
- * no version guards are needed here.
+ * Schedules/cancels the per-trip overdue reminder (playtest #13) and tracks one-nudge-per-trip
+ * state. Defined as an interface so tests can substitute a fake without touching WorkManager;
+ * the production implementation is [WorkManagerReminderScheduler].
  */
-class ReminderScheduler(private val appContext: Context) {
+interface ReminderScheduler {
+    /** Enqueue (or replace) the reminder for [tripId], firing after [endDate]. */
+    fun scheduleForTrip(tripId: UUID, endDate: LocalDate, replace: Boolean = true)
+
+    /** Cancel any scheduled reminder for [tripId] and forget its notified state. */
+    fun cancelForTrip(tripId: UUID)
+
+    /** True if a reminder was already posted for [tripId] at its current [endDate]. */
+    fun wasNotifiedFor(tripId: UUID, endDate: LocalDate): Boolean
+
+    /** Record that a reminder was posted for [tripId] at [endDate] so it won't fire again. */
+    fun markNotified(tripId: UUID, endDate: LocalDate)
+
+    /** Create (idempotently) the notification channel. */
+    fun ensureChannel()
+}
+
+/**
+ * WorkManager-backed [ReminderScheduler]. Unique work keyed on the trip id maps create/edit/end/
+ * delete cleanly to enqueue/replace/cancel; WorkManager persists the queue across process death
+ * and reboot, so a scheduled reminder survives without any boot receiver of our own.
+ *
+ * minSdk is 31, so the notification channel and deferred work are always available; no version
+ * guards are needed here.
+ */
+class WorkManagerReminderScheduler(private val appContext: Context) : ReminderScheduler {
 
     private val workManager: WorkManager get() = WorkManager.getInstance(appContext)
 
@@ -33,14 +54,7 @@ class ReminderScheduler(private val appContext: Context) {
     private val notifiedPrefs =
         appContext.getSharedPreferences(NOTIFIED_PREFS, Context.MODE_PRIVATE)
 
-    /**
-     * Enqueue the reminder for [tripId], firing [TripReminders.DAYS_AFTER_END] day(s) after
-     * [endDate] at [TripReminders.REMINDER_HOUR]. If the computed time is already in the past
-     * (e.g. an already-overdue trip), it runs as soon as constraints allow — the worker still
-     * re-checks before posting. [replace] = false keeps an existing reminder untouched (used by
-     * the startup reconcile so we don't reset already-queued work).
-     */
-    fun scheduleForTrip(tripId: UUID, endDate: LocalDate, replace: Boolean = true) {
+    override fun scheduleForTrip(tripId: UUID, endDate: LocalDate, replace: Boolean) {
         val fireAtMillis = endDate
             .plusDays(TripReminders.DAYS_AFTER_END)
             .atTime(TripReminders.REMINDER_HOUR, 0)
@@ -62,23 +76,19 @@ class ReminderScheduler(private val appContext: Context) {
         )
     }
 
-    /** Cancel any scheduled reminder for [tripId] (trip ended or deleted) and forget its state. */
-    fun cancelForTrip(tripId: UUID) {
+    override fun cancelForTrip(tripId: UUID) {
         workManager.cancelUniqueWork(TripReminders.workName(tripId))
         notifiedPrefs.edit { remove(tripId.toString()) }
     }
 
-    /** True if we've already posted a reminder for [tripId] at its current [endDate]. */
-    fun wasNotifiedFor(tripId: UUID, endDate: LocalDate): Boolean =
+    override fun wasNotifiedFor(tripId: UUID, endDate: LocalDate): Boolean =
         notifiedPrefs.getString(tripId.toString(), null) == endDate.toString()
 
-    /** Record that a reminder was posted for [tripId] at [endDate] so it won't fire again. */
-    fun markNotified(tripId: UUID, endDate: LocalDate) {
+    override fun markNotified(tripId: UUID, endDate: LocalDate) {
         notifiedPrefs.edit { putString(tripId.toString(), endDate.toString()) }
     }
 
-    /** Create (idempotently) the notification channel. Safe to call repeatedly. */
-    fun ensureChannel() {
+    override fun ensureChannel() {
         val channel = NotificationChannel(
             TripReminders.CHANNEL_ID,
             appContext.getString(R.string.reminder_channel_name),

@@ -14,6 +14,7 @@ import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
 import com.getmecookies.licenseplatequest.domain.CelebrationTracker
 import com.getmecookies.licenseplatequest.domain.UiPreferences
 import com.getmecookies.licenseplatequest.notifications.ReminderScheduler
+import com.getmecookies.licenseplatequest.notifications.WorkManagerReminderScheduler
 
 /**
  * Manual dependency container (MVP uses no DI framework, per SPEC section 9). Owns the
@@ -32,7 +33,7 @@ class AppContainer(context: Context) {
         eventLogDao = database.eventLogDao(),
     )
 
-    val reminderScheduler: ReminderScheduler = ReminderScheduler(context.applicationContext)
+    val reminderScheduler: ReminderScheduler = WorkManagerReminderScheduler(context.applicationContext)
 
     val tripRepository: TripRepository = TripRepository(database, reminderScheduler)
 

@@ -27,6 +27,10 @@ data class NewTripUiState(
     val saving: Boolean = false,
     val showErrors: Boolean = false,
 ) {
+    // Resolved region for the picked id — used by the name auto-prefill (withPrefilledName).
+    val originRegion: RegionOption? get() = regionOptions.firstOrNull { it.id == originRegionId }
+    val destinationRegion: RegionOption? get() = regionOptions.firstOrNull { it.id == destinationRegionId }
+
     // Whether a section has anything to clear (city text or a picked state) — drives the
     // quick-clear control on each section header (playtest note #9).
     val hasOrigin: Boolean get() = originCity.isNotBlank() || originRegionId != null
