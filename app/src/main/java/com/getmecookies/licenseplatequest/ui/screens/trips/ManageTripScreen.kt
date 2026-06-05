@@ -382,6 +382,24 @@ fun ManageTripScreen(
             },
         )
     }
+
+    if (uiState.showEndTripPrompt) {
+        AlertDialog(
+            onDismissRequest = viewModel::onDismissEndTripPrompt,
+            title = { Text(stringResource(R.string.manage_trip_end_past_title)) },
+            text = { Text(stringResource(R.string.manage_trip_end_past_body)) },
+            confirmButton = {
+                TextButton(onClick = viewModel::onConfirmEndTripNow) {
+                    Text(stringResource(R.string.manage_trip_end_now))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::onKeepActive) {
+                    Text(stringResource(R.string.manage_trip_keep_active))
+                }
+            },
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

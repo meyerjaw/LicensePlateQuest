@@ -24,6 +24,8 @@ data class ManageTripUiState(
     val selectedPlayerIds: Set<UUID> = emptySet(),
     val saving: Boolean = false,
     val showErrors: Boolean = false,
+    /** Shown when saving a non-completed trip with an end date in the past (playtest #14). */
+    val showEndTripPrompt: Boolean = false,
 ) {
     val hasOrigin: Boolean get() = originCity.isNotBlank() || originRegionId != null
     val hasDestination: Boolean get() = destinationCity.isNotBlank() || destinationRegionId != null

@@ -108,6 +108,10 @@
     <string name="manage_trip_discard_body">You have unsaved changes. Leave without saving?</string>
     <string name="manage_trip_discard_confirm">Discard</string>
     <string name="manage_trip_keep_editing">Keep editing</string>
+    <string name="manage_trip_end_past_title">End date is in the past</string>
+    <string name="manage_trip_end_past_body">End the trip now, or keep it active?</string>
+    <string name="manage_trip_end_now">End trip</string>
+    <string name="manage_trip_keep_active">Keep active</string>
     <string name="active_trip_tab_map">Map</string>
     <string name="active_trip_tab_list">List</string>
     <string name="active_trip_end_title">End this trip?</string>

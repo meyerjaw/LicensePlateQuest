@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
+import com.getmecookies.licenseplatequest.domain.model.TripStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,6 +42,9 @@ class ManageTripViewModel(
     /** The trip as loaded — used for unsaved-changes detection and player diffing on save. */
     private var original: Snapshot? = null
 
+    /** The loaded trip's status, so we only prompt to end a trip that isn't already completed. */
+    private var loadedStatus: TripStatus? = null
+
     private data class Snapshot(
         val name: String,
         val originCity: String,
@@ -70,6 +74,7 @@ class ManageTripViewModel(
                 return@launch
             }
             val playerIds = tripRepository.observePlayerIdsForTrip(tripId).first().toSet()
+            loadedStatus = trip.status
             original = Snapshot(
                 name = trip.name,
                 originCity = trip.originCity,
@@ -154,6 +159,35 @@ class ManageTripViewModel(
             _uiState.update { it.copy(showErrors = true) }
             return
         }
+        // Saving a non-completed trip with a past end date is ambiguous — ask whether to end it now.
+        val endDate = state.endDate
+        if (endDate != null && endDate.isBefore(LocalDate.now()) && loadedStatus != TripStatus.COMPLETED) {
+            _uiState.update { it.copy(showEndTripPrompt = true) }
+            return
+        }
+        persist(endNow = false)
+    }
+
+    /** User chose "End trip" on the past-end-date prompt: save the edits and finalize the trip. */
+    fun onConfirmEndTripNow() {
+        _uiState.update { it.copy(showEndTripPrompt = false) }
+        persist(endNow = true)
+    }
+
+    /** User chose "Keep active": save the edits but leave the trip running (it shows as overdue). */
+    fun onKeepActive() {
+        _uiState.update { it.copy(showEndTripPrompt = false) }
+        persist(endNow = false)
+    }
+
+    /** Dismiss the prompt without saving (back to editing). */
+    fun onDismissEndTripPrompt() {
+        _uiState.update { it.copy(showEndTripPrompt = false) }
+    }
+
+    private fun persist(endNow: Boolean) {
+        val state = _uiState.value
+        if (state.saving) return
         _uiState.update { it.copy(saving = true) }
         viewModelScope.launch {
             tripRepository.updateTrip(
@@ -171,6 +205,7 @@ class ManageTripViewModel(
             val target = state.selectedPlayerIds
             (target - originalIds).forEach { tripRepository.addPlayerToTrip(tripId, it) }
             (originalIds - target).forEach { tripRepository.removePlayerFromTrip(tripId, it) }
+            if (endNow) tripRepository.endTrip(tripId)
             _saved.value = true
         }
     }

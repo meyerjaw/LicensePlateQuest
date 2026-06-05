@@ -10,6 +10,7 @@ import com.getmecookies.licenseplatequest.data.local.entity.PlateRegionEntity
 import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
+import com.getmecookies.licenseplatequest.domain.model.TripStatus
 import com.getmecookies.licenseplatequest.notifications.FakeReminderScheduler
 import com.getmecookies.licenseplatequest.testutil.MainDispatcherRule
 import kotlinx.coroutines.flow.first
@@ -121,6 +122,62 @@ class ManageTripViewModelTest {
         vm.onEndDateChange(LocalDate.of(2026, 6, 10))
 
         assertEquals(LocalDate.of(2026, 6, 15), vm.uiState.value.endDate)
+    }
+
+    @Test
+    fun save_withPastEndDate_promptsBeforeEnding() = runBlocking {
+        val tripId = createTrip(playerIds = listOf(players.addPlayer("Alice")))
+        val vm = loadedViewModel(tripId)
+
+        vm.onStartDateChange(LocalDate.now().minusDays(10))
+        vm.onEndDateChange(LocalDate.now().minusDays(2))
+        vm.onSave()
+
+        assertTrue(vm.uiState.value.showEndTripPrompt)
+        assertFalse(vm.saved.value)
+    }
+
+    @Test
+    fun confirmEndTripNow_savesAndCompletesTrip() = runBlocking {
+        val tripId = createTrip(playerIds = listOf(players.addPlayer("Alice")))
+        val vm = loadedViewModel(tripId)
+        vm.onStartDateChange(LocalDate.now().minusDays(10))
+        vm.onEndDateChange(LocalDate.now().minusDays(2))
+        vm.onSave()
+
+        vm.onConfirmEndTripNow()
+        awaitUntil { vm.saved.value }
+
+        assertEquals(TripStatus.COMPLETED, trips.getTrip(tripId)!!.status)
+    }
+
+    @Test
+    fun keepActive_savesPastEndDate_withoutEnding() = runBlocking {
+        val tripId = createTrip(playerIds = listOf(players.addPlayer("Alice")))
+        val vm = loadedViewModel(tripId)
+        val pastEnd = LocalDate.now().minusDays(2)
+        vm.onStartDateChange(LocalDate.now().minusDays(10))
+        vm.onEndDateChange(pastEnd)
+        vm.onSave()
+
+        vm.onKeepActive()
+        awaitUntil { vm.saved.value }
+
+        val trip = trips.getTrip(tripId)!!
+        assertEquals(TripStatus.ACTIVE, trip.status)
+        assertEquals(pastEnd, trip.endDate)
+    }
+
+    @Test
+    fun save_withFutureEndDate_savesWithoutPrompt() = runBlocking {
+        val tripId = createTrip(playerIds = listOf(players.addPlayer("Alice")))
+        val vm = loadedViewModel(tripId)
+
+        vm.onEndDateChange(LocalDate.now().plusDays(5))
+        vm.onSave()
+        awaitUntil { vm.saved.value }
+
+        assertFalse(vm.uiState.value.showEndTripPrompt)
     }
 
     private fun loadedViewModel(tripId: UUID): ManageTripViewModel {
