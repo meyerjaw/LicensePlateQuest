@@ -82,6 +82,15 @@
     <string name="new_trip_clear_name_cd">Clear trip name</string>
     <string name="new_trip_city_label">City</string>
     <string name="new_trip_state_label">State</string>
+    <string name="new_trip_stops">Stops</string>
+    <string name="new_trip_stop_start">Start</string>
+    <string name="new_trip_stop_destination">Destination</string>
+    <string name="new_trip_stop_label">Stop %1$d</string>
+    <string name="new_trip_add_stop">+ Add stop</string>
+    <string name="new_trip_move_stop_up_cd">Move stop up</string>
+    <string name="new_trip_move_stop_down_cd">Move stop down</string>
+    <string name="new_trip_remove_stop_cd">Remove stop</string>
+    <string name="new_trip_stops_error">Each stop needs a city and state</string>
     <string name="new_trip_start_date">Start date</string>
     <string name="new_trip_end_date">End date (optional)</string>
     <string name="new_trip_end_date_add">Add end date</string>

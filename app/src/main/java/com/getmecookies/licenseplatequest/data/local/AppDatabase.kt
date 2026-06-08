@@ -17,6 +17,7 @@ import com.getmecookies.licenseplatequest.data.local.dao.SpottingDao
 import com.getmecookies.licenseplatequest.data.local.dao.SpottingPlayerDao
 import com.getmecookies.licenseplatequest.data.local.dao.TripDao
 import com.getmecookies.licenseplatequest.data.local.dao.TripPlayerDao
+import com.getmecookies.licenseplatequest.data.local.dao.TripStopDao
 import com.getmecookies.licenseplatequest.data.local.entity.EventLogEntity
 import com.getmecookies.licenseplatequest.data.local.entity.GameInstanceEntity
 import com.getmecookies.licenseplatequest.data.local.entity.GameTypeEntity
@@ -26,6 +27,7 @@ import com.getmecookies.licenseplatequest.data.local.entity.SpottingEntity
 import com.getmecookies.licenseplatequest.data.local.entity.SpottingPlayerEntity
 import com.getmecookies.licenseplatequest.data.local.entity.TripEntity
 import com.getmecookies.licenseplatequest.data.local.entity.TripPlayerEntity
+import com.getmecookies.licenseplatequest.data.local.entity.TripStopEntity
 
 /**
  * Single Room database for all on-device data (SPEC §9 — no backend).
@@ -41,6 +43,7 @@ import com.getmecookies.licenseplatequest.data.local.entity.TripPlayerEntity
         PlateRegionEntity::class,
         TripEntity::class,
         TripPlayerEntity::class,
+        TripStopEntity::class,
         GameTypeEntity::class,
         GameInstanceEntity::class,
         SpottingEntity::class,
@@ -57,6 +60,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun plateRegionDao(): PlateRegionDao
     abstract fun tripDao(): TripDao
     abstract fun tripPlayerDao(): TripPlayerDao
+    abstract fun tripStopDao(): TripStopDao
     abstract fun gameTypeDao(): GameTypeDao
     abstract fun gameInstanceDao(): GameInstanceDao
     abstract fun spottingDao(): SpottingDao
@@ -64,7 +68,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun eventLogDao(): EventLogDao
 
     companion object {
-        const val VERSION = 3
+        const val VERSION = 4
         const val NAME = "license_plate_quest.db"
     }
 }
@@ -106,6 +110,47 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
 }
 
 /**
+ * v3 → v4 (playtest note #11): add the `trip_stop` table for multi-leg trips and seed two stops
+ * per existing trip from its origin/destination (the legacy columns stay in sync with first/last).
+ * DDL mirrors Room's generated schema (UUIDs as TEXT). The id expression builds a v4-format UUID
+ * string so Room's UUID converter can parse it.
+ */
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `trip_stop` (" +
+                "`id` TEXT NOT NULL, " +
+                "`trip_id` TEXT NOT NULL, " +
+                "`position` INTEGER NOT NULL, " +
+                "`region_id` TEXT NOT NULL, " +
+                "`city` TEXT NOT NULL, " +
+                "PRIMARY KEY(`id`), " +
+                "FOREIGN KEY(`trip_id`) REFERENCES `trip`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, " +
+                "FOREIGN KEY(`region_id`) REFERENCES `plate_region`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION)",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_trip_stop_trip_id` ON `trip_stop` (`trip_id`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_trip_stop_region_id` ON `trip_stop` (`region_id`)")
+
+        // Build a lowercase v4-format UUID string in SQL so Room's UUID converter accepts it.
+        val newUuid =
+            "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || " +
+                "substr(hex(randomblob(2)), 2) || '-' || " +
+                "substr('89ab', (abs(random()) % 4) + 1, 1) || substr(hex(randomblob(2)), 2) || '-' || " +
+                "hex(randomblob(6)))"
+
+        // Seed the start (position 0) and destination (position 1) for every existing trip.
+        db.execSQL(
+            "INSERT INTO `trip_stop` (`id`, `trip_id`, `position`, `region_id`, `city`) " +
+                "SELECT $newUuid, `id`, 0, `origin_region_id`, `origin_city` FROM `trip`",
+        )
+        db.execSQL(
+            "INSERT INTO `trip_stop` (`id`, `trip_id`, `position`, `region_id`, `city`) " +
+                "SELECT $newUuid, `id`, 1, `destination_region_id`, `destination_city` FROM `trip`",
+        )
+    }
+}
+
+/**
  * Process-wide singleton holder for [AppDatabase]. Manual DI (no Hilt in MVP) — the single
  * instance is created lazily and shared via [com.getmecookies.licenseplatequest.di.AppContainer].
  */
@@ -125,6 +170,6 @@ object DatabaseProvider {
             AppDatabase::class.java,
             AppDatabase.NAME,
         )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
             .build()
 }

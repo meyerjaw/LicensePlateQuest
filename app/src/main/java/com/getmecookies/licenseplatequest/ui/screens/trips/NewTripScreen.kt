@@ -20,6 +20,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
@@ -52,6 +54,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.R
+import com.getmecookies.licenseplatequest.domain.model.RegionOption
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.PlayerColors
 import com.getmecookies.licenseplatequest.ui.components.PlayerSelectChip
@@ -135,85 +138,35 @@ fun NewTripScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // --- Origin -------------------------------------------------
-            Text(stringResource(R.string.new_trip_from), style = MaterialTheme.typography.titleSmall)
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                OutlinedTextField(
-                    value = uiState.originCity,
-                    onValueChange = viewModel::onOriginCityChange,
-                    label = { Text(stringResource(R.string.new_trip_city_label)) },
-                    singleLine = true,
-                    isError = uiState.showErrors && !uiState.originCityValid,
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Words,
-                        imeAction = ImeAction.Next,
-                    ),
-                    modifier = Modifier.weight(1f),
+            // --- Stops (the route: start → … → destination) -------------
+            Text(stringResource(R.string.new_trip_stops), style = MaterialTheme.typography.titleSmall)
+            uiState.stops.forEachIndexed { index, stop ->
+                StopEditor(
+                    index = index,
+                    total = uiState.stops.size,
+                    city = stop.city,
+                    regionId = stop.regionId,
+                    regionOptions = uiState.regionOptions,
+                    isError = uiState.showErrors && !uiState.stopValid(index),
+                    onCityChange = { viewModel.onStopCityChange(index, it) },
+                    onRegionSelected = { viewModel.onStopRegionSelected(index, it) },
+                    onMoveUp = { viewModel.onMoveStopUp(index) },
+                    onMoveDown = { viewModel.onMoveStopDown(index) },
+                    onRemove = { viewModel.onRemoveStop(index) },
                 )
-                RegionPickerField(
-                    label = stringResource(R.string.new_trip_state_label),
-                    options = uiState.regionOptions,
-                    selectedId = uiState.originRegionId,
-                    onSelected = viewModel::onOriginRegionSelected,
-                    excludeId = uiState.destinationRegionId,
-                    isError = uiState.showErrors && !uiState.originRegionValid,
-                    modifier = Modifier.width(130.dp),
+            }
+            if (uiState.showErrors && !uiState.stopsValid) {
+                Text(
+                    stringResource(R.string.new_trip_stops_error),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
                 )
-                // Always-present clear ✕ so the row never reflows; disabled when nothing's set
-                // (playtest note #9).
-                IconButton(
-                    onClick = viewModel::onClearOrigin,
-                    enabled = uiState.hasOrigin,
-                ) {
-                    Icon(
-                        Icons.Filled.Close,
-                        contentDescription = stringResource(R.string.new_trip_clear_origin_cd),
-                    )
-                }
+            }
+            TextButton(onClick = viewModel::onAddStop) {
+                Text(stringResource(R.string.new_trip_add_stop))
             }
 
-            // --- Destination --------------------------------------------
-            Text(stringResource(R.string.new_trip_to), style = MaterialTheme.typography.titleSmall)
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                OutlinedTextField(
-                    value = uiState.destinationCity,
-                    onValueChange = viewModel::onDestinationCityChange,
-                    label = { Text(stringResource(R.string.new_trip_city_label)) },
-                    singleLine = true,
-                    isError = uiState.showErrors && !uiState.destinationCityValid,
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Words,
-                        imeAction = ImeAction.Next,
-                    ),
-                    modifier = Modifier.weight(1f),
-                )
-                RegionPickerField(
-                    label = stringResource(R.string.new_trip_state_label),
-                    options = uiState.regionOptions,
-                    selectedId = uiState.destinationRegionId,
-                    onSelected = viewModel::onDestinationRegionSelected,
-                    excludeId = uiState.originRegionId,
-                    isError = uiState.showErrors && !uiState.destinationRegionValid,
-                    modifier = Modifier.width(130.dp),
-                )
-                IconButton(
-                    onClick = viewModel::onClearDestination,
-                    enabled = uiState.hasDestination,
-                ) {
-                    Icon(
-                        Icons.Filled.Close,
-                        contentDescription = stringResource(R.string.new_trip_clear_destination_cd),
-                    )
-                }
-            }
-
-            // --- Trip name (auto-fills from From/To above) --------------
+            // --- Trip name (auto-fills from the stops above) ------------
             Text(
                 stringResource(R.string.new_trip_name_label),
                 style = MaterialTheme.typography.titleSmall,
@@ -344,6 +297,86 @@ fun NewTripScreen(
             },
             onDismiss = { showEndDatePicker = false },
         )
+    }
+}
+
+@Composable
+private fun StopEditor(
+    index: Int,
+    total: Int,
+    city: String,
+    regionId: UUID?,
+    regionOptions: List<RegionOption>,
+    isError: Boolean,
+    onCityChange: (String) -> Unit,
+    onRegionSelected: (UUID) -> Unit,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
+    onRemove: () -> Unit,
+) {
+    val isFirst = index == 0
+    val isLast = index == total - 1
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = when {
+                    isFirst -> stringResource(R.string.new_trip_stop_start)
+                    isLast -> stringResource(R.string.new_trip_stop_destination)
+                    else -> stringResource(R.string.new_trip_stop_label, index)
+                },
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Row {
+                IconButton(onClick = onMoveUp, enabled = !isFirst) {
+                    Icon(
+                        Icons.Filled.KeyboardArrowUp,
+                        contentDescription = stringResource(R.string.new_trip_move_stop_up_cd),
+                    )
+                }
+                IconButton(onClick = onMoveDown, enabled = !isLast) {
+                    Icon(
+                        Icons.Filled.KeyboardArrowDown,
+                        contentDescription = stringResource(R.string.new_trip_move_stop_down_cd),
+                    )
+                }
+                IconButton(onClick = onRemove, enabled = total > 2) {
+                    Icon(
+                        Icons.Filled.Close,
+                        contentDescription = stringResource(R.string.new_trip_remove_stop_cd),
+                    )
+                }
+            }
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedTextField(
+                value = city,
+                onValueChange = onCityChange,
+                label = { Text(stringResource(R.string.new_trip_city_label)) },
+                singleLine = true,
+                isError = isError,
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words,
+                    imeAction = ImeAction.Next,
+                ),
+                modifier = Modifier.weight(1f),
+            )
+            RegionPickerField(
+                label = stringResource(R.string.new_trip_state_label),
+                options = regionOptions,
+                selectedId = regionId,
+                onSelected = onRegionSelected,
+                isError = isError,
+                modifier = Modifier.width(130.dp),
+            )
+        }
     }
 }
 

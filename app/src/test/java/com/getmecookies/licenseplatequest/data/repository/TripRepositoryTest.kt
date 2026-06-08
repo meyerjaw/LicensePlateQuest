@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.entity.PlateRegionEntity
 import com.getmecookies.licenseplatequest.domain.model.TripStatus
+import com.getmecookies.licenseplatequest.domain.model.TripStop
 import com.getmecookies.licenseplatequest.notifications.FakeReminderScheduler
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -148,6 +149,63 @@ class TripRepositoryTest {
 
         repo.removePlayerFromTrip(trip, p1)
         assertEquals(listOf(p2), repo.observePlayerIdsForTrip(trip).first())
+    }
+
+    @Test
+    fun createTrip_seedsOriginAndDestinationStops() = runBlocking {
+        val id = newTrip("Trip")
+        val stops = repo.getStops(id)
+
+        assertEquals(2, stops.size)
+        assertEquals(originId, stops[0].regionId)
+        assertEquals("Austin", stops[0].city)
+        assertEquals(destId, stops[1].regionId)
+        assertEquals("Denver", stops[1].city)
+    }
+
+    @Test
+    fun updateTrip_rewritesStopsFromOriginAndDestination() = runBlocking {
+        val id = newTrip("Trip")
+        // Swap which region is origin/destination and change the cities.
+        repo.updateTrip(id, "Renamed", "Dallas", destId, "Boulder", originId, LocalDate.now(), null)
+
+        val stops = repo.getStops(id)
+        assertEquals(2, stops.size)
+        assertEquals(destId, stops[0].regionId)
+        assertEquals("Dallas", stops[0].city)
+        assertEquals(originId, stops[1].regionId)
+        assertEquals("Boulder", stops[1].city)
+    }
+
+    @Test
+    fun deleteTrip_cascadesStops() = runBlocking {
+        val id = newTrip("Trip")
+        repo.deleteTrip(id)
+        assertTrue(repo.getStops(id).isEmpty())
+    }
+
+    @Test
+    fun createTrip_withMultipleStops_persistsOrderedRoute_andSyncsEndpoints() = runBlocking {
+        val mid = region("OK", 3)
+        db.plateRegionDao().upsertAll(listOf(mid))
+
+        val id = repo.createTrip(
+            name = "Multi-leg",
+            stops = listOf(
+                TripStop(originId, "Austin"),
+                TripStop(mid.id, "Tulsa"),
+                TripStop(destId, "Denver"),
+            ),
+            startDate = LocalDate.now(),
+            endDate = null,
+            playerIds = emptyList(),
+        )
+
+        assertEquals(listOf("Austin", "Tulsa", "Denver"), repo.getStops(id).map { it.city })
+        // Legacy origin/destination columns track the first and last stops.
+        val trip = repo.getTrip(id)!!
+        assertEquals(originId, trip.originRegionId)
+        assertEquals(destId, trip.destinationRegionId)
     }
 
     private suspend fun newTrip(

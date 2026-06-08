@@ -10,10 +10,10 @@ class TripFormValidationTest {
 
     private fun filledNewTrip() = NewTripUiState(
         name = "Summer road trip",
-        originCity = "Austin",
-        originRegionId = UUID.randomUUID(),
-        destinationCity = "Denver",
-        destinationRegionId = UUID.randomUUID(),
+        stops = listOf(
+            StopDraft("Austin", UUID.randomUUID()),
+            StopDraft("Denver", UUID.randomUUID()),
+        ),
         selectedPlayerIds = setOf(UUID.randomUUID()),
     )
 
@@ -26,18 +26,28 @@ class TripFormValidationTest {
     fun newTrip_invalid_whenAnyRequiredFieldMissing() {
         assertFalse(NewTripUiState().isValid)
         assertFalse(filledNewTrip().copy(name = "").isValid)
-        assertFalse(filledNewTrip().copy(originCity = "").isValid)
-        assertFalse(filledNewTrip().copy(originRegionId = null).isValid)
-        assertFalse(filledNewTrip().copy(destinationCity = "").isValid)
-        assertFalse(filledNewTrip().copy(destinationRegionId = null).isValid)
         assertFalse(filledNewTrip().copy(selectedPlayerIds = emptySet()).isValid)
+        // Fewer than two stops.
+        assertFalse(filledNewTrip().copy(stops = listOf(StopDraft("Austin", UUID.randomUUID()))).isValid)
+        // A stop missing its city.
+        assertFalse(
+            filledNewTrip().copy(
+                stops = listOf(StopDraft("", UUID.randomUUID()), StopDraft("Denver", UUID.randomUUID())),
+            ).isValid,
+        )
+        // A stop missing its region.
+        assertFalse(
+            filledNewTrip().copy(
+                stops = listOf(StopDraft("Austin", null), StopDraft("Denver", UUID.randomUUID())),
+            ).isValid,
+        )
     }
 
     @Test
-    fun newTrip_hasOrigin_reflectsCityOrRegion() {
-        assertFalse(NewTripUiState().hasOrigin)
-        assertTrue(NewTripUiState(originCity = "Austin").hasOrigin)
-        assertTrue(NewTripUiState(originRegionId = UUID.randomUUID()).hasOrigin)
+    fun newTrip_stopsValid_requiresTwoCompleteStops() {
+        assertTrue(filledNewTrip().stopsValid)
+        // Default state has two empty stops.
+        assertFalse(NewTripUiState().stopsValid)
     }
 
     @Test

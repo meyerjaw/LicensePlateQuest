@@ -6,6 +6,7 @@ import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
+import com.getmecookies.licenseplatequest.domain.model.TripStop
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,8 +39,10 @@ class NewTripViewModel(
         // Pre-fill the "From" field from the saved home location (a suggestion; the user can edit
         // or clear it, and clearing won't re-populate). Playtest note #8.
         settingsRepository.home.value?.let { home ->
-            _uiState.update {
-                it.copy(originCity = home.city, originRegionId = home.regionId).withPrefilledName()
+            _uiState.update { state ->
+                val stops = state.stops.toMutableList()
+                stops[0] = StopDraft(city = home.city, regionId = home.regionId)
+                state.copy(stops = stops).withPrefilledName()
             }
         }
         viewModelScope.launch {
@@ -65,29 +68,52 @@ class NewTripViewModel(
         _uiState.update { it.copy(name = "", nameManuallyEdited = true) }
     }
 
-    fun onOriginCityChange(value: String) {
-        _uiState.update { it.copy(originCity = value).withPrefilledName() }
+    fun onStopCityChange(index: Int, value: String) = updateStop(index) { it.copy(city = value) }
+
+    fun onStopRegionSelected(index: Int, id: UUID) = updateStop(index) { it.copy(regionId = id) }
+
+    /** Append a new empty pit stop at the end (it becomes the new destination slot to fill). */
+    fun onAddStop() {
+        _uiState.update { it.copy(stops = it.stops + StopDraft()).withPrefilledName() }
     }
 
-    fun onDestinationCityChange(value: String) {
-        _uiState.update { it.copy(destinationCity = value).withPrefilledName() }
+    /** Remove a stop. No-op below the two-stop minimum (a trip always has a start + destination). */
+    fun onRemoveStop(index: Int) {
+        _uiState.update { state ->
+            if (state.stops.size <= 2 || index !in state.stops.indices) {
+                state
+            } else {
+                state.copy(stops = state.stops.filterIndexed { i, _ -> i != index }).withPrefilledName()
+            }
+        }
     }
 
-    fun onOriginRegionSelected(id: UUID) {
-        _uiState.update { it.copy(originRegionId = id).withPrefilledName() }
+    fun onMoveStopUp(index: Int) = moveStop(index, index - 1)
+
+    fun onMoveStopDown(index: Int) = moveStop(index, index + 1)
+
+    private fun updateStop(index: Int, transform: (StopDraft) -> StopDraft) {
+        _uiState.update { state ->
+            if (index !in state.stops.indices) {
+                state
+            } else {
+                val stops = state.stops.toMutableList()
+                stops[index] = transform(stops[index])
+                state.copy(stops = stops).withPrefilledName()
+            }
+        }
     }
 
-    fun onDestinationRegionSelected(id: UUID) {
-        _uiState.update { it.copy(destinationRegionId = id).withPrefilledName() }
-    }
-
-    /** Quick-clear both subfields of a section at once (playtest note #9). */
-    fun onClearOrigin() {
-        _uiState.update { it.copy(originCity = "", originRegionId = null).withPrefilledName() }
-    }
-
-    fun onClearDestination() {
-        _uiState.update { it.copy(destinationCity = "", destinationRegionId = null).withPrefilledName() }
+    private fun moveStop(from: Int, to: Int) {
+        _uiState.update { state ->
+            if (from !in state.stops.indices || to !in state.stops.indices) {
+                state
+            } else {
+                val stops = state.stops.toMutableList()
+                stops.add(to, stops.removeAt(from))
+                state.copy(stops = stops).withPrefilledName()
+            }
+        }
     }
 
     fun onStartDateChange(date: LocalDate) {
@@ -142,10 +168,7 @@ class NewTripViewModel(
         viewModelScope.launch {
             tripRepository.createTrip(
                 name = state.name,
-                originCity = state.originCity,
-                originRegionId = state.originRegionId!!,
-                destinationCity = state.destinationCity,
-                destinationRegionId = state.destinationRegionId!!,
+                stops = state.stops.map { TripStop(regionId = it.regionId!!, city = it.city) },
                 startDate = state.startDate,
                 endDate = state.endDate,
                 playerIds = state.selectedPlayerIds.toList(),
@@ -156,27 +179,28 @@ class NewTripViewModel(
 
     /**
      * Recompute the auto-prefilled name unless the user has taken over the field. Format:
-     * "Origin to Destination, Month Year", filling in whatever pieces are known so far.
+     * "Start to … to Destination - Month Year", using each stop's city (or its state code), with
+     * the destination state appended. A single known stop stays open as "X to ".
      */
     private fun NewTripUiState.withPrefilledName(): NewTripUiState {
         if (nameManuallyEdited) return this
-        val origin = originCity.trim().ifBlank { originRegion?.code ?: "" }
-        // Destination includes its state, e.g. "Cincinnati, OH".
-        val destCity = destinationCity.trim()
-        val destCode = destinationRegion?.code
-        val destination = when {
-            destCity.isNotBlank() && !destCode.isNullOrBlank() -> "$destCity, $destCode"
-            destCity.isNotBlank() -> destCity
-            !destCode.isNullOrBlank() -> destCode
-            else -> ""
+        val lastIndex = stops.lastIndex
+        val labels = stops.mapIndexedNotNull { index, stop ->
+            val city = stop.city.trim()
+            val code = regionCode(stop.regionId)
+            when {
+                // The final stop carries its state too, e.g. "Cincinnati, OH".
+                city.isNotBlank() && index == lastIndex && code != null -> "$city, $code"
+                city.isNotBlank() -> city
+                code != null -> code
+                else -> null
+            }
         }
         val monthYear = startDate.format(MONTH_YEAR)
         val prefilled = when {
-            origin.isNotBlank() && destination.isNotBlank() -> "$origin to $destination - $monthYear"
-            // Origin only (e.g. pre-filled from home): leave it open as "X to " so it completes to
-            // the full name the moment a destination is filled in (playtest follow-up).
-            origin.isNotBlank() -> "$origin to "
-            destination.isNotBlank() -> "Trip to $destination - $monthYear"
+            labels.size >= 2 -> labels.joinToString(" to ") + " - $monthYear"
+            // One known stop (e.g. home prefill): leave it open as "X to ".
+            labels.size == 1 -> "${labels.first()} to "
             else -> ""
         }
         return copy(name = prefilled)

@@ -10,6 +10,7 @@ import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.notifications.FakeReminderScheduler
 import com.getmecookies.licenseplatequest.testutil.MainDispatcherRule
+import kotlinx.coroutines.test.StandardTestDispatcher
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -26,8 +27,10 @@ import java.time.LocalDate
 @RunWith(RobolectricTestRunner::class)
 class NewTripViewModelTest {
 
+    // StandardTestDispatcher keeps the ViewModel's init-time flow collects dormant (we never
+    // advance it), so these synchronous handler tests run deterministically without async races.
     @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+    val mainDispatcherRule = MainDispatcherRule(StandardTestDispatcher())
 
     private lateinit var db: AppDatabase
     private lateinit var viewModel: NewTripViewModel
@@ -82,5 +85,41 @@ class NewTripViewModelTest {
         viewModel.onEndDateChange(LocalDate.of(2026, 6, 22))
         viewModel.onClearEndDate()
         assertEquals(null, viewModel.uiState.value.endDate)
+    }
+
+    @Test
+    fun startsWithTwoStops_andAddStopAppends() {
+        assertEquals(2, viewModel.uiState.value.stops.size)
+        viewModel.onAddStop()
+        assertEquals(3, viewModel.uiState.value.stops.size)
+    }
+
+    @Test
+    fun removeStop_respectsTwoStopMinimum() {
+        viewModel.onRemoveStop(0)
+        assertEquals(2, viewModel.uiState.value.stops.size)
+
+        viewModel.onAddStop()
+        viewModel.onRemoveStop(1)
+        assertEquals(2, viewModel.uiState.value.stops.size)
+    }
+
+    @Test
+    fun stopEdits_updateCityAndRegion() {
+        val region = java.util.UUID.randomUUID()
+        viewModel.onStopCityChange(0, "Austin")
+        viewModel.onStopRegionSelected(0, region)
+
+        val stop = viewModel.uiState.value.stops[0]
+        assertEquals("Austin", stop.city)
+        assertEquals(region, stop.regionId)
+    }
+
+    @Test
+    fun moveStopDown_reordersTheList() {
+        viewModel.onStopCityChange(0, "A")
+        viewModel.onStopCityChange(1, "B")
+        viewModel.onMoveStopDown(0)
+        assertEquals(listOf("B", "A"), viewModel.uiState.value.stops.map { it.city })
     }
 }
