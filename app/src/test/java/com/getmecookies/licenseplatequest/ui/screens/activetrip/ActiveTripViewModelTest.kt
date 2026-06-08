@@ -113,6 +113,15 @@ class ActiveTripViewModelTest {
         assertTrue(celebration != null && celebration.mode == CelebrationMode.MANUAL_END)
     }
 
+    @Test
+    fun routeStops_reflectTheTripsStops() = runBlocking {
+        createActiveTrip()
+        val vm = loadedViewModel()
+
+        awaitUntil { vm.uiState.value.routeStops.isNotEmpty() }
+        assertEquals(listOf("S00", "S01"), vm.uiState.value.routeStops)
+    }
+
     private fun loadedViewModel(): ActiveTripViewModel {
         val vm = ActiveTripViewModel(
             mapRepository = mapRepository,

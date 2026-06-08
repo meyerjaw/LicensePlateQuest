@@ -19,6 +19,14 @@ interface TripStopDao {
     @Query("SELECT * FROM trip_stop WHERE trip_id = :tripId ORDER BY position")
     fun observeForTrip(tripId: UUID): Flow<List<TripStopEntity>>
 
+    /** Ordered region codes for a trip's stops (start → destination) — for the map route. */
+    @Query(
+        "SELECT pr.region_code FROM trip_stop ts " +
+            "JOIN plate_region pr ON pr.id = ts.region_id " +
+            "WHERE ts.trip_id = :tripId ORDER BY ts.position",
+    )
+    fun observeStopCodesForTrip(tripId: UUID): Flow<List<String>>
+
     @Query("DELETE FROM trip_stop WHERE trip_id = :tripId")
     suspend fun deleteForTrip(tripId: UUID)
 }

@@ -12,12 +12,15 @@ import com.getmecookies.licenseplatequest.domain.model.FoundState
 import com.getmecookies.licenseplatequest.domain.model.StateSummary
 import com.getmecookies.licenseplatequest.ui.map.UsMapShapes
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -64,6 +67,8 @@ data class ActiveTripUiState(
     val tripName: String = "",
     val shapes: UsMapShapes? = null,
     val foundCodes: Set<String> = emptySet(),
+    /** Ordered state codes of the trip's stops, for the map route overlay (playtest #11). */
+    val routeStops: List<String> = emptyList(),
     /** The (filtered + sorted) rows shown in the sheet — found states, plus unfound when toggled. */
     val states: List<StateRow> = emptyList(),
     val sort: FoundSort = FoundSort.ORDER_FOUND,
@@ -91,6 +96,7 @@ data class Celebration(val tripId: UUID, val mode: CelebrationMode)
  * [CelebrationTracker] so re-marking can't replay it). Ending a trip routes through the
  * manual-end celebration, which finalizes the trip.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 class ActiveTripViewModel(
     mapRepository: MapRepository,
     private val tripRepository: TripRepository,
@@ -127,6 +133,14 @@ class ActiveTripViewModel(
         viewModelScope.launch {
             val shapes = mapRepository.loadShapes()
             _uiState.update { it.copy(shapes = shapes) }
+        }
+        viewModelScope.launch {
+            // The active trip's ordered stop codes, for the map route overlay (playtest #11).
+            tripRepository.observeActiveTrip()
+                .flatMapLatest { trip ->
+                    if (trip == null) flowOf(emptyList()) else tripRepository.observeStopCodesForTrip(trip.id)
+                }
+                .collect { codes -> _uiState.update { it.copy(routeStops = codes) } }
         }
         viewModelScope.launch {
             // The trip + its spottings + the full state list on one side; the sheet's view

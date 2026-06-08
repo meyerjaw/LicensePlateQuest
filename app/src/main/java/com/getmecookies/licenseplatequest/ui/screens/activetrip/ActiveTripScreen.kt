@@ -202,6 +202,7 @@ fun ActiveTripScreen(
                                         shapes = shapes,
                                         foundCodes = uiState.foundCodes,
                                         onStateClick = onOpenState,
+                                        routeStops = uiState.routeStops,
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .padding(8.dp),

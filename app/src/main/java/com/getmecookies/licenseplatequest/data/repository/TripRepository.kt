@@ -58,6 +58,10 @@ class TripRepository(
     suspend fun getStops(tripId: UUID): List<TripStop> =
         tripStopDao.getForTrip(tripId).map { TripStop(it.regionId, it.city) }
 
+    /** Ordered region codes for a trip's stops (for drawing the map route — playtest #11). */
+    fun observeStopCodesForTrip(tripId: UUID): Flow<List<String>> =
+        tripStopDao.observeStopCodesForTrip(tripId)
+
     /** Player ids on a trip (join order), observed for the manage-players screen. */
     fun observePlayerIdsForTrip(tripId: UUID): Flow<List<UUID>> =
         tripPlayerDao.observePlayerIdsForTrip(tripId)

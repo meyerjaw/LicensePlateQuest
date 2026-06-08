@@ -15,6 +15,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
@@ -50,6 +51,8 @@ fun UsMap(
     unfoundColor: Color = Color(0xFF33486A),
     outlineColor: Color = Color(0xFF0F1B2D),
     labelColor: Color = Color(0xFFEAF1FB),
+    routeStops: List<String> = emptyList(),
+    routeColor: Color = Color(0xFF12243F),
 ) {
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
     var scale by remember { mutableFloatStateOf(0f) }
@@ -227,6 +230,39 @@ fun UsMap(
                 shapes.states.forEach { state ->
                     val anchor = state.labelAnchor ?: return@forEach
                     val measured = textMeasurer.measure(state.code, labelStyle)
+                    drawText(
+                        textLayoutResult = measured,
+                        topLeft = Offset(
+                            x = anchor.x - measured.size.width / 2f,
+                            y = anchor.y - measured.size.height / 2f,
+                        ),
+                    )
+                }
+            }
+
+            // Route overlay (playtest #11): the trip's stops in order, joined by a connecting
+            // line with numbered pins at each state's visual center. Drawn last, so the pins sit
+            // on top of any check marks/labels. Sizes use 1/scale to stay visually constant.
+            if (routeStops.isNotEmpty()) {
+                val anchorByCode = shapes.states.associate { it.code to it.labelAnchor }
+                val routeAnchors = routeStops.mapNotNull { anchorByCode[it] }
+                for (i in 0 until routeAnchors.size - 1) {
+                    drawLine(
+                        color = routeColor,
+                        start = routeAnchors[i],
+                        end = routeAnchors[i + 1],
+                        strokeWidth = 3f / scale,
+                        cap = StrokeCap.Round,
+                    )
+                }
+                val pinStyle = TextStyle(
+                    color = Color.White,
+                    fontSize = (9f / scale).sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                routeAnchors.forEachIndexed { index, anchor ->
+                    drawCircle(color = routeColor, radius = 9f / scale, center = anchor)
+                    val measured = textMeasurer.measure((index + 1).toString(), pinStyle)
                     drawText(
                         textLayoutResult = measured,
                         topLeft = Offset(

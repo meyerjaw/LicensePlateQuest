@@ -206,6 +206,9 @@ class TripRepositoryTest {
         val trip = repo.getTrip(id)!!
         assertEquals(originId, trip.originRegionId)
         assertEquals(destId, trip.destinationRegionId)
+
+        // Ordered region codes for the map route.
+        assertEquals(listOf("TX", "OK", "CO"), repo.observeStopCodesForTrip(id).first())
     }
 
     private suspend fun newTrip(
