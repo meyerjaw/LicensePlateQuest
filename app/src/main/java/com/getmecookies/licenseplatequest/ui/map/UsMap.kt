@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,11 +49,13 @@ fun UsMap(
     onStateClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     interactive: Boolean = true,
-    unfoundColor: Color = Color(0xFF33486A),
-    outlineColor: Color = Color(0xFF0F1B2D),
-    labelColor: Color = Color(0xFFEAF1FB),
+    // Themed to the app palette so unfound states/outlines/labels match light or dark mode,
+    // rather than a fixed slate (the vibrant found-state palette stays as-is on top).
+    unfoundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    outlineColor: Color = MaterialTheme.colorScheme.outline,
+    labelColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     routeStops: List<String> = emptyList(),
-    routeColor: Color = Color(0xFF12243F),
+    routeColor: Color = MaterialTheme.colorScheme.primary,
 ) {
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
     var scale by remember { mutableFloatStateOf(0f) }

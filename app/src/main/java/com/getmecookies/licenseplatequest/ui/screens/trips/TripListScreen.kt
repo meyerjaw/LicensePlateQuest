@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
@@ -46,6 +47,7 @@ import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.TripListItem
 import com.getmecookies.licenseplatequest.domain.model.TripStatus
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
+import com.getmecookies.licenseplatequest.ui.components.EmptyState
 import com.getmecookies.licenseplatequest.ui.components.SwipeToDeleteRow
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -95,13 +97,10 @@ fun TripListScreen(
                 .padding(innerPadding),
         ) {
             if (!uiState.loading && uiState.isEmpty) {
-                Text(
-                    text = stringResource(R.string.trip_list_empty),
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(24.dp),
+                EmptyState(
+                    icon = Icons.Filled.Map,
+                    message = stringResource(R.string.trip_list_empty),
+                    modifier = Modifier.align(Alignment.Center),
                 )
             } else {
                 TripSections(

@@ -34,6 +34,8 @@ android {
     }
     buildFeatures {
         compose = true
+        // BuildConfig.DEBUG gates the debug-only "Seed sample data" action.
+        buildConfig = true
     }
     testOptions {
         unitTests {

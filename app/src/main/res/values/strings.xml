@@ -36,6 +36,10 @@
     <string name="settings_home_state">State</string>
     <string name="settings_trip_reminders">Trip reminders</string>
     <string name="settings_trip_reminders_desc">Get a nudge when a trip passes its end date</string>
+    <string name="settings_debug">Developer</string>
+    <string name="settings_seed_sample">Seed sample data</string>
+    <string name="settings_seed_desc">Adds a few players and a multi-stop trip with finds for testing.</string>
+    <string name="settings_seed_done">Sample data added</string>
 
     <!-- Overdue-trip reminder notification (playtest #13) -->
     <string name="reminder_channel_name">Trip reminders</string>

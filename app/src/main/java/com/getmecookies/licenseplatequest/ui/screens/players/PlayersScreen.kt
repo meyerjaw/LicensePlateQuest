@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -50,6 +51,7 @@ import com.getmecookies.licenseplatequest.domain.model.Player
 import com.getmecookies.licenseplatequest.domain.model.PlayerListItem
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.PlayerColors
+import com.getmecookies.licenseplatequest.ui.components.EmptyState
 import com.getmecookies.licenseplatequest.ui.components.PlayerColorPicker
 import com.getmecookies.licenseplatequest.ui.components.SwipeToDeleteRow
 import com.getmecookies.licenseplatequest.ui.theme.LicensePlateQuestTheme
@@ -123,11 +125,10 @@ fun PlayersScreen(
 
 @Composable
 private fun EmptyPlayers(modifier: Modifier = Modifier) {
-    Text(
-        text = stringResource(R.string.players_empty),
-        style = MaterialTheme.typography.bodyLarge,
-        textAlign = TextAlign.Center,
-        modifier = modifier.padding(24.dp),
+    EmptyState(
+        icon = Icons.Filled.People,
+        message = stringResource(R.string.players_empty),
+        modifier = modifier,
     )
 }
 

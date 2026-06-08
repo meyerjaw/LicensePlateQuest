@@ -83,6 +83,9 @@ object AppViewModelProvider {
             SettingsViewModel(
                 settingsRepository = lpqApp().container.settingsRepository,
                 regionRepository = lpqApp().container.regionRepository,
+                playerRepository = lpqApp().container.playerRepository,
+                tripRepository = lpqApp().container.tripRepository,
+                spottingRepository = lpqApp().container.spottingRepository,
             )
         }
     }
