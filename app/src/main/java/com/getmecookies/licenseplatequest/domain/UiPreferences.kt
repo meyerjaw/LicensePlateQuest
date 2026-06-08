@@ -16,8 +16,20 @@ class UiPreferences(context: Context) {
         get() = prefs.getInt(KEY_ACTIVE_TRIP_TAB, 0)
         set(value) = prefs.edit().putInt(KEY_ACTIVE_TRIP_TAB, value).apply()
 
+    /** List tab: whether found states are shown (defaults on; remembered across sessions). */
+    var listShowFound: Boolean
+        get() = prefs.getBoolean(KEY_LIST_SHOW_FOUND, true)
+        set(value) = prefs.edit().putBoolean(KEY_LIST_SHOW_FOUND, value).apply()
+
+    /** List tab: whether unfound states are shown (defaults on; remembered across sessions). */
+    var listShowUnfound: Boolean
+        get() = prefs.getBoolean(KEY_LIST_SHOW_UNFOUND, true)
+        set(value) = prefs.edit().putBoolean(KEY_LIST_SHOW_UNFOUND, value).apply()
+
     private companion object {
         const val PREFS = "ui_prefs"
         const val KEY_ACTIVE_TRIP_TAB = "active_trip_tab"
+        const val KEY_LIST_SHOW_FOUND = "list_show_found"
+        const val KEY_LIST_SHOW_UNFOUND = "list_show_unfound"
     }
 }

@@ -38,7 +38,7 @@ enum class ActiveTripTab { MAP, LIST }
 
 /**
  * One row in the Active Trip bottom-sheet list. [foundAt] is null for states the trip hasn't
- * found yet (shown only when the "show unfound" toggle is on).
+ * found yet (hidden when the "only show found" toggle is on).
  */
 data class StateRow(
     val code: String,
@@ -71,11 +71,16 @@ data class ActiveTripUiState(
     val routeStops: List<String> = emptyList(),
     /** Found states whose fill animation hasn't played yet — the map animates these (playtest #20). */
     val pendingCelebrations: Set<String> = emptySet(),
-    /** The (filtered + sorted) rows shown in the sheet — found states, plus unfound when toggled. */
+    /** The (filtered + sorted) rows shown in the sheet, per the Found/Unfound section toggles. */
     val states: List<StateRow> = emptyList(),
     val sort: FoundSort = FoundSort.ORDER_FOUND,
     val searchQuery: String = "",
-    val showUnfound: Boolean = false,
+    /** Section toggles (both default on, remembered across sessions). */
+    val showFound: Boolean = true,
+    val showUnfound: Boolean = true,
+    /** Counts of states matching the search that are hidden by a section toggle (drives the hint). */
+    val hiddenFoundMatches: Int = 0,
+    val hiddenUnfoundMatches: Int = 0,
     /** Which top tab is showing; restored from [UiPreferences] when the screen opens. */
     val selectedTab: ActiveTripTab = ActiveTripTab.MAP,
     /** At-a-glance stats for the strip beneath the map (playtest note #21). */
@@ -113,7 +118,10 @@ class ActiveTripViewModel(
 
     private val sort = MutableStateFlow(FoundSort.ORDER_FOUND)
     private val searchQuery = MutableStateFlow("")
-    private val showUnfound = MutableStateFlow(false)
+
+    // Section toggles restored from prefs so the list opens as the user last left it.
+    private val showFound = MutableStateFlow(uiPreferences.listShowFound)
+    private val showUnfound = MutableStateFlow(uiPreferences.listShowUnfound)
     // Restore the last-used tab so re-entering a trip shows Map or List as the user left it.
     private val initialTab = ActiveTripTab.entries.getOrElse(uiPreferences.activeTripTab) { ActiveTripTab.MAP }
     private val _uiState = MutableStateFlow(ActiveTripUiState(selectedTab = initialTab))
@@ -152,30 +160,35 @@ class ActiveTripViewModel(
         }
         viewModelScope.launch {
             // The trip + its spottings + the full state list on one side; the sheet's view
-            // controls (sort/search/show-unfound) on the other. Combined so the list re-filters
+            // controls (sort/search/section toggles) on the other. Combined so the list re-filters
             // live as the user types or toggles.
             val tripData = combine(
                 tripRepository.observeActiveTrip(),
                 spottingRepository.observeFoundStatesForActiveTrip(),
                 spottingRepository.observeAllStates(),
             ) { trip, found, allStates -> Triple(trip, found, allStates) }
-            val controls = combine(sort, searchQuery, showUnfound) { s, q, u -> Triple(s, q, u) }
+            val controls = combine(sort, searchQuery, showFound, showUnfound) { s, q, f, u ->
+                Controls(s, q, f, u)
+            }
 
             combine(tripData, controls) { data, control -> data to control }
                 .collect { (data, control) ->
                     val (trip, found, allStates) = data
-                    val (sortMode, query, showUnfoundSel) = control
                     detectCelebrations(trip?.id, found.size)
+                    val list = buildList(found, allStates, control)
                     _uiState.update {
                         it.copy(
                             loading = false,
                             tripId = trip?.id,
                             tripName = trip?.name ?: "",
                             foundCodes = found.map { f -> f.code }.toSet(),
-                            states = buildRows(found, allStates, sortMode, query, showUnfoundSel),
-                            sort = sortMode,
-                            searchQuery = query,
-                            showUnfound = showUnfoundSel,
+                            states = list.rows,
+                            sort = control.sort,
+                            searchQuery = control.query,
+                            showFound = control.showFound,
+                            showUnfound = control.showUnfound,
+                            hiddenFoundMatches = list.hiddenFound,
+                            hiddenUnfoundMatches = list.hiddenUnfound,
                             mapStats = buildMapStats(trip?.createdAt, found),
                         )
                     }
@@ -183,30 +196,52 @@ class ActiveTripViewModel(
         }
     }
 
+    /** The sheet's live view controls, combined into one value. */
+    private data class Controls(
+        val sort: FoundSort,
+        val query: String,
+        val showFound: Boolean,
+        val showUnfound: Boolean,
+    )
+
+    /** The visible rows plus the count of search matches hidden by each section toggle. */
+    private data class ListResult(
+        val rows: List<StateRow>,
+        val hiddenFound: Int,
+        val hiddenUnfound: Int,
+    )
+
     /**
-     * Builds the sheet rows: found states (in [FoundSort] order), optionally followed by unfound
-     * states (alphabetical), then narrowed by the search query against the state name.
+     * Builds the sheet rows: found states (in [FoundSort] order) followed by unfound states
+     * (alphabetical), narrowed by the search query, then by the Found/Unfound section toggles. Also
+     * counts how many *matches* are hidden by a toggle so the UI can hint that results exist in a
+     * switched-off section.
      */
-    private fun buildRows(
+    private fun buildList(
         found: List<FoundState>,
         allStates: List<StateSummary>,
-        sortMode: FoundSort,
-        query: String,
-        showUnfound: Boolean,
-    ): List<StateRow> {
+        controls: Controls,
+    ): ListResult {
         val foundRows = found.map { StateRow(it.code, it.name, it.foundAt) } // newest-first
         val foundCodes = found.mapTo(HashSet()) { it.code }
         val unfoundRows = allStates
             .filterNot { it.code in foundCodes }
             .map { StateRow(it.code, it.name, null) }
             .sortedBy { it.name }
-        val ordered = when (sortMode) {
+        val ordered = when (controls.sort) {
             FoundSort.ORDER_FOUND -> foundRows + unfoundRows
             FoundSort.ALPHABETICAL -> (foundRows + unfoundRows).sortedBy { it.name }
         }
-        val visible = if (showUnfound) ordered else ordered.filter { it.found }
-        val q = query.trim()
-        return if (q.isEmpty()) visible else visible.filter { it.name.contains(q, ignoreCase = true) }
+        val q = controls.query.trim()
+        val matches =
+            if (q.isEmpty()) ordered else ordered.filter { it.name.contains(q, ignoreCase = true) }
+        val rows =
+            matches.filter { (it.found && controls.showFound) || (!it.found && controls.showUnfound) }
+        // Hints only matter while searching: how many matches sit in a switched-off section.
+        val hiddenFound = if (q.isEmpty() || controls.showFound) 0 else matches.count { it.found }
+        val hiddenUnfound =
+            if (q.isEmpty() || controls.showUnfound) 0 else matches.count { !it.found }
+        return ListResult(rows, hiddenFound, hiddenUnfound)
     }
 
     /** Derive the at-a-glance map stats (playtest note #21) from the found states and trip start. */
@@ -280,8 +315,14 @@ class ActiveTripViewModel(
         searchQuery.value = query
     }
 
+    fun onToggleShowFound(show: Boolean) {
+        showFound.value = show
+        uiPreferences.listShowFound = show
+    }
+
     fun onToggleShowUnfound(show: Boolean) {
         showUnfound.value = show
+        uiPreferences.listShowUnfound = show
     }
 
     fun onEndTripClick() {

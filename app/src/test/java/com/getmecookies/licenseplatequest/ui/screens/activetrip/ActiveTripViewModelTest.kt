@@ -136,6 +136,42 @@ class ActiveTripViewModelTest {
         assertEquals(setOf("S00"), vm.uiState.value.foundCodes)
     }
 
+    @Test
+    fun list_defaultsToAllStates_andSectionTogglesFilter() = runBlocking {
+        createActiveTrip()
+        val vm = loadedViewModel()
+
+        spotting.markState(regions[0].regionCode)
+        awaitUntil { vm.uiState.value.foundCount == 1 }
+
+        // Both sections on by default: every state is listed.
+        assertEquals(50, vm.uiState.value.states.size)
+
+        // Hide unfound: only the marked one remains.
+        vm.onToggleShowUnfound(false)
+        awaitUntil { !vm.uiState.value.showUnfound && vm.uiState.value.states.size == 1 }
+        assertEquals(regions[0].regionCode, vm.uiState.value.states.single().code)
+
+        // Hide found too: nothing left.
+        vm.onToggleShowFound(false)
+        awaitUntil { !vm.uiState.value.showFound && vm.uiState.value.states.isEmpty() }
+    }
+
+    @Test
+    fun search_reportsMatchesHiddenByASectionToggle() = runBlocking {
+        createActiveTrip()
+        val vm = loadedViewModel()
+
+        // Hide unfound, then search for an (unfound) state's name.
+        vm.onToggleShowUnfound(false)
+        awaitUntil { !vm.uiState.value.showUnfound }
+        vm.onSearchChange(regions[5].name) // test regions use name == code, e.g. "S05"
+
+        awaitUntil { vm.uiState.value.hiddenUnfoundMatches > 0 }
+        assertEquals(0, vm.uiState.value.states.size)
+        assertEquals(0, vm.uiState.value.hiddenFoundMatches)
+    }
+
     private fun loadedViewModel(): ActiveTripViewModel {
         val vm = ActiveTripViewModel(
             mapRepository = mapRepository,

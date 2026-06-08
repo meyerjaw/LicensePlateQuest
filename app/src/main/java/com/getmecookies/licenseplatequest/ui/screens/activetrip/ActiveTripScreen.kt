@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MoreVert
@@ -51,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -234,9 +236,13 @@ fun ActiveTripScreen(
                                 sort = uiState.sort,
                                 states = uiState.states,
                                 searchQuery = uiState.searchQuery,
+                                showFound = uiState.showFound,
                                 showUnfound = uiState.showUnfound,
+                                hiddenFoundMatches = uiState.hiddenFoundMatches,
+                                hiddenUnfoundMatches = uiState.hiddenUnfoundMatches,
                                 onSortChange = viewModel::onSortChange,
                                 onSearchChange = viewModel::onSearchChange,
+                                onToggleShowFound = viewModel::onToggleShowFound,
                                 onToggleShowUnfound = viewModel::onToggleShowUnfound,
                                 onRowClick = onOpenState,
                             )
@@ -368,17 +374,21 @@ private fun relativeAgo(instant: Instant?): String {
     }
 }
 
-/** The found-states list (its own tab). Header (count + sort), a search box, a show-unfound
- *  toggle, then the scrolling list of state rows. */
+/** The states list (its own tab). Header (count + sort), a search box, Found/Unfound section
+ *  toggles (with a hint when a search matches a switched-off section), then the state rows. */
 @Composable
 private fun FoundStatesList(
     count: Int,
     sort: FoundSort,
     states: List<StateRow>,
     searchQuery: String,
+    showFound: Boolean,
     showUnfound: Boolean,
+    hiddenFoundMatches: Int,
+    hiddenUnfoundMatches: Int,
     onSortChange: (FoundSort) -> Unit,
     onSearchChange: (String) -> Unit,
+    onToggleShowFound: (Boolean) -> Unit,
     onToggleShowUnfound: (Boolean) -> Unit,
     onRowClick: (String) -> Unit,
 ) {
@@ -430,16 +440,76 @@ private fun FoundStatesList(
             singleLine = true,
         )
 
-        FilterChip(
-            selected = showUnfound,
-            onClick = { onToggleShowUnfound(!showUnfound) },
-            label = { Text(stringResource(R.string.active_trip_show_unfound)) },
-            leadingIcon = if (showUnfound) {
-                { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-            } else {
-                null
-            },
-        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(
+                selected = showFound,
+                onClick = { onToggleShowFound(!showFound) },
+                label = { Text(stringResource(R.string.active_trip_filter_found)) },
+                leadingIcon = if (showFound) {
+                    {
+                        Icon(
+                            Icons.Filled.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                } else {
+                    null
+                },
+            )
+            FilterChip(
+                selected = showUnfound,
+                onClick = { onToggleShowUnfound(!showUnfound) },
+                label = { Text(stringResource(R.string.active_trip_filter_unfound)) },
+                leadingIcon = if (showUnfound) {
+                    {
+                        Icon(
+                            Icons.Filled.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                } else {
+                    null
+                },
+            )
+        }
+
+        // Hint: a search match lives in a switched-off section. Tap to reveal it.
+        val hidden = hiddenFoundMatches > 0 || hiddenUnfoundMatches > 0
+        if (hidden) {
+            val hintText = when {
+                hiddenFoundMatches > 0 && hiddenUnfoundMatches > 0 ->
+                    stringResource(R.string.active_trip_hidden_both)
+
+                hiddenFoundMatches > 0 -> stringResource(R.string.active_trip_hidden_found)
+                else -> stringResource(R.string.active_trip_hidden_unfound)
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(MaterialTheme.shapes.small)
+                    .clickable {
+                        if (hiddenFoundMatches > 0) onToggleShowFound(true)
+                        if (hiddenUnfoundMatches > 0) onToggleShowUnfound(true)
+                    }
+                    .padding(vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Filled.Info,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(18.dp),
+                )
+                Text(
+                    text = hintText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
 
         if (states.isEmpty()) {
             val message = when {
