@@ -122,6 +122,20 @@ class ActiveTripViewModelTest {
         assertEquals(listOf("S00", "S01"), vm.uiState.value.routeStops)
     }
 
+    @Test
+    fun foundState_appearsInPendingCelebrations_thenClearsWhenAnimated() = runBlocking {
+        createActiveTrip()
+        val vm = loadedViewModel()
+
+        spotting.markState(regions[0].regionCode) // "S00"
+        awaitUntil { vm.uiState.value.pendingCelebrations.contains("S00") }
+
+        // The map reports it animated; the find clears from pending but stays found (#20).
+        vm.onCelebrationsAnimated(setOf("S00"))
+        awaitUntil { vm.uiState.value.pendingCelebrations.isEmpty() }
+        assertEquals(setOf("S00"), vm.uiState.value.foundCodes)
+    }
+
     private fun loadedViewModel(): ActiveTripViewModel {
         val vm = ActiveTripViewModel(
             mapRepository = mapRepository,

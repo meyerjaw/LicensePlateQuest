@@ -6,6 +6,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import com.getmecookies.licenseplatequest.data.local.entity.SpottingEntity
 import kotlinx.coroutines.flow.Flow
+import java.time.Instant
 import java.util.UUID
 
 @Dao
@@ -30,6 +31,30 @@ interface SpottingDao {
         """
     )
     fun observeFoundCodesForGame(gameInstanceId: UUID): Flow<List<String>>
+
+    /**
+     * Region codes found in a game whose fill animation hasn't played yet (celebrated_at IS NULL).
+     * The map animates these on its next visit, so finds made off the map aren't missed (#20).
+     */
+    @Query(
+        """
+        SELECT pr.region_code
+        FROM spotting s
+        JOIN plate_region pr ON pr.id = s.plate_region_id
+        WHERE s.game_instance_id = :gameInstanceId AND s.celebrated_at IS NULL
+        """
+    )
+    fun observeUncelebratedCodesForGame(gameInstanceId: UUID): Flow<List<String>>
+
+    /** Stamp the given regions as celebrated (animation played). No-op for already-stamped rows. */
+    @Query(
+        """
+        UPDATE spotting SET celebrated_at = :now
+        WHERE game_instance_id = :gameInstanceId AND celebrated_at IS NULL
+          AND plate_region_id IN (SELECT id FROM plate_region WHERE region_code IN (:regionCodes))
+        """
+    )
+    suspend fun markCelebrated(gameInstanceId: UUID, regionCodes: List<String>, now: Instant)
 
     /** The spotting for a given region in a game, if it's been marked. */
     @Query(

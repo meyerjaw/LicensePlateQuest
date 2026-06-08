@@ -112,3 +112,14 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 }
+
+// Room exports its schema JSONs during KSP. The androidTest assets bundle $projectDir/schemas for
+// MigrationTestHelper, but the asset-merge task doesn't naturally wait for KSP — so the *first*
+// build after a schema version bump can merge assets before the new N.json exists, failing the
+// migration test with "Cannot find the schema file ... N.json". Make every androidTest asset merge
+// depend on every KSP task so the exported schema is always present first.
+afterEvaluate {
+    tasks.matching { it.name.matches(Regex("merge.*AndroidTestAssets")) }.configureEach {
+        dependsOn(tasks.matching { it.name.matches(Regex("ksp.*Kotlin")) })
+    }
+}

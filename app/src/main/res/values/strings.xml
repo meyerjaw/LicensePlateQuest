@@ -40,6 +40,7 @@
     <string name="settings_seed_sample">Seed sample data</string>
     <string name="settings_seed_desc">Adds a few players and a multi-stop trip with finds for testing.</string>
     <string name="settings_seed_done">Sample data added</string>
+    <string name="settings_seed_failed">Couldn\'t add sample data (already present or regions not ready)</string>
 
     <!-- Overdue-trip reminder notification (playtest #13) -->
     <string name="reminder_channel_name">Trip reminders</string>

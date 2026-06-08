@@ -68,7 +68,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun eventLogDao(): EventLogDao
 
     companion object {
-        const val VERSION = 4
+        const val VERSION = 5
         const val NAME = "license_plate_quest.db"
     }
 }
@@ -151,6 +151,17 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
 }
 
 /**
+ * v4 → v5 (playtest note #20): add the nullable `celebrated_at` to `spotting`. Existing finds get
+ * NULL (so they'd re-animate once on next map visit, which is harmless). Stored as an ISO-8601 UTC
+ * string to match Room's [Instant] converter.
+ */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `spotting` ADD COLUMN `celebrated_at` TEXT")
+    }
+}
+
+/**
  * Process-wide singleton holder for [AppDatabase]. Manual DI (no Hilt in MVP) — the single
  * instance is created lazily and shared via [com.getmecookies.licenseplatequest.di.AppContainer].
  */
@@ -170,6 +181,6 @@ object DatabaseProvider {
             AppDatabase::class.java,
             AppDatabase.NAME,
         )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
             .build()
 }

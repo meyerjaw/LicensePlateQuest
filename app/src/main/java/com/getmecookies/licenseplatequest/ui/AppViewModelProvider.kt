@@ -86,6 +86,7 @@ object AppViewModelProvider {
                 playerRepository = lpqApp().container.playerRepository,
                 tripRepository = lpqApp().container.tripRepository,
                 spottingRepository = lpqApp().container.spottingRepository,
+                regionSeeder = lpqApp().container.regionSeeder,
             )
         }
     }

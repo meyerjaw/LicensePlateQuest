@@ -73,9 +73,24 @@ class MigrationTest {
     }
 
     @Test
+    fun migrate4To5_addsCelebratedAtColumn() {
+        helper.createDatabase(TEST_DB, 4).close()
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 5, true, MIGRATION_4_5)
+
+        db.query("PRAGMA table_info(`spotting`)").use { cursor ->
+            val nameIdx = cursor.getColumnIndex("name")
+            val columns = buildSet { while (cursor.moveToNext()) add(cursor.getString(nameIdx)) }
+            assertTrue("celebrated_at column was not added", columns.contains("celebrated_at"))
+        }
+    }
+
+    @Test
     fun allMigrations_validateAgainstExportedSchemas() {
         helper.createDatabase(TEST_DB, 1).close()
-        helper.runMigrationsAndValidate(TEST_DB, 4, true, MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+        helper.runMigrationsAndValidate(
+            TEST_DB, 5, true, MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
+        )
     }
 
     private fun insertRegion(id: String, code: String, name: String, order: Int): String =

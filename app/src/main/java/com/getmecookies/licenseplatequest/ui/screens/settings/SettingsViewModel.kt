@@ -7,6 +7,7 @@ import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
+import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
 import com.getmecookies.licenseplatequest.domain.model.HomeLocation
 import com.getmecookies.licenseplatequest.domain.model.RegionOption
 import com.getmecookies.licenseplatequest.domain.model.ThemeMode
@@ -34,6 +35,7 @@ class SettingsViewModel(
     private val playerRepository: PlayerRepository,
     private val tripRepository: TripRepository,
     private val spottingRepository: SpottingRepository,
+    private val regionSeeder: RegionSeeder,
 ) : ViewModel() {
 
     val themeMode: StateFlow<ThemeMode> = settingsRepository.themeMode
@@ -79,43 +81,62 @@ class SettingsViewModel(
 
     fun onClearHome() = settingsRepository.clearHome()
 
-    /** One-shot signal that sample data finished seeding (debug-only "Seed sample data"). */
-    private val _seedEvents = Channel<Unit>(Channel.BUFFERED)
-    val seedEvents: Flow<Unit> = _seedEvents.receiveAsFlow()
+    /**
+     * One-shot human-readable result of the debug-only "Seed sample data" action. Debug-only, so the
+     * message is deliberately detailed (region count, created trip id, exception text) to make a
+     * failed seed self-diagnosing in the confirmation Toast.
+     */
+    private val _seedEvents = Channel<String>(Channel.BUFFERED)
+    val seedEvents: Flow<String> = _seedEvents.receiveAsFlow()
 
     /**
      * Debug-only: populate a few players and a multi-stop trip with some finds so a fresh install
-     * is one tap from a useful test state. Gated to debug builds at the call site. No-ops if the
-     * bundled regions haven't seeded yet.
+     * is one tap from a useful test state. Gated to debug builds at the call site.
+     *
+     * Self-sufficient on a fresh launch: it first ensures the bundled regions are seeded (they
+     * normally load in the background at app start, which can race this tap), then builds the trip.
+     * Always reports a detailed result via [seedEvents].
      */
     fun seedSampleData() {
         viewModelScope.launch {
-            val regionsByCode = regionRepository.getAllRegions().associateBy { it.regionCode }
-            fun stop(code: String, city: String): TripStop? =
-                regionsByCode[code]?.let { TripStop(it.id, city) }
-            val stops = listOfNotNull(
-                stop("OH", "Columbus"),
-                stop("KY", "Louisville"),
-                stop("TN", "Nashville"),
-                stop("FL", "Orlando"),
-            )
-            if (stops.size < 2) return@launch
+            val msg = try {
+                // Make sure the bundled regions + license-plate game type exist before we build a
+                // trip on top of them (avoids a silent no-op when the startup seed hasn't finished).
+                regionSeeder.seedIfNeeded()
 
-            val alex = playerRepository.addPlayer("Alex")
-            val sam = playerRepository.addPlayer("Sam")
-            val jordan = playerRepository.addPlayer("Jordan")
-            tripRepository.createTrip(
-                name = "Sample Road Trip",
-                stops = stops,
-                startDate = LocalDate.now().minusDays(2),
-                endDate = LocalDate.now().plusDays(5),
-                playerIds = listOf(alex, sam, jordan),
-            )
-            // A few finds so the map fills, the leaderboard ranks, and stats have content.
-            spottingRepository.markState("OH", listOf(alex))
-            spottingRepository.markState("KY", listOf(alex, sam))
-            spottingRepository.markState("TN", listOf(jordan))
-            _seedEvents.send(Unit)
+                val regionsByCode = regionRepository.getAllRegions().associateBy { it.regionCode }
+                fun stop(code: String, city: String): TripStop? =
+                    regionsByCode[code]?.let { TripStop(it.id, city) }
+
+                val stops = listOfNotNull(
+                    stop("OH", "Columbus"),
+                    stop("KY", "Louisville"),
+                    stop("TN", "Nashville"),
+                    stop("FL", "Orlando"),
+                )
+                if (stops.size < 2) {
+                    "Seed failed: only ${regionsByCode.size} regions loaded"
+                } else {
+                    val alex = playerRepository.addPlayer("Alex")
+                    val sam = playerRepository.addPlayer("Sam")
+                    val jordan = playerRepository.addPlayer("Jordan")
+                    val tripId = tripRepository.createTrip(
+                        name = "Sample Road Trip",
+                        stops = stops,
+                        startDate = LocalDate.now().minusDays(2),
+                        endDate = LocalDate.now().plusDays(5),
+                        playerIds = listOf(alex, sam, jordan),
+                    )
+                    // A few finds so the map fills, the leaderboard ranks, and stats have content.
+                    val m1 = spottingRepository.markState("OH", listOf(alex))
+                    val m2 = spottingRepository.markState("KY", listOf(alex, sam))
+                    val m3 = spottingRepository.markState("TN", listOf(jordan))
+                    "Sample data added (trip ${tripId.toString().take(8)}, finds $m1/$m2/$m3)"
+                }
+            } catch (e: Exception) {
+                "Seed failed: ${e.javaClass.simpleName} ${e.message ?: ""}".trim()
+            }
+            _seedEvents.send(msg)
         }
     }
 }

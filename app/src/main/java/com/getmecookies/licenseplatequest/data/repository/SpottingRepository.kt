@@ -61,6 +61,34 @@ class SpottingRepository(
         }
 
     /**
+     * Found state codes for the active trip whose fill animation hasn't played yet (#20). The map
+     * animates these on its next visit, then calls [markCelebrated] to clear them. Re-subscribes
+     * when the active trip changes; empty when no trip is active.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun observeUncelebratedCodesForActiveTrip(): Flow<Set<String>> =
+        tripDao.observeByStatus(TripStatus.ACTIVE).flatMapLatest { trip ->
+            if (trip == null) {
+                flowOf(emptySet())
+            } else {
+                val game = gameInstanceDao.getForTrip(trip.id).firstOrNull()
+                if (game == null) {
+                    flowOf(emptySet())
+                } else {
+                    spottingDao.observeUncelebratedCodesForGame(game.id).map { it.toSet() }
+                }
+            }
+        }
+
+    /** Mark the given found states' animations as played, so they won't re-animate (#20). */
+    suspend fun markCelebrated(regionCodes: Set<String>) {
+        if (regionCodes.isEmpty()) return
+        val activeTrip = tripDao.getByStatus(TripStatus.ACTIVE) ?: return
+        val game = gameInstanceDao.getForTrip(activeTrip.id).firstOrNull() ?: return
+        spottingDao.markCelebrated(game.id, regionCodes.toList(), Instant.now())
+    }
+
+    /**
      * Found states (with display details) for the active trip, newest-found first. Like
      * [observeFoundCodesForActiveTrip], it re-subscribes when the active trip changes and
      * emits an empty list when no trip is active.

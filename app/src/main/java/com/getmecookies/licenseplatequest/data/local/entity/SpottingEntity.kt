@@ -12,6 +12,10 @@ import java.util.UUID
  * A single "we saw this state's plate" event within a game (SPEC §7). Several fields are
  * reserved nullable for future phases: [spotterPlayerId] (per-player attribution),
  * [photoPath], [gpsLat]/[gpsLng]. They stay null in MVP.
+ *
+ * [celebratedAt] is null until the find's fill animation has played on the map. It lets a find
+ * made off the map (from the list or State Detail) defer its animation to the next map visit
+ * instead of being silently missed (playtest note #20).
  */
 @Entity(
     tableName = "spotting",
@@ -51,4 +55,6 @@ data class SpottingEntity(
     @ColumnInfo(name = "gps_lat") val gpsLat: Double?,
     @ColumnInfo(name = "gps_lng") val gpsLng: Double?,
     @ColumnInfo(name = "created_at") val createdAt: Instant,
+    /** When the find's map animation has played (null = not yet celebrated; playtest #20). */
+    @ColumnInfo(name = "celebrated_at") val celebratedAt: Instant? = null,
 )

@@ -319,6 +319,8 @@ All entity IDs are UUIDs (java.util.UUID). All timestamps are stored as UTC ISO 
 - `gps_lat` (numeric, nullable) — reserved for future
 - `gps_lng` (numeric, nullable) — reserved for future
 - `created_at` (timestamp)
+- `celebrated_at` (timestamp, nullable — added v1.7, DB v5) — null until the find's map fill
+  animation has played; lets off-map finds defer their animation to the next map visit (#20)
 
 **SpottingPlayer** (junction — per-player attribution, added v1.4)
 - `id` (UUID, PK)
@@ -522,4 +524,21 @@ Several of these were resolved during build (noted inline):
   - **Pit stops / multi-leg trips (#11):** a trip is now an ordered list of **stops** (first = start, last = destination, optional pit stops between). New Trip and Manage trip add/remove/reorder stops (up/down); the name auto-prefill spans N stops. The active-trip **map draws the route** as a connecting line with numbered pins at each stop's visual center. Plate counting stays global to the trip. *Schema: new `trip_stop` table; DB bumped to **v4**. The repository writes ordered stops and keeps the legacy `origin_*`/`destination_*` columns in sync with the first/last stop, so existing stats and name prefill are untouched. Built test-first across the data, repository, and ViewModel layers.*
   - **Database migration tests (new discipline):** added `androidx.room:room-testing` and instrumented `MigrationTestHelper` tests (exported schemas wired into androidTest assets). They prove the v3→v4 migration preserves trip data and validate the full 1→2→3→4 chain against the schemas. **Going forward every migration ships with a test** (see §9). This was prompted by a dev-environment data wipe that an automated migration test would have caught.
   - **Still deferred:** per-stop arrival/departure dates + notes; route on the summary/shared image; **actual city pins** for the route (pins currently sit at the stop state's center, not the city — see backlog); one-way trips (#22); celebration sound; pre-permission priming.
+- **v1.7 (2026-06-08)** — UX & polish round:
+  - **Deferred find animation (#20):** a find marked **off the map** (from the list or State Detail)
+    no longer misses its fill sweep — it's queued and plays on the **next map visit**. Backed by a
+    new nullable `Spotting.celebrated_at`; the map animates the pending finds, then stamps them
+    celebrated (so they never replay), and on-map finds animate immediately through the same path.
+    *Schema: `spotting.celebrated_at`; DB bumped to **v5** (with a v4→v5 migration test).*
+  - **Four-color base map (#6):** the **unfound** base is now a subtle 4-colored mosaic (a gentle
+    tint over the themed neutral) instead of flat gray — no two neighbors share a tint.
+    Color/adjacency data moved to a pure, unit-tested `StateColorData` (a test proves both the found
+    mosaic and the base are conflict-free).
+  - **Empty-state illustration:** the Trips and Players empty screens show a friendly camper-van
+    illustration instead of a plain icon.
+  - **Tap targets:** the map's `hitTest` gains a small nearest-anchor tolerance so tiny northeastern
+    states are easier to tap (AK/HI placement verified — no change needed).
+  - **Still deferred:** the richer #20 batch (staggered cascade, "+N states" combo overlay,
+    cross-restart toast); celebration sound; pre-permission priming; first-run onboarding; one-way
+    trips (#22).
 

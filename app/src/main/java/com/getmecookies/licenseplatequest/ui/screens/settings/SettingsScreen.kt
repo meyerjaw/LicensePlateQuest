@@ -65,13 +65,12 @@ fun SettingsScreen(
     val regionOptions by viewModel.regionOptions.collectAsStateWithLifecycle()
     val homeDialog by viewModel.homeDialog.collectAsStateWithLifecycle()
 
-    // Debug-only: confirm the seed action with a Toast.
+    // Debug-only: report the seed result (detailed message) via a Toast.
     if (BuildConfig.DEBUG) {
         val context = LocalContext.current
-        val seedDoneMsg = stringResource(R.string.settings_seed_done)
         LaunchedEffect(Unit) {
-            viewModel.seedEvents.collect {
-                Toast.makeText(context, seedDoneMsg, Toast.LENGTH_SHORT).show()
+            viewModel.seedEvents.collect { msg ->
+                Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
             }
         }
     }

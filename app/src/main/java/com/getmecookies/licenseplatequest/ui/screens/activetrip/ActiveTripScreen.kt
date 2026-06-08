@@ -203,6 +203,8 @@ fun ActiveTripScreen(
                                         foundCodes = uiState.foundCodes,
                                         onStateClick = onOpenState,
                                         routeStops = uiState.routeStops,
+                                        celebrateCodes = uiState.pendingCelebrations,
+                                        onCelebrated = viewModel::onCelebrationsAnimated,
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .padding(8.dp),

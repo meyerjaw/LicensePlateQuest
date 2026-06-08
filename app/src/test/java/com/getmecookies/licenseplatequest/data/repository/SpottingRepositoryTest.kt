@@ -103,6 +103,27 @@ class SpottingRepositoryTest {
     }
 
     @Test
+    fun markState_leavesFindPendingCelebration() = runBlocking {
+        createActiveTrip()
+        spotting.markState("TX")
+
+        // A fresh find is uncelebrated until the map animates it (#20).
+        assertEquals(setOf("TX"), spotting.observeUncelebratedCodesForActiveTrip().first())
+    }
+
+    @Test
+    fun markCelebrated_clearsPending_butKeepsFound() = runBlocking {
+        createActiveTrip()
+        spotting.markState("TX")
+
+        spotting.markCelebrated(setOf("TX"))
+
+        assertTrue(spotting.observeUncelebratedCodesForActiveTrip().first().isEmpty())
+        // Still found — only the animation flag changed.
+        assertEquals(setOf("TX"), spotting.observeFoundCodesForActiveTrip().first())
+    }
+
+    @Test
     fun unmarkState_removesSpotting() = runBlocking {
         createActiveTrip()
         spotting.markState("TX")

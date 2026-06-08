@@ -30,6 +30,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.withResumed
 import com.getmecookies.licenseplatequest.R
 
 /**
@@ -56,6 +58,10 @@ fun UsMap(
     labelColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     routeStops: List<String> = emptyList(),
     routeColor: Color = MaterialTheme.colorScheme.primary,
+    // Found states awaiting their fill animation (playtest #20). The map animates these, then calls
+    // [onCelebrated] so they're stamped done and won't replay — even finds made off the map.
+    celebrateCodes: Set<String> = emptySet(),
+    onCelebrated: (Set<String>) -> Unit = {},
 ) {
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
     var scale by remember { mutableFloatStateOf(0f) }
@@ -63,17 +69,29 @@ fun UsMap(
     var minScale by remember { mutableFloatStateOf(0f) }
     val textMeasurer = rememberTextMeasurer()
 
-    // Animate newly-found states from the unfound to the found color (brief fill sweep).
-    var previousFound by remember { mutableStateOf(foundCodes) }
+    // Animate pending finds from the base to the found color (fill sweep), then acknowledge so
+    // they're stamped celebrated. Driven by [celebrateCodes] (persisted), so finds made while the map
+    // wasn't on screen still play their sweep on the next visit (playtest #20).
+    val lifecycleOwner = LocalLifecycleOwner.current
     var newlyFound by remember { mutableStateOf(emptySet<String>()) }
     val fillProgress = remember { Animatable(1f) }
-    LaunchedEffect(foundCodes) {
-        val added = foundCodes - previousFound
-        previousFound = foundCodes
-        if (added.isNotEmpty()) {
-            newlyFound = added
+    LaunchedEffect(celebrateCodes) {
+        if (celebrateCodes.isNotEmpty()) {
+            val animating = celebrateCodes
+            // Reset these to the base color *first*: foundCodes already contains them, so they'd
+            // otherwise render fully filled and then visibly "unfill" the moment we snap to 0. Doing
+            // it before the wait means that reset happens behind the nav transition, unseen.
+            newlyFound = animating
             fillProgress.snapTo(0f)
-            fillProgress.animateTo(1f, animationSpec = tween(durationMillis = 450))
+            // Then wait until the map is actually on screen before sweeping. Returning from State
+            // Detail runs a nav transition during which this composable is only STARTED, not RESUMED
+            // — animating then would finish the sweep behind the transition and never be seen (a tab
+            // switch works without this only because it has no transition). Resolves immediately when
+            // already resumed (on-map find / tab switch), so those are unchanged.
+            lifecycleOwner.lifecycle.withResumed {}
+            fillProgress.animateTo(1f, animationSpec = tween(durationMillis = STATE_FILL_ANIM_MS))
+            newlyFound = emptySet()
+            onCelebrated(animating)
         }
     }
 
@@ -117,45 +135,47 @@ fun UsMap(
             // parent scroll pass through (playtest note #3).
             .then(
                 if (!interactive) Modifier else Modifier
-            .pointerInput(shapes) {
-                detectTransformGestures { centroid, pan, zoom, _ ->
-                    if (scale <= 0f) return@detectTransformGestures
-                    val newScale = (scale * zoom).coerceIn(minScale, minScale * 12f)
-                    // Keep the gesture centroid anchored, then apply pan, then clamp on-screen.
-                    val candidate = (offset - centroid) * (newScale / scale) + centroid + pan
-                    offset = clampOffset(candidate, newScale)
-                    scale = newScale
-                }
-            }
-            .pointerInput(shapes) {
-                detectTapGestures(
-                    onTap = onTap@{ tap ->
-                        if (scale <= 0f) return@onTap
-                        val mapX = (tap.x - offset.x) / scale
-                        val mapY = (tap.y - offset.y) / scale
-                        // ~16dp of slop (converted to viewBox units) so tiny states are tappable.
-                        shapes.hitTest(mapX, mapY, tolerance = 16f / scale)?.let(onStateClick)
-                    },
-                    onDoubleTap = onDoubleTap@{ tap ->
-                        if (minScale <= 0f) return@onDoubleTap
-                        // Toggle: if zoomed in, reset to fit-and-center; else zoom toward the tap.
-                        val zoomedIn = scale > minScale * 1.5f
-                        if (zoomedIn) {
-                            scale = minScale
-                            offset = Offset(
-                                x = (canvasSize.width - shapes.width * minScale) / 2f,
-                                y = (canvasSize.height - shapes.height * minScale) / 2f,
-                            )
-                        } else {
-                            val newScale = (minScale * 3f).coerceAtMost(minScale * 12f)
-                            // Keep the tapped screen point fixed as we scale up, then clamp.
-                            val candidate = tap - (tap - offset) * (newScale / scale)
+                    .pointerInput(shapes) {
+                        detectTransformGestures { centroid, pan, zoom, _ ->
+                            if (scale <= 0f) return@detectTransformGestures
+                            val newScale = (scale * zoom).coerceIn(minScale, minScale * 12f)
+                            // Keep the gesture centroid anchored, then apply pan, then clamp on-screen.
+                            val candidate =
+                                (offset - centroid) * (newScale / scale) + centroid + pan
                             offset = clampOffset(candidate, newScale)
                             scale = newScale
                         }
+                    }
+                    .pointerInput(shapes) {
+                        detectTapGestures(
+                            onTap = onTap@{ tap ->
+                                if (scale <= 0f) return@onTap
+                                val mapX = (tap.x - offset.x) / scale
+                                val mapY = (tap.y - offset.y) / scale
+                                // ~16dp of slop (converted to viewBox units) so tiny states are tappable.
+                                shapes.hitTest(mapX, mapY, tolerance = 16f / scale)
+                                    ?.let(onStateClick)
+                            },
+                            onDoubleTap = onDoubleTap@{ tap ->
+                                if (minScale <= 0f) return@onDoubleTap
+                                // Toggle: if zoomed in, reset to fit-and-center; else zoom toward the tap.
+                                val zoomedIn = scale > minScale * 1.5f
+                                if (zoomedIn) {
+                                    scale = minScale
+                                    offset = Offset(
+                                        x = (canvasSize.width - shapes.width * minScale) / 2f,
+                                        y = (canvasSize.height - shapes.height * minScale) / 2f,
+                                    )
+                                } else {
+                                    val newScale = (minScale * 3f).coerceAtMost(minScale * 12f)
+                                    // Keep the tapped screen point fixed as we scale up, then clamp.
+                                    val candidate = tap - (tap - offset) * (newScale / scale)
+                                    offset = clampOffset(candidate, newScale)
+                                    scale = newScale
+                                }
+                            },
+                        )
                     },
-                )
-            },
             ),
     ) {
         canvasSize = IntSize(size.width.toInt(), size.height.toInt())
@@ -280,6 +300,9 @@ fun UsMap(
         }
     }
 }
+
+/** Duration of the per-state fill sweep when a find is celebrated on the map (playtest #20). */
+private const val STATE_FILL_ANIM_MS = 850
 
 /** Vibrant fill colors for found states; each state maps to one deterministically by its code. */
 private val FOUND_PALETTE = listOf(

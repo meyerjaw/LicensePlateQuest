@@ -69,6 +69,8 @@ data class ActiveTripUiState(
     val foundCodes: Set<String> = emptySet(),
     /** Ordered state codes of the trip's stops, for the map route overlay (playtest #11). */
     val routeStops: List<String> = emptyList(),
+    /** Found states whose fill animation hasn't played yet — the map animates these (playtest #20). */
+    val pendingCelebrations: Set<String> = emptySet(),
     /** The (filtered + sorted) rows shown in the sheet — found states, plus unfound when toggled. */
     val states: List<StateRow> = emptyList(),
     val sort: FoundSort = FoundSort.ORDER_FOUND,
@@ -100,7 +102,7 @@ data class Celebration(val tripId: UUID, val mode: CelebrationMode)
 class ActiveTripViewModel(
     mapRepository: MapRepository,
     private val tripRepository: TripRepository,
-    spottingRepository: SpottingRepository,
+    private val spottingRepository: SpottingRepository,
     private val celebrationTracker: CelebrationTracker,
     private val uiPreferences: UiPreferences,
     settingsRepository: SettingsRepository,
@@ -141,6 +143,12 @@ class ActiveTripViewModel(
                     if (trip == null) flowOf(emptyList()) else tripRepository.observeStopCodesForTrip(trip.id)
                 }
                 .collect { codes -> _uiState.update { it.copy(routeStops = codes) } }
+        }
+        viewModelScope.launch {
+            // Found states still awaiting their map animation (playtest #20) — fed straight to the
+            // map, which animates them then acknowledges via [onCelebrationsAnimated].
+            spottingRepository.observeUncelebratedCodesForActiveTrip()
+                .collect { codes -> _uiState.update { it.copy(pendingCelebrations = codes) } }
         }
         viewModelScope.launch {
             // The trip + its spottings + the full state list on one side; the sheet's view
@@ -247,6 +255,15 @@ class ActiveTripViewModel(
         } else {
             _confettiEvents.trySend(Unit)
         }
+    }
+
+    /**
+     * The map finished animating these finds — stamp them celebrated so they won't replay on the
+     * next visit (playtest #20). Clears them from [ActiveTripUiState.pendingCelebrations] via the DB.
+     */
+    fun onCelebrationsAnimated(codes: Set<String>) {
+        if (codes.isEmpty()) return
+        viewModelScope.launch { spottingRepository.markCelebrated(codes) }
     }
 
     /** Switch tabs and remember the choice for next time the user opens a trip. */
