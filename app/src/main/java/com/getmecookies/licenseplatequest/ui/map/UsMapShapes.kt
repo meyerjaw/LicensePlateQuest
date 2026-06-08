@@ -32,14 +32,48 @@ class UsMapShapes(
     /** True for the offline tile-grid placeholder; drives label rendering. */
     val showLabels: Boolean = false,
 ) {
-    /** The state whose region contains the given point in viewBox space, or null. */
-    fun hitTest(x: Float, y: Float): String? {
+    /**
+     * The state whose region contains the given point in viewBox space, or null.
+     *
+     * On an exact miss, if [tolerance] > 0 (viewBox units), falls back to the nearest state whose
+     * label anchor is within [tolerance] — so tiny states (the northeastern cluster, DC) are easier
+     * to tap. Pass 0 to keep strict point-in-polygon behavior.
+     */
+    fun hitTest(x: Float, y: Float, tolerance: Float = 0f): String? {
         val xi = x.toInt()
         val yi = y.toInt()
         // Iterate in reverse so smaller states drawn later win ties on shared borders.
         for (i in states.indices.reversed()) {
             if (states[i].region.contains(xi, yi)) return states[i].code
         }
-        return null
+        if (tolerance <= 0f) return null
+        val anchors = states.mapNotNull { s -> s.labelAnchor?.let { s.code to it } }
+        return nearestCodeWithin(x, y, anchors, tolerance)
     }
+}
+
+/**
+ * The code whose [anchors] entry is closest to (x, y), if within [tolerance] (Euclidean, same units
+ * as the coordinates). Pure math so it can be unit-tested without Android. Returns null when nothing
+ * is in range. Backs [UsMapShapes.hitTest]'s small-state tap tolerance.
+ */
+internal fun nearestCodeWithin(
+    x: Float,
+    y: Float,
+    anchors: List<Pair<String, Offset>>,
+    tolerance: Float,
+): String? {
+    if (tolerance <= 0f) return null
+    var best: String? = null
+    var bestSq = tolerance * tolerance
+    for ((code, a) in anchors) {
+        val dx = a.x - x
+        val dy = a.y - y
+        val sq = dx * dx + dy * dy
+        if (sq <= bestSq) {
+            bestSq = sq
+            best = code
+        }
+    }
+    return best
 }

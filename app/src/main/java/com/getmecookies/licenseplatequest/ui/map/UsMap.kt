@@ -133,7 +133,8 @@ fun UsMap(
                         if (scale <= 0f) return@onTap
                         val mapX = (tap.x - offset.x) / scale
                         val mapY = (tap.y - offset.y) / scale
-                        shapes.hitTest(mapX, mapY)?.let(onStateClick)
+                        // ~16dp of slop (converted to viewBox units) so tiny states are tappable.
+                        shapes.hitTest(mapX, mapY, tolerance = 16f / scale)?.let(onStateClick)
                     },
                     onDoubleTap = onDoubleTap@{ tap ->
                         if (minScale <= 0f) return@onDoubleTap
@@ -172,11 +173,12 @@ fun UsMap(
                 // Each found state gets its own vibrant color (stable per state code), so the
                 // map fills in as a colorful mosaic; newly-found states animate from unfound.
                 val target = foundColorFor(state.code)
+                val base = baseColorFor(state.code, unfoundColor)
                 val fill = when {
                     state.code in foundCodes && state.code in newlyFound ->
-                        lerp(unfoundColor, target, fillProgress.value)
+                        lerp(base, target, fillProgress.value)
                     state.code in foundCodes -> target
-                    else -> unfoundColor
+                    else -> base
                 }
                 drawPath(path = state.path, color = fill)
                 drawPath(path = state.path, color = outlineColor, style = Stroke(width = strokeWidth))
@@ -292,29 +294,34 @@ private val FOUND_PALETTE = listOf(
 )
 
 /**
- * Per-state palette index, precomputed by graph-coloring the US state adjacency graph so that no
- * two bordering states share a color (four-color theorem; playtest note #6). This keeps the
- * vibrant fill-in mosaic but guarantees neighboring found states never blur together. AK and HI
- * have no land neighbors, so their colors are free.
- */
-private val STATE_COLOR_INDEX: Map<String, Int> = mapOf(
-    "AK" to 1, "AL" to 3, "AR" to 7, "AZ" to 6, "CA" to 0, "CO" to 4, "CT" to 3, "DE" to 6,
-    "FL" to 6, "GA" to 1, "HI" to 0, "IA" to 7, "ID" to 4, "IL" to 4, "IN" to 5, "KS" to 2,
-    "KY" to 2, "LA" to 2, "MA" to 2, "MD" to 0, "ME" to 7, "MI" to 6, "MN" to 2, "MO" to 1,
-    "MS" to 1, "MT" to 0, "NC" to 2, "ND" to 1, "NE" to 3, "NH" to 5, "NJ" to 0, "NM" to 5,
-    "NV" to 5, "NY" to 1, "OH" to 4, "OK" to 0, "OR" to 7, "PA" to 7, "RI" to 4, "SC" to 4,
-    "SD" to 6, "TN" to 0, "TX" to 6, "UT" to 3, "VA" to 1, "VT" to 7, "WA" to 5, "WI" to 3,
-    "WV" to 3, "WY" to 5,
-)
-
-/**
- * Stable per-state fill color. Neighboring states are guaranteed different via
- * [STATE_COLOR_INDEX]; any code outside the bundled 50 (e.g. future DC/territories) falls back to
- * a hash so it still gets a stable color.
+ * Stable per-state fill color. Neighboring states are guaranteed different via [STATE_COLOR_INDEX]
+ * (graph-colored in [StateColorData]); any code outside the bundled 50 (e.g. future DC/territories)
+ * falls back to a hash so it still gets a stable color.
  */
 private fun foundColorFor(code: String): Color {
     val index = STATE_COLOR_INDEX[code] ?: ((code.hashCode() and 0x7fffffff) % FOUND_PALETTE.size)
     return FOUND_PALETTE[index]
+}
+
+/**
+ * Four subtle hues for the *unfound* base map (playtest note #6). Kept gentle so the base reads as a
+ * soft mosaic, not a loud one — the vibrant found palette still pops on top when a state is marked.
+ */
+private val BASE_TINT_PALETTE = listOf(
+    Color(0xFF80CBC4), // soft teal
+    Color(0xFFFFE0A3), // soft amber
+    Color(0xFFF5B7C4), // soft rose
+    Color(0xFFB3C7E6), // soft periwinkle
+)
+
+/**
+ * The unfound base fill: the themed [neutral] gently tinted toward one of four hues so neighboring
+ * unfound states differ subtly ([BASE_COLOR_INDEX] guarantees no two neighbors share a tint).
+ * Falls back to the plain neutral for any code outside the bundled 50.
+ */
+private fun baseColorFor(code: String, neutral: Color): Color {
+    val index = BASE_COLOR_INDEX[code] ?: return neutral
+    return lerp(neutral, BASE_TINT_PALETTE[index], 0.15f)
 }
 
 /** A dark or light check mark depending on the fill's brightness, so it always reads clearly. */

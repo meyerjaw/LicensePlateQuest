@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Friendly flat camper-van-on-a-road scene for empty states. Full-color (not tinted). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="160dp"
+    android:height="150dp"
+    android:viewportWidth="192"
+    android:viewportHeight="180">
+
+    <!-- Sun -->
+    <path
+        android:fillColor="#FFB703"
+        android:pathData="M134,40 a18,18 0 1 0 36,0 a18,18 0 1 0 -36,0 z" />
+
+    <!-- Road -->
+    <path
+        android:fillColor="#6C757D"
+        android:pathData="M12,143 h168 v14 h-168 z" />
+    <!-- Road dashes -->
+    <path
+        android:fillColor="#F6F2E7"
+        android:pathData="M28,148 h16 v4 h-16 z M68,148 h16 v4 h-16 z M108,148 h16 v4 h-16 z M148,148 h16 v4 h-16 z" />
+
+    <!-- Van body (lower, teal) -->
+    <path
+        android:fillColor="#2A9D8F"
+        android:pathData="M52,98 h80 a8,8 0 0 1 8,8 v18 a8,8 0 0 1 -8,8 h-80 a8,8 0 0 1 -8,-8 v-18 a8,8 0 0 1 8,-8 z" />
+    <!-- Van roof band (cream) -->
+    <path
+        android:fillColor="#F6F2E7"
+        android:pathData="M52,98 h80 a8,8 0 0 1 8,8 v6 h-96 v-6 a8,8 0 0 1 8,-8 z" />
+    <!-- Windows -->
+    <path
+        android:fillColor="#A8DADC"
+        android:pathData="M54,116 h34 v12 h-34 z M96,116 h34 v12 h-34 z" />
+    <!-- Headlight -->
+    <path
+        android:fillColor="#FFD166"
+        android:pathData="M135,126 a3,3 0 1 0 6,0 a3,3 0 1 0 -6,0 z" />
+
+    <!-- Wheels -->
+    <path
+        android:fillColor="#264653"
+        android:pathData="M55,132 a11,11 0 1 0 22,0 a11,11 0 1 0 -22,0 z M107,132 a11,11 0 1 0 22,0 a11,11 0 1 0 -22,0 z" />
+    <path
+        android:fillColor="#E9E9E9"
+        android:pathData="M62,132 a4,4 0 1 0 8,0 a4,4 0 1 0 -8,0 z M114,132 a4,4 0 1 0 8,0 a4,4 0 1 0 -8,0 z" />
+
+    <!-- A couple of clouds -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M36,52 a9,9 0 1 0 18,0 a9,9 0 1 0 -18,0 z M48,52 a7,7 0 1 0 14,0 a7,7 0 1 0 -14,0 z" />
+</vector>

@@ -20,7 +20,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -126,7 +125,7 @@ fun PlayersScreen(
 @Composable
 private fun EmptyPlayers(modifier: Modifier = Modifier) {
     EmptyState(
-        icon = Icons.Filled.People,
+        illustrationRes = R.drawable.ic_empty_roadtrip,
         message = stringResource(R.string.players_empty),
         modifier = modifier,
     )

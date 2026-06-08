@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
@@ -98,7 +97,7 @@ fun TripListScreen(
         ) {
             if (!uiState.loading && uiState.isEmpty) {
                 EmptyState(
-                    icon = Icons.Filled.Map,
+                    illustrationRes = R.drawable.ic_empty_roadtrip,
                     message = stringResource(R.string.trip_list_empty),
                     modifier = Modifier.align(Alignment.Center),
                 )
