@@ -300,8 +300,9 @@ fun NewTripScreen(
     }
 }
 
+/** Shared by New Trip and Manage trip (same package) — one editable stop in a route. */
 @Composable
-private fun StopEditor(
+internal fun StopEditor(
     index: Int,
     total: Int,
     city: String,

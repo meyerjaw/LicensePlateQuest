@@ -180,6 +180,36 @@ class ManageTripViewModelTest {
         assertFalse(vm.uiState.value.showEndTripPrompt)
     }
 
+    @Test
+    fun loadsTrip_withItsStops() = runBlocking {
+        val tripId = createTrip(playerIds = listOf(players.addPlayer("Alice")))
+        val vm = loadedViewModel(tripId)
+
+        assertEquals(listOf("Austin", "Denver"), vm.uiState.value.stops.map { it.city })
+    }
+
+    @Test
+    fun editingStop_marksDirty() = runBlocking {
+        val tripId = createTrip(playerIds = listOf(players.addPlayer("Alice")))
+        val vm = loadedViewModel(tripId)
+
+        vm.onStopCityChange(0, "Houston")
+
+        assertTrue(vm.isDirty())
+    }
+
+    @Test
+    fun save_persistsStopChanges() = runBlocking {
+        val tripId = createTrip(playerIds = listOf(players.addPlayer("Alice")))
+        val vm = loadedViewModel(tripId)
+
+        vm.onStopCityChange(0, "Houston")
+        vm.onSave()
+        awaitUntil { vm.saved.value }
+
+        assertEquals("Houston", trips.getStops(tripId).first().city)
+    }
+
     private fun loadedViewModel(tripId: UUID): ManageTripViewModel {
         val vm = ManageTripViewModel(
             savedStateHandle = SavedStateHandle(

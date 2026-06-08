@@ -55,14 +55,15 @@ class TripFormValidationTest {
         val valid = ManageTripUiState(
             loading = false,
             name = "Edited trip",
-            originCity = "Austin",
-            originRegionId = UUID.randomUUID(),
-            destinationCity = "Denver",
-            destinationRegionId = UUID.randomUUID(),
+            stops = listOf(
+                StopDraft("Austin", UUID.randomUUID()),
+                StopDraft("Denver", UUID.randomUUID()),
+            ),
             selectedPlayerIds = setOf(UUID.randomUUID()),
         )
         assertTrue(valid.isValid)
         assertFalse(valid.copy(name = "").isValid)
         assertFalse(valid.copy(selectedPlayerIds = emptySet()).isValid)
+        assertFalse(valid.copy(stops = listOf(StopDraft("Austin", UUID.randomUUID()))).isValid)
     }
 }

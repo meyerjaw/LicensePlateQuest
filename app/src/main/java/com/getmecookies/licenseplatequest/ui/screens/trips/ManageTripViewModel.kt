@@ -7,6 +7,7 @@ import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.domain.model.TripStatus
+import com.getmecookies.licenseplatequest.domain.model.TripStop
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,10 +18,10 @@ import java.time.LocalDate
 import java.util.UUID
 
 /**
- * ViewModel for the Manage trip (edit) screen (playtest #14). Loads the trip and its players
- * once, prefills the form, and stages all edits until [onSave] — which writes the trip fields via
- * [TripRepository.updateTrip] and reconciles players against the loaded set. [isDirty] backs the
- * unsaved-changes warning.
+ * ViewModel for the Manage trip (edit) screen (playtest #14). Loads the trip, its ordered stops
+ * (playtest #11), and its players once, prefills the form, and stages all edits until [onSave] —
+ * which writes the trip via [TripRepository.updateTrip] and reconciles players against the loaded
+ * set. [isDirty] backs the unsaved-changes warning.
  */
 class ManageTripViewModel(
     savedStateHandle: SavedStateHandle,
@@ -47,10 +48,7 @@ class ManageTripViewModel(
 
     private data class Snapshot(
         val name: String,
-        val originCity: String,
-        val originRegionId: UUID?,
-        val destinationCity: String,
-        val destinationRegionId: UUID?,
+        val stops: List<StopDraft>,
         val startDate: LocalDate,
         val endDate: LocalDate?,
         val playerIds: Set<UUID>,
@@ -73,14 +71,12 @@ class ManageTripViewModel(
                 _uiState.update { it.copy(loading = false) }
                 return@launch
             }
+            val stops = tripRepository.getStops(tripId).map { StopDraft(city = it.city, regionId = it.regionId) }
             val playerIds = tripRepository.observePlayerIdsForTrip(tripId).first().toSet()
             loadedStatus = trip.status
             original = Snapshot(
                 name = trip.name,
-                originCity = trip.originCity,
-                originRegionId = trip.originRegionId,
-                destinationCity = trip.destinationCity,
-                destinationRegionId = trip.destinationRegionId,
+                stops = stops,
                 startDate = trip.startDate,
                 endDate = trip.endDate,
                 playerIds = playerIds,
@@ -89,10 +85,7 @@ class ManageTripViewModel(
                 it.copy(
                     loading = false,
                     name = trip.name,
-                    originCity = trip.originCity,
-                    originRegionId = trip.originRegionId,
-                    destinationCity = trip.destinationCity,
-                    destinationRegionId = trip.destinationRegionId,
+                    stops = stops,
                     startDate = trip.startDate,
                     endDate = trip.endDate,
                     selectedPlayerIds = playerIds,
@@ -105,17 +98,47 @@ class ManageTripViewModel(
 
     fun onClearName() = _uiState.update { it.copy(name = "") }
 
-    fun onOriginCityChange(value: String) = _uiState.update { it.copy(originCity = value) }
+    fun onStopCityChange(index: Int, value: String) = updateStop(index) { it.copy(city = value) }
 
-    fun onDestinationCityChange(value: String) = _uiState.update { it.copy(destinationCity = value) }
+    fun onStopRegionSelected(index: Int, id: UUID) = updateStop(index) { it.copy(regionId = id) }
 
-    fun onOriginRegionSelected(id: UUID) = _uiState.update { it.copy(originRegionId = id) }
+    fun onAddStop() = _uiState.update { it.copy(stops = it.stops + StopDraft()) }
 
-    fun onDestinationRegionSelected(id: UUID) = _uiState.update { it.copy(destinationRegionId = id) }
+    fun onRemoveStop(index: Int) = _uiState.update { state ->
+        if (state.stops.size <= 2 || index !in state.stops.indices) {
+            state
+        } else {
+            state.copy(stops = state.stops.filterIndexed { i, _ -> i != index })
+        }
+    }
 
-    fun onClearOrigin() = _uiState.update { it.copy(originCity = "", originRegionId = null) }
+    fun onMoveStopUp(index: Int) = moveStop(index, index - 1)
 
-    fun onClearDestination() = _uiState.update { it.copy(destinationCity = "", destinationRegionId = null) }
+    fun onMoveStopDown(index: Int) = moveStop(index, index + 1)
+
+    private fun updateStop(index: Int, transform: (StopDraft) -> StopDraft) {
+        _uiState.update { state ->
+            if (index !in state.stops.indices) {
+                state
+            } else {
+                val stops = state.stops.toMutableList()
+                stops[index] = transform(stops[index])
+                state.copy(stops = stops)
+            }
+        }
+    }
+
+    private fun moveStop(from: Int, to: Int) {
+        _uiState.update { state ->
+            if (from !in state.stops.indices || to !in state.stops.indices) {
+                state
+            } else {
+                val stops = state.stops.toMutableList()
+                stops.add(to, stops.removeAt(from))
+                state.copy(stops = stops)
+            }
+        }
+    }
 
     fun onStartDateChange(date: LocalDate) = _uiState.update { state ->
         // Keep end ≥ start: if start moves past the end, push the end forward too.
@@ -143,10 +166,7 @@ class ManageTripViewModel(
         val o = original ?: return false
         val s = _uiState.value
         return s.name != o.name ||
-            s.originCity != o.originCity ||
-            s.originRegionId != o.originRegionId ||
-            s.destinationCity != o.destinationCity ||
-            s.destinationRegionId != o.destinationRegionId ||
+            s.stops != o.stops ||
             s.startDate != o.startDate ||
             s.endDate != o.endDate ||
             s.selectedPlayerIds != o.playerIds
@@ -193,10 +213,7 @@ class ManageTripViewModel(
             tripRepository.updateTrip(
                 tripId = tripId,
                 name = state.name,
-                originCity = state.originCity,
-                originRegionId = state.originRegionId!!,
-                destinationCity = state.destinationCity,
-                destinationRegionId = state.destinationRegionId!!,
+                stops = state.stops.map { TripStop(regionId = it.regionId!!, city = it.city) },
                 startDate = state.startDate,
                 endDate = state.endDate,
             )

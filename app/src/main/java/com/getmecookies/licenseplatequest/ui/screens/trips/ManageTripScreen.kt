@@ -155,80 +155,32 @@ fun ManageTripScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // --- Origin -------------------------------------------------
-            Text(stringResource(R.string.new_trip_from), style = MaterialTheme.typography.titleSmall)
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                OutlinedTextField(
-                    value = uiState.originCity,
-                    onValueChange = viewModel::onOriginCityChange,
-                    label = { Text(stringResource(R.string.new_trip_city_label)) },
-                    singleLine = true,
-                    isError = uiState.showErrors && !uiState.originCityValid,
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Words,
-                        imeAction = ImeAction.Next,
-                    ),
-                    modifier = Modifier.weight(1f),
+            // --- Stops (the route: start → … → destination) -------------
+            Text(stringResource(R.string.new_trip_stops), style = MaterialTheme.typography.titleSmall)
+            uiState.stops.forEachIndexed { index, stop ->
+                StopEditor(
+                    index = index,
+                    total = uiState.stops.size,
+                    city = stop.city,
+                    regionId = stop.regionId,
+                    regionOptions = uiState.regionOptions,
+                    isError = uiState.showErrors && !uiState.stopValid(index),
+                    onCityChange = { viewModel.onStopCityChange(index, it) },
+                    onRegionSelected = { viewModel.onStopRegionSelected(index, it) },
+                    onMoveUp = { viewModel.onMoveStopUp(index) },
+                    onMoveDown = { viewModel.onMoveStopDown(index) },
+                    onRemove = { viewModel.onRemoveStop(index) },
                 )
-                RegionPickerField(
-                    label = stringResource(R.string.new_trip_state_label),
-                    options = uiState.regionOptions,
-                    selectedId = uiState.originRegionId,
-                    onSelected = viewModel::onOriginRegionSelected,
-                    excludeId = uiState.destinationRegionId,
-                    isError = uiState.showErrors && !uiState.originRegionValid,
-                    modifier = Modifier.width(130.dp),
-                )
-                IconButton(
-                    onClick = viewModel::onClearOrigin,
-                    enabled = uiState.hasOrigin,
-                ) {
-                    Icon(
-                        Icons.Filled.Close,
-                        contentDescription = stringResource(R.string.new_trip_clear_origin_cd),
-                    )
-                }
             }
-
-            // --- Destination --------------------------------------------
-            Text(stringResource(R.string.new_trip_to), style = MaterialTheme.typography.titleSmall)
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                OutlinedTextField(
-                    value = uiState.destinationCity,
-                    onValueChange = viewModel::onDestinationCityChange,
-                    label = { Text(stringResource(R.string.new_trip_city_label)) },
-                    singleLine = true,
-                    isError = uiState.showErrors && !uiState.destinationCityValid,
-                    keyboardOptions = KeyboardOptions(
-                        capitalization = KeyboardCapitalization.Words,
-                        imeAction = ImeAction.Next,
-                    ),
-                    modifier = Modifier.weight(1f),
+            if (uiState.showErrors && !uiState.stopsValid) {
+                Text(
+                    stringResource(R.string.new_trip_stops_error),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
                 )
-                RegionPickerField(
-                    label = stringResource(R.string.new_trip_state_label),
-                    options = uiState.regionOptions,
-                    selectedId = uiState.destinationRegionId,
-                    onSelected = viewModel::onDestinationRegionSelected,
-                    excludeId = uiState.originRegionId,
-                    isError = uiState.showErrors && !uiState.destinationRegionValid,
-                    modifier = Modifier.width(130.dp),
-                )
-                IconButton(
-                    onClick = viewModel::onClearDestination,
-                    enabled = uiState.hasDestination,
-                ) {
-                    Icon(
-                        Icons.Filled.Close,
-                        contentDescription = stringResource(R.string.new_trip_clear_destination_cd),
-                    )
-                }
+            }
+            TextButton(onClick = viewModel::onAddStop) {
+                Text(stringResource(R.string.new_trip_add_stop))
             }
 
             // --- Trip name ----------------------------------------------
