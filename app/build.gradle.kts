@@ -41,6 +41,12 @@ android {
             isIncludeAndroidResources = true
         }
     }
+    // Make the exported Room schemas available to instrumented migration tests.
+    sourceSets {
+        getByName("androidTest") {
+            assets.srcDirs(files("$projectDir/schemas"))
+        }
+    }
 }
 
 ksp {
@@ -97,6 +103,7 @@ dependencies {
     // Instrumented / Compose UI tests
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.room.testing)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)

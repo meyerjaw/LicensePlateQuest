@@ -47,6 +47,15 @@ Patterns in place:
 Still to add: the full create-trip → mark-state → celebrate navigation flow (the most involved;
 left until the harness above is proven on a device).
 
+### Database migration tests (instrumented)
+
+`MigrationTest` (androidTest) uses Room's `MigrationTestHelper` with the **exported schemas**
+(`app/schemas/`, wired into androidTest assets) to guarantee migrations don't lose data or drift
+from the entity schema. Every schema change must come with: (1) a bumped `AppDatabase.VERSION` +
+a `Migration`, and (2) a migration test that seeds data at the old version, runs the migration,
+and asserts the data survived. `runMigrationsAndValidate` also fails if the hand-written DDL
+doesn't match Room's generated schema. Run on an emulator via `connectedDebugAndroidTest`.
+
 ## Test doubles
 
 - `FakeReminderScheduler` implements the `ReminderScheduler` interface in-memory (records
