@@ -1,6 +1,6 @@
 # License Plate Quest — Project Handover
 
-How to move this project to a new computer and pick up where you left off (including continuing with Claude Cowork). Last updated 2026-06-01.
+How to move this project to a new computer and pick up where you left off (including continuing with Claude Cowork). Last updated 2026-06-08.
 
 ---
 
@@ -47,13 +47,13 @@ The generated launcher icons and all 50 **state flag PNGs** (`app/src/main/asset
 
 ## 4. Prerequisites on the NEW computer
 
-- **Android Studio** — latest stable version (must support **AGP 8.13** and **Android SDK Platform 36**).
-- **Android SDK Platform 36** (install via Android Studio → SDK Manager). `minSdk = 31`, `targetSdk = 36`, `compileSdk = 36`.
+- **Android Studio** — latest stable version (must support **AGP 9.1** and **Android SDK Platform 37**).
+- **Android SDK Platform 37** (install via Android Studio → SDK Manager). `minSdk = 31`, `targetSdk = 36`, `compileSdk = 37`.
 - **JDK 17+** to run Gradle — Android Studio's bundled JDK (JBR) is fine; no separate install needed.
 - **Git**.
 - An **Android emulator** (API 31+) or a physical device with USB debugging for testing.
 
-Build tooling versions (already pinned in the repo, listed for reference): Gradle **8.13**, AGP **8.13.2**, Kotlin **2.0.21**, Compose BOM **2024.12.01**.
+Build tooling versions (already pinned in the repo, listed for reference): Gradle **9.5.1**, AGP **9.1.1**, Kotlin **2.1.0**, KSP **2.1.0-1.0.29**, Compose BOM **2026.05.01**. Note: **AGP 9 has a built-in Kotlin plugin** — do *not* add the `kotlin.android` plugin or Gradle fails with "Cannot add extension with name 'kotlin'". Coroutines (1.10.2) and kotlinx-serialization (1.8.0) are pinned to match Kotlin 2.1.0.
 
 ---
 
@@ -107,7 +107,9 @@ The app was built collaboratively using **Claude Cowork** (Claude desktop). To k
 - `BACKLOG.md` — what's intentionally not done yet.
 - `HANDOVER.md` — this file.
 
-A fresh Cowork session that reads those three files will have everything it needs to continue.
+A fresh Cowork session that reads those three files will have everything it needs to continue. (`SPEC.md` is at **v1.6** as of this writing; its change log runs v1.0 → v1.6.)
+
+> **Working style:** new work is done **test-first (TDD)** — see `TESTING.md` for the test layers and the standing rule that every Room migration ships with a migration test.
 
 ---
 
@@ -117,18 +119,22 @@ A fresh Cowork session that reads those three files will have everything it need
 app/src/main/
   java/com/getmecookies/licenseplatequest/
     di/AppContainer.kt              – manual dependency container
-    data/                           – Room (entities, DAOs, AppDatabase), repositories, seeding
+    data/                           – Room (entities incl. trip_stop, DAOs, AppDatabase @ DB v4), repositories, seeding
     domain/                         – domain models, CelebrationTracker, UiPreferences
+    notifications/                  – ReminderScheduler (WorkManager), ReminderWorker, ReminderActionReceiver (overdue-trip reminders)
     ui/
       navigation/                   – AppNavHost, Routes, TopDestination (bottom tabs)
       theme/                        – Color/Theme/Shapes (sunny palette, dynamic color OFF)
-      screens/                      – trips, activetrip, statedetail, players, manageplayers, celebration
-      components/                   – Confetti (firework), FlagImage
-      map/                          – UsMap (vector US map, hit-testing, multi-color fills)
+      screens/                      – trips (incl. New Trip + Manage trip), activetrip, statedetail, players, settings, celebration
+      components/                   – Confetti, FlagImage, EmptyState, RegionPicker, SwipeToDeleteRow
+      map/                          – UsMap (vector US map, hit-testing, themed multi-color fills, route overlay)
   res/values/strings.xml            – ALL user-facing text (app is i18n-ready)
   assets/flags/<code>.png           – 50 committed state flags
+app/schemas/                        – exported Room schemas (used by migration tests)
+app/src/test/                       – JVM unit tests (Robolectric + in-memory Room)
+app/src/androidTest/                – instrumented tests (Compose UI + Room MigrationTestHelper)
 tools/fetch_flags.py                – flag downloader (already run; rarely needed)
-SPEC.md · BACKLOG.md · HANDOVER.md  – docs
+SPEC.md · BACKLOG.md · HANDOVER.md · TESTING.md  – docs
 ```
 
 ---
@@ -136,9 +142,13 @@ SPEC.md · BACKLOG.md · HANDOVER.md  – docs
 ## 10. Known state / gotchas
 
 - **App version:** `versionName 1.0`, `versionCode 1` (debug builds only so far; no release signing config set up yet).
+- **Database is at v4** with explicit migrations (`MIGRATION_1_2 … MIGRATION_3_4`) and **no destructive fallback**; exported schemas live in `app/schemas/` and every migration has a `MigrationTestHelper` test. Latest addition: the `trip_stop` table for multi-leg trips.
+- **Automated tests exist** and new work is TDD: JVM unit tests (Robolectric + in-memory Room) in `app/src/test/`, instrumented Compose UI + migration tests in `app/src/androidTest/`. See `TESTING.md`. Run unit tests from Android Studio or `./gradlew testDebugUnitTest`.
+- **Debug-only "Seed sample data"** lives in Settings → Developer (gated on `BuildConfig.DEBUG`, absent from release builds). One tap seeds a few players and a multi-stop trip with finds.
 - **Celebration sound is not implemented** (deferred — see `BACKLOG.md`); per-find feedback uses confetti + haptics.
 - The DB column `plate_image_path` is **retained but unused** (state flags are derived from the state code) — left in place to avoid a Room migration. See `BACKLOG.md` for the eventual cleanup.
-- No automated tests yet (also in the backlog).
+- **Line-ending churn:** the working tree often shows the whole repo as "modified" due to CRLF/LF normalization; `git diff --ignore-all-space` reveals the real changes. Stage real files explicitly (or sort out `.gitattributes`/`core.autocrlf`) rather than a blanket `git add -A`.
+- **Intermittent dev data loss:** on a physical device, Android Studio sometimes does an uninstall→reinstall (e.g. signature mismatch) that wipes app data. This is the IDE/device, **not** a migration bug (migrations are additive and verified). The debug seed above exists to recover quickly.
 - App data (trips/players) lives only on the device; it does **not** transfer with the source. Moving the *project* to a new computer does not move any *gameplay data* off a phone.
 
 ---
