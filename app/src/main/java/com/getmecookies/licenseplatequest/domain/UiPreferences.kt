@@ -26,10 +26,16 @@ class UiPreferences(context: Context) {
         get() = prefs.getBoolean(KEY_LIST_SHOW_UNFOUND, true)
         set(value) = prefs.edit().putBoolean(KEY_LIST_SHOW_UNFOUND, value).apply()
 
+    /** Whether the one-time "tap a state to mark it" map hint has been shown/dismissed. */
+    var onboardingMapHintSeen: Boolean
+        get() = prefs.getBoolean(KEY_MAP_HINT_SEEN, false)
+        set(value) = prefs.edit().putBoolean(KEY_MAP_HINT_SEEN, value).apply()
+
     private companion object {
         const val PREFS = "ui_prefs"
         const val KEY_ACTIVE_TRIP_TAB = "active_trip_tab"
         const val KEY_LIST_SHOW_FOUND = "list_show_found"
         const val KEY_LIST_SHOW_UNFOUND = "list_show_unfound"
+        const val KEY_MAP_HINT_SEEN = "onboarding_map_hint_seen"
     }
 }

@@ -156,6 +156,8 @@
     <string name="active_trip_hidden_found">A found state matches — tap to show found states</string>
     <string name="active_trip_hidden_unfound">An unfound state matches — tap to show unfound states</string>
     <string name="active_trip_hidden_both">More matches are hidden — tap to show all states</string>
+    <string name="active_trip_map_hint">Tap a state on the map when you spot its plate!</string>
+    <string name="active_trip_map_hint_dismiss">Dismiss tip</string>
     <string name="active_trip_no_match">No states match “%1$s”.</string>
     <string name="active_trip_no_states">No states yet — switch to the Map tab and tap a state when you spot its plate.</string>
     <string name="active_trip_not_found_yet">Not found yet</string>

@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MoreVert
@@ -218,6 +219,15 @@ fun ActiveTripScreen(
                                             .align(Alignment.TopEnd)
                                             .padding(16.dp),
                                     )
+                                    // One-time first-run tip, dismissed on tap or first find.
+                                    if (uiState.showMapHint) {
+                                        MapOnboardingHint(
+                                            onDismiss = viewModel::onDismissMapHint,
+                                            modifier = Modifier
+                                                .align(Alignment.BottomCenter)
+                                                .padding(16.dp),
+                                        )
+                                    }
                                 }
                                 // Tight stats strip beneath the map (playtest note #21).
                                 MapStatsStrip(
@@ -294,6 +304,37 @@ private fun MapStateCounter(count: Int, modifier: Modifier = Modifier) {
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
         )
+    }
+}
+
+/** One-time first-run tip overlaid on the map, telling new players how to mark a state. */
+@Composable
+private fun MapOnboardingHint(onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        shadowElevation = 4.dp,
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(Icons.Filled.TouchApp, contentDescription = null)
+            Text(
+                text = stringResource(R.string.active_trip_map_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+            )
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.active_trip_map_hint_dismiss),
+                )
+            }
+        }
     }
 }
 

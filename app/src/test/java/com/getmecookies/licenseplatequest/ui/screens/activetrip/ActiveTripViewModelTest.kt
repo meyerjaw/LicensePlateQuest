@@ -172,6 +172,34 @@ class ActiveTripViewModelTest {
         assertEquals(0, vm.uiState.value.hiddenFoundMatches)
     }
 
+    @Test
+    fun mapHint_showsByDefault_dismissPersists_andFirstFindClearsIt() = runBlocking {
+        uiPreferences.onboardingMapHintSeen = false
+        createActiveTrip()
+        val vm = loadedViewModel()
+
+        // First run: the tip is visible.
+        assertTrue(vm.uiState.value.showMapHint)
+
+        // Dismissing hides it and remembers across sessions.
+        vm.onDismissMapHint()
+        awaitUntil { !vm.uiState.value.showMapHint }
+        assertTrue(uiPreferences.onboardingMapHintSeen)
+    }
+
+    @Test
+    fun mapHint_isRetiredByTheFirstFind() = runBlocking {
+        uiPreferences.onboardingMapHintSeen = false
+        createActiveTrip()
+        val vm = loadedViewModel()
+        assertTrue(vm.uiState.value.showMapHint)
+
+        spotting.markState(regions[0].regionCode)
+        awaitUntil { vm.uiState.value.foundCount == 1 }
+        awaitUntil { !vm.uiState.value.showMapHint }
+        assertTrue(uiPreferences.onboardingMapHintSeen)
+    }
+
     private fun loadedViewModel(): ActiveTripViewModel {
         val vm = ActiveTripViewModel(
             mapRepository = mapRepository,

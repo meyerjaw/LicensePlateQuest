@@ -83,6 +83,8 @@ data class ActiveTripUiState(
     val hiddenUnfoundMatches: Int = 0,
     /** Which top tab is showing; restored from [UiPreferences] when the screen opens. */
     val selectedTab: ActiveTripTab = ActiveTripTab.MAP,
+    /** One-time first-run tip on the map ("tap a state to mark it"); dismissed on tap or first find. */
+    val showMapHint: Boolean = false,
     /** At-a-glance stats for the strip beneath the map (playtest note #21). */
     val mapStats: MapStats = MapStats(),
     val showEndDialog: Boolean = false,
@@ -124,7 +126,12 @@ class ActiveTripViewModel(
     private val showUnfound = MutableStateFlow(uiPreferences.listShowUnfound)
     // Restore the last-used tab so re-entering a trip shows Map or List as the user left it.
     private val initialTab = ActiveTripTab.entries.getOrElse(uiPreferences.activeTripTab) { ActiveTripTab.MAP }
-    private val _uiState = MutableStateFlow(ActiveTripUiState(selectedTab = initialTab))
+    private val _uiState = MutableStateFlow(
+        ActiveTripUiState(
+            selectedTab = initialTab,
+            showMapHint = !uiPreferences.onboardingMapHintSeen,
+        ),
+    )
     val uiState: StateFlow<ActiveTripUiState> = _uiState.asStateFlow()
 
     /**
@@ -282,6 +289,9 @@ class ActiveTripViewModel(
         // unmark, since count only rises here). Playtest note #1.
         if (searchQuery.value.isNotEmpty()) searchQuery.value = ""
 
+        // They clearly know how to mark a state now — retire the first-run map hint.
+        if (_uiState.value.showMapHint) onDismissMapHint()
+
         if (count >= TOTAL_STATES && !celebrationTracker.hasCelebratedFifty(tripId)) {
             celebrationTracker.markFiftyCelebrated(tripId)
             _uiState.update {
@@ -299,6 +309,12 @@ class ActiveTripViewModel(
     fun onCelebrationsAnimated(codes: Set<String>) {
         if (codes.isEmpty()) return
         viewModelScope.launch { spottingRepository.markCelebrated(codes) }
+    }
+
+    /** Dismiss the one-time first-run map hint and remember it so it never shows again. */
+    fun onDismissMapHint() {
+        if (!uiPreferences.onboardingMapHintSeen) uiPreferences.onboardingMapHintSeen = true
+        _uiState.update { it.copy(showMapHint = false) }
     }
 
     /** Switch tabs and remember the choice for next time the user opens a trip. */
