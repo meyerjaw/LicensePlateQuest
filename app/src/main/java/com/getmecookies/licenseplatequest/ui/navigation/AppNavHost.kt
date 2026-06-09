@@ -26,6 +26,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerScreen
+import com.getmecookies.licenseplatequest.ui.screens.passport.PassportScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersScreen
 import com.getmecookies.licenseplatequest.ui.screens.settings.SettingsScreen
 import com.getmecookies.licenseplatequest.ui.screens.statedetail.StateDetailScreen
@@ -126,6 +127,19 @@ fun AppRoot(
                         navController.navigate(Routes.editTrip(tripId.toString()))
                     },
                     onMapViewActiveChange = { mapViewActive = it },
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                )
+            }
+            composable(TopDestination.Passport.route) {
+                // Back from a tab returns to the Trips tab (the app's home) rather than exiting.
+                BackHandler {
+                    navController.navigate(TopDestination.Trips.route) {
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+                PassportScreen(
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                 )
             }

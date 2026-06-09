@@ -327,6 +327,12 @@ private fun foundColorFor(code: String): Color {
 }
 
 /**
+ * The vibrant accent color for a state — the same per-state hue used on the found map mosaic — so
+ * lists and cards elsewhere can echo the map. Stable per state code.
+ */
+fun stateAccentColor(code: String): Color = foundColorFor(code)
+
+/**
  * Four subtle hues for the *unfound* base map (playtest note #6). Kept gentle so the base reads as a
  * soft mosaic, not a loud one — the vibrant found palette still pops on top when a state is marked.
  */

@@ -5,6 +5,7 @@ import com.getmecookies.licenseplatequest.data.local.entity.EventLogEntity
 import com.getmecookies.licenseplatequest.data.local.entity.SpottingEntity
 import com.getmecookies.licenseplatequest.data.local.entity.SpottingPlayerEntity
 import com.getmecookies.licenseplatequest.domain.model.FoundState
+import com.getmecookies.licenseplatequest.domain.model.LifetimeState
 import com.getmecookies.licenseplatequest.domain.model.Player
 import com.getmecookies.licenseplatequest.domain.model.StateDetailData
 import com.getmecookies.licenseplatequest.domain.model.StateInfo
@@ -113,6 +114,21 @@ class SpottingRepository(
                         }
                     }
                 }
+            }
+        }
+
+    /**
+     * The lifetime "Plate Passport": every state ever spotted across *all* trips, with the date it
+     * was first caught. Independent of the active trip — it's the family's long-term collection.
+     */
+    fun observeLifetimeStates(): Flow<List<LifetimeState>> =
+        spottingDao.observeLifetimeFound().map { rows ->
+            rows.map {
+                LifetimeState(
+                    code = it.code,
+                    name = it.name,
+                    firstFoundAt = it.firstFoundAt
+                )
             }
         }
 

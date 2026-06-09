@@ -16,7 +16,17 @@
 
     <!-- Bottom navigation tabs -->
     <string name="nav_trips">Trips</string>
+    <string name="nav_passport">Passport</string>
     <string name="nav_players">Players</string>
+
+    <!-- Plate Passport (lifetime cross-trip collection). -->
+    <string name="passport_title">Plate Passport</string>
+    <string name="passport_count">%1$d of %2$d states collected</string>
+    <string name="passport_remaining">%1$d to go</string>
+    <string name="passport_complete">All 50 states collected — what a journey!</string>
+    <string name="passport_collected_header">Collected states</string>
+    <string name="passport_first_spotted">First spotted %1$s</string>
+    <string name="passport_empty">States you spot on your trips are collected here for keeps. Start a trip and tap a state when you see its plate!</string>
 
     <string name="settings_title">Settings</string>
     <string name="settings_theme">Theme</string>
@@ -173,6 +183,7 @@
     <string name="active_trip_no_match">No states match “%1$s”.</string>
     <string name="active_trip_no_states">No states yet — switch to the Map tab and tap a state when you spot its plate.</string>
     <string name="active_trip_not_found_yet">Not found yet</string>
+    <string name="active_trip_spotted">Spotted %1$s</string>
 
     <!-- State detail -->
     <string name="state_detail_title_fallback">State</string>

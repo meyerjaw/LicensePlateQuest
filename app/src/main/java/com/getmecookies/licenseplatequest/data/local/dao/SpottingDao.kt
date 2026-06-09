@@ -81,6 +81,24 @@ interface SpottingDao {
     fun observeFoundDetailsForGame(gameInstanceId: UUID): Flow<List<FoundStateRow>>
 
     /**
+     * The lifetime "Plate Passport" (cross-trip collection): every state ever spotted in any trip,
+     * with the date it was *first* caught. ISO-8601 UTC timestamps sort chronologically as strings,
+     * so MIN() yields the earliest. Ordered by state name for display.
+     */
+    @Query(
+        """
+        SELECT pr.region_code AS region_code,
+               pr.name AS name,
+               MIN(s.timestamp) AS first_found_at
+        FROM spotting s
+        JOIN plate_region pr ON pr.id = s.plate_region_id
+        GROUP BY pr.id
+        ORDER BY pr.name
+        """
+    )
+    fun observeLifetimeFound(): Flow<List<LifetimeFoundRow>>
+
+    /**
      * All spottings in a game with the region attributes needed to compute celebration stats
      * (name, geographic center, rarity), ordered chronologically.
      */

@@ -132,7 +132,9 @@ The architecture is deliberately built to grow into a multi-game platform — sl
 
 ### Navigation
 
-- Bottom navigation with two tabs: **Trips** and **Players**. The bottom nav is hidden while the Active Trip view is showing, so it reads as a standalone full-screen view.
+- Bottom navigation with three tabs: **Trips**, **Passport** (the lifetime cross-trip collection),
+  and **Players**. The bottom nav is hidden while the Active Trip view is showing, so it reads as a
+  standalone full-screen view.
 - Trips tab default destination: Active Trip View if a trip is active, otherwise Trip List.
 - Trip List → Active Trip View on selecting a trip (also makes that trip the active one).
 - Active Trip View has two top tabs, **Map** and **List**; the chosen tab is remembered across sessions (restored on re-entry). State Detail opens by tapping a state on the Map tab or a row on the List tab.
@@ -177,8 +179,10 @@ A standalone, full-screen view (the app's bottom navigation is hidden while it's
   newest first — or "Alphabetical"); a **search box** (filter by name); independent **Found** / *
   *Unfound** section filters (both on by default, remembered across sessions; when a search matches
   a state in a switched-off section, a tappable hint offers to reveal it); then the scrolling list.
-  Each row shows the state flag thumbnail and name; unfound rows are dimmed and labelled "Not found
-  yet." Tapping a row opens State Detail.
+  Each row is a **collectible card** — the state flag, name, the spotted date (or "Not found yet"),
+  a colored accent stripe in the state's map color, and a found check badge; unfound rows are
+  dimmed.
+  Tapping a row opens State Detail.
 
 ### State Detail
 
@@ -577,4 +581,23 @@ Several of these were resolved during build (noted inline):
   - **Still deferred:** the richer #20 batch; celebration sound; per-stop dates/notes; route on the
     summary/shared image; actual city pins; plus the newer ideas captured in `BACKLOG.md` (lifetime
     Plate Passport, achievements, rare-plate moments, photo capture, widget, recap, export/import).
+- **v1.9 (2026-06-09)** — Lifetime Plate Passport (v1):
+  - A new **Passport** bottom tab (third top-level destination) holding the family's **cross-trip
+    collection**: a filled **lifetime map**, an all-time **"X of 50 collected"** counter (with an
+    "N to go" line), and the collected states listed with their **first-spotted dates** (friendly
+    empty state until the first catch). Read-only.
+  - Backed by `SpottingRepository.observeLifetimeStates()` → `SpottingDao.observeLifetimeFound`
+    (DISTINCT region across **all** trips' spottings, earliest timestamp via `MIN`). **No schema
+    change** — it's a new read over existing data. Repository + ViewModel tests added.
+  - **Still open (backlog):** which-trip-first attribution, a "new for your collection!" accent on a
+    first-ever catch, and tapping a passport state to open its detail.
+- **v1.10 (2026-06-09)** — Richer state rows + summary stats:
+  - **Collectible state cards:** the Active Trip **List** rows and the **Passport** collection now
+    use a shared `StateCard` — flag, bold name, a subtitle (spotted/first-spotted date or "Not found
+    yet"), a colored accent stripe in the state's **map color**, and a found check badge (unfound
+    states dimmed). The per-state hue is exposed via `stateAccentColor(code)` so lists echo the map.
+  - **Summary stat tiles:** the celebration/summary screen leads with a row of **stat tiles** (
+    icon +
+    big value + label) for the headline numbers — states found, duration, and estimated distance —
+    above the detail rows.
 

@@ -48,7 +48,13 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
   first caught it. Derived from existing `spotting` rows across all game instances — a
   DISTINCT-by-region read, no new writes. Reachable from a top-level "Passport"/"Collection" entry.
   Optionally a gentle "new for your collection!" accent the first time a state is added lifetime (
-  distinct from the normal per-trip find). Foundation for achievements below.
+  distinct from the normal per-trip find). Foundation for achievements below. *Status: v1 shipped
+  2026-06-09 — a **Passport** bottom tab with a lifetime filled map, an all-time "X of 50 collected"
+  counter (+ "N to go"), and the collected states listed with first-spotted dates (empty state when
+  none). Reads `observeLifetimeStates()` (DISTINCT region across all trips, MIN timestamp); no
+  schema
+  change; repo + VM tests. Still open: which-trip-first attribution, the "new for your collection!"
+  accent, and tapping a state for detail.*
 - **Achievements / badges.** `[2026-06-09]` Award playful milestones: first plate, a regional
   sweep (all of New England / the West Coast / a custom region), neighbor chains, a full 50 (per
   trip *and* lifetime), a rare catch (see rare-plate moments), and quantity/time fun ("5 before

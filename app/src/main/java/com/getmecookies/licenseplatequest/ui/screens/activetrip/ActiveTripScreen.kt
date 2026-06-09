@@ -68,9 +68,12 @@ import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.components.Confetti
 import com.getmecookies.licenseplatequest.ui.components.FlagImage
+import com.getmecookies.licenseplatequest.ui.components.StateCard
 import com.getmecookies.licenseplatequest.ui.map.UsMap
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode
 import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.UUID
 
@@ -568,51 +571,33 @@ private fun FoundStatesList(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(states, key = { it.code }) { state ->
-                    StateRowItem(state = state, onClick = { onRowClick(state.code) })
-                    HorizontalDivider()
+                    StateCard(
+                        code = state.code,
+                        name = state.name,
+                        found = state.found,
+                        subtitle = stateSubtitle(state),
+                        onClick = { onRowClick(state.code) },
+                        modifier = Modifier.animateItem(),
+                    )
                 }
             }
         }
     }
 }
 
+/** Subtitle for a state card: the spotted date when found, else "Not found yet". */
 @Composable
-private fun StateRowItem(state: StateRow, onClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        FlagImage(
-            code = state.code,
-            modifier = Modifier
-                .width(64.dp)
-                .alpha(if (state.found) 1f else 0.4f),
-            placeholderFontSize = 16.sp,
+private fun stateSubtitle(state: StateRow): String =
+    if (state.foundAt != null) {
+        stringResource(
+            R.string.active_trip_spotted,
+            state.foundAt.atZone(ZoneId.systemDefault()).toLocalDate().format(LIST_DATE_FORMAT),
         )
-        Column {
-            Text(
-                text = state.name,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (state.found) {
-                    MaterialTheme.colorScheme.onSurface
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-            )
-            if (!state.found) {
-                Text(
-                    text = stringResource(R.string.active_trip_not_found_yet),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+    } else {
+        stringResource(R.string.active_trip_not_found_yet)
     }
-}
+
+private val LIST_DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")

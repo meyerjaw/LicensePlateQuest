@@ -22,6 +22,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
@@ -54,6 +57,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -349,18 +353,6 @@ private data class Stat(val label: String, val value: String?, val info: String?
 
 @Composable
 private fun StatsSections(stats: CelebrationStats) {
-    val progress = listOf(
-        Stat(
-            stringResource(R.string.celebration_stat_states_found),
-            stringResource(R.string.celebration_states_found, stats.foundCount),
-        ),
-        Stat(stringResource(R.string.celebration_stat_trip_duration), stats.durationText),
-        Stat(
-            label = stringResource(R.string.celebration_stat_estimated_distance),
-            value = stats.estimatedDistanceText,
-            info = stringResource(R.string.celebration_estimated_distance_info),
-        ),
-    )
     val timing = listOf(
         Stat(stringResource(R.string.celebration_stat_average_gap), stats.averageGapText),
         Stat(stringResource(R.string.celebration_stat_longest_gap), stats.longestGapText),
@@ -374,7 +366,7 @@ private fun StatsSections(stats: CelebrationStats) {
     )
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        StatSection(stringResource(R.string.celebration_section_progress), progress)
+        StatTiles(stats)
         StatSection(stringResource(R.string.celebration_section_timing), timing)
         StatSection(stringResource(R.string.celebration_section_highlights), highlights)
         if (stats.leaderboard.isNotEmpty()) {
@@ -473,6 +465,77 @@ private fun LeaderboardRow(player: PlayerScore) {
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
         )
+    }
+}
+
+/** The headline numbers as a row of tiles (icon + big value + label) — the summary's hero stats. */
+@Composable
+private fun StatTiles(stats: CelebrationStats) {
+    data class Tile(val icon: ImageVector, val value: String, val label: String)
+
+    val tiles = buildList {
+        add(
+            Tile(
+                Icons.Filled.Map,
+                "${stats.foundCount} / 50",
+                stringResource(R.string.celebration_stat_states_found),
+            ),
+        )
+        add(
+            Tile(
+                Icons.Filled.Schedule,
+                stats.durationText,
+                stringResource(R.string.celebration_stat_trip_duration),
+            ),
+        )
+        stats.estimatedDistanceText?.let {
+            add(
+                Tile(
+                    Icons.Filled.DirectionsCar,
+                    it,
+                    stringResource(R.string.celebration_stat_estimated_distance)
+                )
+            )
+        }
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        tiles.forEach { tile ->
+            Card(
+                modifier = Modifier.weight(1f),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Icon(
+                        tile.icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = tile.value,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                    )
+                    Text(
+                        text = tile.label,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+            }
+        }
     }
 }
 

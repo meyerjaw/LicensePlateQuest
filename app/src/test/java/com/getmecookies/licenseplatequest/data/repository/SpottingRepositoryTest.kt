@@ -163,6 +163,24 @@ class SpottingRepositoryTest {
         assertTrue(spotting.getStateDetail("CO")!!.initialAttribution.isEmpty())
     }
 
+    @Test
+    fun observeLifetimeStates_unionsAcrossTrips_anddedupes() = runBlocking {
+        // Trip 1: catch TX.
+        createActiveTrip()
+        spotting.markState("TX")
+        // Trip 2 becomes active (demotes trip 1); catch CO, and TX again.
+        createActiveTrip()
+        spotting.markState("CO")
+        spotting.markState("TX")
+
+        val lifetime = spotting.observeLifetimeStates().first()
+        // Union across both trips, with TX collapsed to a single lifetime entry.
+        assertEquals(
+            listOf("CO", "TX"),
+            lifetime.map { it.code }) // ordered by name (Colorado, Texas)
+        assertEquals(2, lifetime.size)
+    }
+
     private suspend fun createActiveTrip(playerIds: List<UUID> = emptyList()): UUID =
         trips.createTrip(
             name = "Trip",

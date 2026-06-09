@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.getmecookies.licenseplatequest.LicensePlateQuestApp
 import com.getmecookies.licenseplatequest.ui.screens.activetrip.ActiveTripViewModel
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationViewModel
+import com.getmecookies.licenseplatequest.ui.screens.passport.PassportViewModel
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerViewModel
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersViewModel
 import com.getmecookies.licenseplatequest.ui.screens.settings.SettingsViewModel
@@ -53,6 +54,12 @@ object AppViewModelProvider {
         }
         initializer {
             PlayersViewModel(lpqApp().container.playerRepository)
+        }
+        initializer {
+            PassportViewModel(
+                mapRepository = lpqApp().container.mapRepository,
+                spottingRepository = lpqApp().container.spottingRepository,
+            )
         }
         initializer {
             AddPlayerViewModel(lpqApp().container.playerRepository)
