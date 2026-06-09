@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.ui.screens.activetrip
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.getmecookies.licenseplatequest.data.map.MapRepository
+import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
@@ -71,6 +72,8 @@ data class ActiveTripUiState(
     val routeStops: List<String> = emptyList(),
     /** Found states whose fill animation hasn't played yet — the map animates these (playtest #20). */
     val pendingCelebrations: Set<String> = emptySet(),
+    /** The rare-plate state codes, for the "Rare" badge on the list rows (rare-plate moments). */
+    val rareCodes: Set<String> = emptySet(),
     /** The (filtered + sorted) rows shown in the sheet, per the Found/Unfound section toggles. */
     val states: List<StateRow> = emptyList(),
     val sort: FoundSort = FoundSort.ORDER_FOUND,
@@ -110,6 +113,7 @@ class ActiveTripViewModel(
     mapRepository: MapRepository,
     private val tripRepository: TripRepository,
     private val spottingRepository: SpottingRepository,
+    private val regionRepository: RegionRepository,
     private val celebrationTracker: CelebrationTracker,
     private val uiPreferences: UiPreferences,
     settingsRepository: SettingsRepository,
@@ -142,14 +146,27 @@ class ActiveTripViewModel(
     private val _confettiEvents = Channel<Unit>(Channel.BUFFERED)
     val confettiEvents: Flow<Unit> = _confettiEvents.receiveAsFlow()
 
+    /** One-shot: a rare plate was just marked — emits the state name for an extra flourish. */
+    private val _rareFindEvents = Channel<String>(Channel.BUFFERED)
+    val rareFindEvents: Flow<String> = _rareFindEvents.receiveAsFlow()
+
     // Track the previous found count per trip so we only react to genuine increases.
     private var prevTripId: UUID? = null
     private var prevCount: Int? = null
+
+    // The rare-plate codes (static), and the previous found set per trip for rare-find detection.
+    private var rareCodes: Set<String> = emptySet()
+    private var rareBaselineTripId: UUID? = null
+    private var prevRareFound: Set<String>? = null
 
     init {
         viewModelScope.launch {
             val shapes = mapRepository.loadShapes()
             _uiState.update { it.copy(shapes = shapes) }
+        }
+        viewModelScope.launch {
+            rareCodes = regionRepository.getRareCodes()
+            _uiState.update { it.copy(rareCodes = rareCodes) }
         }
         viewModelScope.launch {
             // The active trip's ordered stop codes, for the map route overlay (playtest #11).
@@ -182,6 +199,7 @@ class ActiveTripViewModel(
                 .collect { (data, control) ->
                     val (trip, found, allStates) = data
                     detectCelebrations(trip?.id, found.size)
+                    detectRareFinds(trip?.id, found)
                     val list = buildList(found, allStates, control)
                     _uiState.update {
                         it.copy(
@@ -270,6 +288,27 @@ class ActiveTripViewModel(
             dayOfTrip = dayOfTrip,
             foundToday = found.count { it.foundAt.atZone(zone).toLocalDate() == today },
         )
+    }
+
+    /**
+     * Emit a one-shot rare-find event when a newly-found state is a rare plate (rare-plate moments).
+     * Baseline resets per trip so switching trips never mis-fires.
+     */
+    private fun detectRareFinds(tripId: UUID?, found: List<FoundState>) {
+        val codes = found.mapTo(HashSet()) { it.code }
+        if (tripId != rareBaselineTripId) {
+            rareBaselineTripId = tripId
+            prevRareFound = codes
+            return
+        }
+        val prev = prevRareFound
+        prevRareFound = codes
+        if (tripId == null || prev == null) return
+        (codes - prev).forEach { code ->
+            if (code in rareCodes) {
+                _rareFindEvents.trySend(found.firstOrNull { it.code == code }?.name ?: code)
+            }
+        }
     }
 
     /** Fire per-state confetti and the once-per-trip 50/50 celebration on real count increases. */

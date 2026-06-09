@@ -69,7 +69,12 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
   celebration (different accent / sound / animation, gated on a threshold), show a small "rare"
   badge on that state's list/detail row and in the summary, and feed an achievement. Tune the
   threshold from the bundled data; keep it subtle so common finds still feel good. Cheap,
-  high-delight, and makes existing data earn its keep.
+  high-delight, and makes existing data earn its keep. *Status: v1 shipped 2026-06-09 — pure
+  `isRarePlate(rarityScore)` (threshold 0.6 → ~6 states) + unit test; a **Rare** badge on the Active
+  Trip list + Passport rows, a **✦ Rare find** chip on State Detail, and a **Rare plate!** toast
+  when
+  a rare plate is marked. Still open: a richer rare flourish (distinct animation/sound) and feeding
+  an achievement.*
 - **Photo capture for a find.** `[2026-06-09]` `Spotting.photo_path` is reserved but always null.
   Let a player attach a photo of the actual plate when marking a state (system camera intent or
   CameraX), stored in **app-private** storage with the path on the spotting; show a thumbnail on

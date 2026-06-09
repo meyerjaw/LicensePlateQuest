@@ -45,6 +45,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import android.widget.Toast
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -122,6 +124,17 @@ fun ActiveTripScreen(
             if (viewModel.hapticsEnabled.value) {
                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
             }
+        }
+    }
+
+    // Extra fanfare when a rare plate is spotted (rare-plate moments). Resolve the string via
+    // stringResource (locale-aware) and format the state name into it inside the coroutine.
+    val context = LocalContext.current
+    val rareFindTemplate = stringResource(R.string.active_trip_rare_find)
+    LaunchedEffect(Unit) {
+        viewModel.rareFindEvents.collect { stateName ->
+            Toast.makeText(context, String.format(rareFindTemplate, stateName), Toast.LENGTH_LONG)
+                .show()
         }
     }
 
@@ -248,6 +261,7 @@ fun ActiveTripScreen(
                                 count = uiState.foundCount,
                                 sort = uiState.sort,
                                 states = uiState.states,
+                                rareCodes = uiState.rareCodes,
                                 searchQuery = uiState.searchQuery,
                                 showFound = uiState.showFound,
                                 showUnfound = uiState.showUnfound,
@@ -425,6 +439,7 @@ private fun FoundStatesList(
     count: Int,
     sort: FoundSort,
     states: List<StateRow>,
+    rareCodes: Set<String>,
     searchQuery: String,
     showFound: Boolean,
     showUnfound: Boolean,
@@ -579,6 +594,11 @@ private fun FoundStatesList(
                         name = state.name,
                         found = state.found,
                         subtitle = stateSubtitle(state),
+                        badgeLabel = if (state.code in rareCodes) {
+                            stringResource(R.string.state_rare_badge)
+                        } else {
+                            null
+                        },
                         onClick = { onRowClick(state.code) },
                         modifier = Modifier.animateItem(),
                     )

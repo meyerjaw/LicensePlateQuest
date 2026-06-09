@@ -156,10 +156,10 @@ private fun PassportContent(uiState: PassportUiState, onOpenState: (String) -> U
                         .format(DATE_FORMAT),
                     state.firstTripName,
                 ),
-                badgeLabel = if (state.code in uiState.newToCollection) {
-                    stringResource(R.string.passport_new_badge)
-                } else {
-                    null
+                badgeLabel = when {
+                    state.code in uiState.rareCodes -> stringResource(R.string.state_rare_badge)
+                    state.code in uiState.newToCollection -> stringResource(R.string.passport_new_badge)
+                    else -> null
                 },
                 onClick = { onOpenState(state.code) },
             )

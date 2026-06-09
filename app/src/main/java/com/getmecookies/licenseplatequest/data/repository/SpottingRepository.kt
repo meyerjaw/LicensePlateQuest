@@ -153,6 +153,7 @@ class SpottingRepository(
             motto = region.motto,
             flower = region.flower,
             funFacts = parseFunFacts(region.funFacts),
+            rarityScore = region.rarityScore,
         )
 
         val activeTrip = tripDao.getByStatus(TripStatus.ACTIVE)

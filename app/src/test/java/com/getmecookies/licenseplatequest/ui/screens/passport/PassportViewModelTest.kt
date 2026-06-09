@@ -8,6 +8,7 @@ import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.entity.GameTypeEntity
 import com.getmecookies.licenseplatequest.data.local.entity.PlateRegionEntity
 import com.getmecookies.licenseplatequest.data.map.MapRepository
+import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
@@ -70,7 +71,8 @@ class PassportViewModelTest {
         createActiveTrip() // demotes the first trip; this one is now active
         spotting.markState("CO")
 
-        val vm = PassportViewModel(mapRepository, spotting, trips)
+        val vm =
+            PassportViewModel(mapRepository, spotting, trips, RegionRepository(db.plateRegionDao()))
         awaitUntil { !vm.uiState.value.loading && vm.uiState.value.collectedCount == 2 }
 
         assertEquals(setOf("TX", "CO"), vm.uiState.value.foundCodes)

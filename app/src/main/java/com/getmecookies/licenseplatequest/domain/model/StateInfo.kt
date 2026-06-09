@@ -14,6 +14,8 @@ data class StateInfo(
     val motto: String,
     val flower: String,
     val funFacts: List<String>,
+    /** Bundled rarity score (0..1); high values are "rare finds" (rare-plate moments). */
+    val rarityScore: Double = 0.0,
 )
 
 /**

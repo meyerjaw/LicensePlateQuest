@@ -603,4 +603,12 @@ Several of these were resolved during build (noted inline):
     icon +
     big value + label) for the headline numbers — states found, duration, and estimated distance —
     above the detail rows.
+- **v1.11 (2026-06-09)** — Rare-plate moments (v1):
+  - The bundled `rarity_score` now earns a little fanfare. A pure `isRarePlate(score)` (threshold
+    0.6 → ~6 states: HI, AK, ND, WY, VT, SD) drives a **Rare** badge on the Active Trip list and
+    Passport rows, a **✦ Rare find** chip on State Detail, and a **"Rare plate!"** toast the moment
+    a
+    rare plate is spotted. No schema change; classifier unit-tested.
+  - **Still open (backlog):** a richer rare flourish (distinct animation/sound) and feeding a
+    rare-catch achievement.
 

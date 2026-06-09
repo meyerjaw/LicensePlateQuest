@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.R
+import com.getmecookies.licenseplatequest.domain.isRarePlate
 import com.getmecookies.licenseplatequest.domain.model.Player
 import com.getmecookies.licenseplatequest.domain.model.StateDetailData
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
@@ -186,6 +187,11 @@ private fun StateDetailContent(
                     .fillMaxWidth()
                     .padding(12.dp),
             )
+        }
+
+        // A rare plate earns a little badge (rare-plate moments).
+        if (isRarePlate(info.rarityScore)) {
+            RareFindChip()
         }
 
         // When-found banner sits up top once a state is in the trip.
@@ -337,6 +343,23 @@ private fun FactRow(label: String, value: String) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(text = value, style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+@Composable
+private fun RareFindChip() {
+    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Surface(
+            shape = RoundedCornerShape(percent = 50),
+            color = MaterialTheme.colorScheme.tertiaryContainer,
+            contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        ) {
+            Text(
+                text = stringResource(R.string.state_detail_rare),
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+            )
+        }
     }
 }
 

@@ -185,6 +185,8 @@
     <string name="active_trip_no_states">No states yet — switch to the Map tab and tap a state when you spot its plate.</string>
     <string name="active_trip_not_found_yet">Not found yet</string>
     <string name="active_trip_spotted">Spotted %1$s</string>
+    <string name="active_trip_rare_find">Rare plate! You spotted %1$s ✦</string>
+    <string name="state_rare_badge">Rare</string>
 
     <!-- State detail -->
     <string name="state_detail_title_fallback">State</string>
@@ -205,6 +207,7 @@
     <string name="state_detail_bird">State bird</string>
     <string name="state_detail_flower">State flower</string>
     <string name="state_detail_motto">Motto</string>
+    <string name="state_detail_rare">✦ Rare find</string>
     <string name="state_detail_fun_facts">Fun facts</string>
     <string name="state_detail_bullet">•</string>
     <string name="state_detail_found_when">Found %1$s</string>

@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.ui.screens.passport
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.getmecookies.licenseplatequest.data.map.MapRepository
+import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.domain.model.LifetimeState
@@ -24,6 +25,8 @@ data class PassportUiState(
     val collected: List<LifetimeState> = emptyList(),
     /** Codes first caught on the *current* active trip — highlighted as new to the collection. */
     val newToCollection: Set<String> = emptySet(),
+    /** Rare-plate state codes, for the "Rare" badge (rare-plate moments). */
+    val rareCodes: Set<String> = emptySet(),
 ) {
     val collectedCount: Int get() = collected.size
     val remaining: Int get() = (PassportViewModel.TOTAL_STATES - collectedCount).coerceAtLeast(0)
@@ -34,6 +37,7 @@ class PassportViewModel(
     mapRepository: MapRepository,
     spottingRepository: SpottingRepository,
     tripRepository: TripRepository,
+    regionRepository: RegionRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PassportUiState())
@@ -43,6 +47,9 @@ class PassportViewModel(
         viewModelScope.launch {
             val shapes = mapRepository.loadShapes()
             _uiState.update { it.copy(shapes = shapes) }
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(rareCodes = regionRepository.getRareCodes()) }
         }
         viewModelScope.launch {
             // A state is "new to the collection" when its first-ever catch was on the active trip.

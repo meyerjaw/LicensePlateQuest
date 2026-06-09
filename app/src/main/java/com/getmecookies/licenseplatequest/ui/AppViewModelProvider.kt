@@ -39,6 +39,7 @@ object AppViewModelProvider {
                 mapRepository = lpqApp().container.mapRepository,
                 tripRepository = lpqApp().container.tripRepository,
                 spottingRepository = lpqApp().container.spottingRepository,
+                regionRepository = lpqApp().container.regionRepository,
                 celebrationTracker = lpqApp().container.celebrationTracker,
                 uiPreferences = lpqApp().container.uiPreferences,
                 settingsRepository = lpqApp().container.settingsRepository,
@@ -60,6 +61,7 @@ object AppViewModelProvider {
                 mapRepository = lpqApp().container.mapRepository,
                 spottingRepository = lpqApp().container.spottingRepository,
                 tripRepository = lpqApp().container.tripRepository,
+                regionRepository = lpqApp().container.regionRepository,
             )
         }
         initializer {

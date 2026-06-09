@@ -9,6 +9,7 @@ import com.getmecookies.licenseplatequest.data.local.entity.GameTypeEntity
 import com.getmecookies.licenseplatequest.data.local.entity.PlateRegionEntity
 import com.getmecookies.licenseplatequest.data.map.MapRepository
 import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
+import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
@@ -50,6 +51,7 @@ class ActiveTripViewModelTest {
     private lateinit var mapRepository: MapRepository
     private lateinit var uiPreferences: UiPreferences
     private lateinit var settings: SettingsRepository
+    private lateinit var regionRepository: RegionRepository
     private lateinit var regions: List<PlateRegionEntity>
 
     @Before
@@ -64,6 +66,7 @@ class ActiveTripViewModelTest {
         mapRepository = MapRepository(context)
         uiPreferences = UiPreferences(context)
         settings = SettingsRepository(context)
+        regionRepository = RegionRepository(db.plateRegionDao())
 
         regions = (0 until 50).map { i -> region(code = "S%02d".format(i), order = i) }
         db.plateRegionDao().upsertAll(regions)
@@ -200,11 +203,23 @@ class ActiveTripViewModelTest {
         assertTrue(uiPreferences.onboardingMapHintSeen)
     }
 
+    @Test
+    fun rareCodes_arePopulatedFromRegionRarity() = runBlocking {
+        // Make the first region a rare plate (same id, so this upsert updates it).
+        db.plateRegionDao().upsertAll(listOf(regions[0].copy(rarityScore = 0.9)))
+        createActiveTrip()
+        val vm = loadedViewModel()
+
+        awaitUntil { vm.uiState.value.rareCodes.contains(regions[0].regionCode) }
+        assertTrue(regions[1].regionCode !in vm.uiState.value.rareCodes)
+    }
+
     private fun loadedViewModel(): ActiveTripViewModel {
         val vm = ActiveTripViewModel(
             mapRepository = mapRepository,
             tripRepository = trips,
             spottingRepository = spotting,
+            regionRepository = regionRepository,
             celebrationTracker = celebrationTracker,
             uiPreferences = uiPreferences,
             settingsRepository = settings,
