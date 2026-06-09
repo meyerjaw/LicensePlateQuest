@@ -53,8 +53,10 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
   counter (+ "N to go"), and the collected states listed with first-spotted dates (empty state when
   none). Reads `observeLifetimeStates()` (DISTINCT region across all trips, MIN timestamp); no
   schema
-  change; repo + VM tests. Still open: which-trip-first attribution, the "new for your collection!"
-  accent, and tapping a state for detail.*
+  change; repo + VM tests. Follow-ups shipped 2026-06-09: which-trip-first attribution ("First
+  spotted <date> · <trip>"), a **New!** badge on states first caught on the active trip, and tapping
+  a collected state to open its State Detail. Still open: an at-catch "new for your collection!"
+  flourish on the map/celebration when a brand-new lifetime state is marked.*
 - **Achievements / badges.** `[2026-06-09]` Award playful milestones: first plate, a regional
   sweep (all of New England / the West Coast / a custom region), neighbor chains, a full 50 (per
   trip *and* lifetime), a rare catch (see rare-plate moments), and quantity/time fun ("5 before

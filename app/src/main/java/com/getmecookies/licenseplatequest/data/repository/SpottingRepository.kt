@@ -127,7 +127,9 @@ class SpottingRepository(
                 LifetimeState(
                     code = it.code,
                     name = it.name,
-                    firstFoundAt = it.firstFoundAt
+                    firstFoundAt = it.firstFoundAt,
+                    firstTripId = it.firstTripId,
+                    firstTripName = it.firstTripName,
                 )
             }
         }

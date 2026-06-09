@@ -46,6 +46,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun PassportScreen(
     onOpenSettings: () -> Unit = {},
+    onOpenState: (String) -> Unit = {},
     viewModel: PassportViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -79,14 +80,14 @@ fun PassportScreen(
                     modifier = Modifier.align(Alignment.Center),
                 )
 
-                else -> PassportContent(uiState)
+                else -> PassportContent(uiState, onOpenState)
             }
         }
     }
 }
 
 @Composable
-private fun PassportContent(uiState: PassportUiState) {
+private fun PassportContent(uiState: PassportUiState, onOpenState: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -153,7 +154,14 @@ private fun PassportContent(uiState: PassportUiState) {
                     R.string.passport_first_spotted,
                     state.firstFoundAt.atZone(ZoneId.systemDefault()).toLocalDate()
                         .format(DATE_FORMAT),
+                    state.firstTripName,
                 ),
+                badgeLabel = if (state.code in uiState.newToCollection) {
+                    stringResource(R.string.passport_new_badge)
+                } else {
+                    null
+                },
+                onClick = { onOpenState(state.code) },
             )
         }
     }

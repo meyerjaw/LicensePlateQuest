@@ -82,16 +82,24 @@ interface SpottingDao {
 
     /**
      * The lifetime "Plate Passport" (cross-trip collection): every state ever spotted in any trip,
-     * with the date it was *first* caught. ISO-8601 UTC timestamps sort chronologically as strings,
-     * so MIN() yields the earliest. Ordered by state name for display.
+     * with the date it was *first* caught and the trip that caught it. ISO-8601 UTC timestamps sort
+     * chronologically as strings, so the earliest-timestamp row (per region) is the first catch.
+     * Ordered by state name for display.
      */
     @Query(
         """
         SELECT pr.region_code AS region_code,
                pr.name AS name,
-               MIN(s.timestamp) AS first_found_at
+               s.timestamp AS first_found_at,
+               t.id AS first_trip_id,
+               t.name AS first_trip_name
         FROM spotting s
         JOIN plate_region pr ON pr.id = s.plate_region_id
+        JOIN game_instance gi ON gi.id = s.game_instance_id
+        JOIN trip t ON t.id = gi.trip_id
+        WHERE s.timestamp = (
+            SELECT MIN(s2.timestamp) FROM spotting s2 WHERE s2.plate_region_id = s.plate_region_id
+        )
         GROUP BY pr.id
         ORDER BY pr.name
         """

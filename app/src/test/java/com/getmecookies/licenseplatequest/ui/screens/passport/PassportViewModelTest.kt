@@ -64,17 +64,19 @@ class PassportViewModelTest {
     fun tearDown() = db.close()
 
     @Test
-    fun collectsFoundStatesAcrossTrips() = runBlocking {
+    fun collectsFoundStatesAcrossTrips_andFlagsNewOnesFromTheActiveTrip() = runBlocking {
         createActiveTrip()
         spotting.markState("TX")
-        createActiveTrip() // demotes the first trip
+        createActiveTrip() // demotes the first trip; this one is now active
         spotting.markState("CO")
 
-        val vm = PassportViewModel(mapRepository, spotting)
+        val vm = PassportViewModel(mapRepository, spotting, trips)
         awaitUntil { !vm.uiState.value.loading && vm.uiState.value.collectedCount == 2 }
 
         assertEquals(setOf("TX", "CO"), vm.uiState.value.foundCodes)
         assertEquals(48, vm.uiState.value.remaining)
+        // CO was first caught on the active trip -> new to the collection; TX was on the older trip.
+        assertEquals(setOf("CO"), vm.uiState.value.newToCollection)
     }
 
     private suspend fun createActiveTrip(): UUID = trips.createTrip(

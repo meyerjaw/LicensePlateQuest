@@ -59,6 +59,7 @@ object AppViewModelProvider {
             PassportViewModel(
                 mapRepository = lpqApp().container.mapRepository,
                 spottingRepository = lpqApp().container.spottingRepository,
+                tripRepository = lpqApp().container.tripRepository,
             )
         }
         initializer {

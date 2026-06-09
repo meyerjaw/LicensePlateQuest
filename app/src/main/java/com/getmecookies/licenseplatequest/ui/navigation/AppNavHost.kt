@@ -141,6 +141,7 @@ fun AppRoot(
                 }
                 PassportScreen(
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    onOpenState = { code -> navController.navigate(Routes.stateDetail(code)) },
                 )
             }
             composable(TopDestination.Players.route) {

@@ -25,7 +25,8 @@
     <string name="passport_remaining">%1$d to go</string>
     <string name="passport_complete">All 50 states collected — what a journey!</string>
     <string name="passport_collected_header">Collected states</string>
-    <string name="passport_first_spotted">First spotted %1$s</string>
+    <string name="passport_first_spotted">First spotted %1$s · %2$s</string>
+    <string name="passport_new_badge">New!</string>
     <string name="passport_empty">States you spot on your trips are collected here for keeps. Start a trip and tap a state when you see its plate!</string>
 
     <string name="settings_title">Settings</string>

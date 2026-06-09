@@ -589,8 +589,11 @@ Several of these were resolved during build (noted inline):
   - Backed by `SpottingRepository.observeLifetimeStates()` → `SpottingDao.observeLifetimeFound`
     (DISTINCT region across **all** trips' spottings, earliest timestamp via `MIN`). **No schema
     change** — it's a new read over existing data. Repository + ViewModel tests added.
-  - **Still open (backlog):** which-trip-first attribution, a "new for your collection!" accent on a
-    first-ever catch, and tapping a passport state to open its detail.
+  - **Passport follow-ups (2026-06-09):** each collected state now shows **which trip first caught
+    it** ("First spotted <date> · <trip>"), states first caught on the **current active trip** get a
+    **New!** badge, and tapping a collected state opens its **State Detail**.
+  - **Still open (backlog):** an at-catch "new for your collection!" flourish on the map/celebration
+    the moment a brand-new lifetime state is marked.
 - **v1.10 (2026-06-09)** — Richer state rows + summary stats:
   - **Collectible state cards:** the Active Trip **List** rows and the **Passport** collection now
     use a shared `StateCard` — flag, bold name, a subtitle (spotted/first-spotted date or "Not found
