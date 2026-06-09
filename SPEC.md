@@ -50,7 +50,9 @@ The architecture is deliberately built to grow into a multi-game platform — sl
 - Manual-end celebration with stats screen
 - Trip list with three sections: Active, In Progress, Completed
 - Special visual treatment for completed (50/50) trips in the list
-- Active Trip view with **Map** and **List** top tabs (selection remembered across sessions); the List tab shows found states — sortable (order found, alphabetical), searchable, with a toggle to also show unfound states
+- Active Trip view with **Map** and **List** top tabs (selection remembered across sessions); the
+  List tab is sortable (order found, alphabetical), searchable, with independent **Found** / *
+  *Unfound** section filters (both on by default, remembered)
 - Found states fill the map in a graph-colored vibrant palette (no two bordering states share a color), with 2-letter abbreviations on unfound states and check marks at each state's visual center
 - A bottom stats strip under the map (found X/50, percent, last find, day of trip, found today)
 - Delete trips; swipe-to-delete with an in-place 3-second undo on the Trip List and Player roster
@@ -162,8 +164,21 @@ A standalone, full-screen view (the app's bottom navigation is hidden while it's
 
 - **Top bar:** Back button (returns to the Trip List), trip name, and an overflow (⋯) menu with **Manage trip** (the full edit screen) and **End trip** (the latter with a confirmation dialog).
 - **Top tabs:** **Map** and **List**. The selected tab is persisted (via `UiPreferences`) and restored the next time the user opens a trip.
-- **Map tab:** Bundled vector U.S. map. Unfound states show outline only; found states are filled with a per-state color drawn from a vibrant palette (stable per state code), so the map fills in as a colorful mosaic; a newly found state animates its fill. Found states also carry a check mark (color-blind-safe cue). The trip's **route** is overlaid as a connecting line through the stops in order, with numbered pins at each stop's visual center (playtest #11). Pinch-to-zoom and pan supported. Tapping a state opens State Detail.
-- **List tab:** Header with the persistent **X/50 counter** and sort chips ("Order found" — default, newest first — or "Alphabetical"); a **search box** (filter by name); a **"Show unfound states"** toggle; then the scrolling list. Each row shows the state flag thumbnail and name; unfound rows are dimmed and labelled "Not found yet." Tapping a row opens State Detail.
+- **Map tab:** Bundled vector U.S. map. Unfound states show outline only; found states are filled
+  with a per-state color drawn from a vibrant palette (stable per state code), so the map fills in
+  as a colorful mosaic; a newly found state animates its fill. Found states also carry a check
+  mark (color-blind-safe cue). The fill sweep plays when a state is found, and a find made **off the
+  map** (from the List tab or State Detail) plays its sweep on the **next map visit** (#20). On
+  first run a one-time, dismissible hint tells new players to tap a state when they spot its plate (
+  auto-retires on the first find). The trip's **route** is overlaid as a connecting line through the
+  stops in order, with numbered pins at each stop's visual center (playtest #11). Pinch-to-zoom and
+  pan supported. Tapping a state opens State Detail.
+- **List tab:** Header with the persistent **X/50 counter** and sort chips ("Order found" — default,
+  newest first — or "Alphabetical"); a **search box** (filter by name); independent **Found** / *
+  *Unfound** section filters (both on by default, remembered across sessions; when a search matches
+  a state in a switched-off section, a tappable hint offers to reveal it); then the scrolling list.
+  Each row shows the state flag thumbnail and name; unfound rows are dimmed and labelled "Not found
+  yet." Tapping a row opens State Detail.
 
 ### State Detail
 
@@ -541,4 +556,25 @@ Several of these were resolved during build (noted inline):
   - **Still deferred:** the richer #20 batch (staggered cascade, "+N states" combo overlay,
     cross-restart toast); celebration sound; pre-permission priming; first-run onboarding; one-way
     trips (#22).
+- **v1.8 (2026-06-09)** — List filters, onboarding hint, and notification priming:
+  - **Independent List filters:** the List tab now has separate **Found** and **Unfound** section
+    toggles (both on by default, remembered via `UiPreferences`) in place of the single "show
+    unfound" switch — so the list shows all states by default. When a search matches a state in a
+    switched-off section, a **tappable hint** offers to reveal it.
+  - **First-run map hint:** a one-time, dismissible tip on the active-trip map ("Tap a state when
+    you spot its plate"), persisted in `UiPreferences` and auto-retired on the first find.
+  - **Pre-permission priming for notifications:** before Android's `POST_NOTIFICATIONS` dialog we
+    show a friendly in-app rationale (graphic + benefit points), and once permanently denied a
+    "turn it on in Settings" deep-link variant. Reusable `rememberNotificationPermissionPrimer()`
+    with a pure, unit-tested decision (`notificationPrimerAction` / `resolveSnooze`). Triggers on
+    the first end-date set (New Trip + Manage trip) and on the Settings **Trip reminders** toggle
+    (which now reflects the real permission outcome — declining leaves it off). "Not now" snoozes
+    the primer for the next 2 end-date picks.
+  - **Find-animation polish:** slower fill sweep (850 ms) and a fix so a find marked in State
+    Detail animates after the return transition instead of behind it.
+  - **Debug seed hardening:** the debug "Seed sample data" action ensures regions are seeded first
+    (no more silent no-op on a fresh install) and always reports a detailed result.
+  - **Still deferred:** the richer #20 batch; celebration sound; per-stop dates/notes; route on the
+    summary/shared image; actual city pins; plus the newer ideas captured in `BACKLOG.md` (lifetime
+    Plate Passport, achievements, rare-plate moments, photo capture, widget, recap, export/import).
 
