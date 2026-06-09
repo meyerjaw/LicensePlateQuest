@@ -36,6 +36,18 @@
     <string name="settings_home_state">State</string>
     <string name="settings_trip_reminders">Trip reminders</string>
     <string name="settings_trip_reminders_desc">Get a nudge when a trip passes its end date</string>
+
+    <!-- Notification pre-permission primer (shown before Android's POST_NOTIFICATIONS dialog). -->
+    <string name="notif_primer_title">Want a heads-up when your trip wraps up?</string>
+    <string name="notif_primer_body">We\'ll send a gentle reminder the day after your trip\'s end date, so you can finish spotting and see your final map.</string>
+    <string name="notif_primer_point_one">Just one reminder per trip</string>
+    <string name="notif_primer_point_two">No spam, ever</string>
+    <string name="notif_primer_point_three">Turn it off anytime in Settings</string>
+    <string name="notif_primer_confirm">Sounds good</string>
+    <string name="notif_primer_dismiss">Not now</string>
+    <string name="notif_primer_settings_title">Turn on notifications</string>
+    <string name="notif_primer_settings_body">Trip reminders are turned off for License Plate Quest. You can switch them back on in Settings to get the end-of-trip nudge.</string>
+    <string name="notif_primer_settings_confirm">Open Settings</string>
     <string name="settings_debug">Developer</string>
     <string name="settings_seed_sample">Seed sample data</string>
     <string name="settings_seed_desc">Adds a few players and a multi-stop trip with finds for testing.</string>

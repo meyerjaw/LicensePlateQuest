@@ -49,6 +49,7 @@ import com.getmecookies.licenseplatequest.domain.model.RegionOption
 import com.getmecookies.licenseplatequest.domain.model.ThemeMode
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.components.RegionPickerField
+import com.getmecookies.licenseplatequest.ui.components.rememberNotificationPermissionPrimer
 import java.util.UUID
 
 /** Settings screen (reached from the top-right icon): theme choice and the haptics toggle. */
@@ -64,6 +65,9 @@ fun SettingsScreen(
     val home by viewModel.home.collectAsStateWithLifecycle()
     val regionOptions by viewModel.regionOptions.collectAsStateWithLifecycle()
     val homeDialog by viewModel.homeDialog.collectAsStateWithLifecycle()
+
+    // Pre-permission primer for the Trip reminders toggle (renders its own dialogs).
+    val notificationPrimer = rememberNotificationPermissionPrimer()
 
     // Debug-only: report the seed result (detailed message) via a Toast.
     if (BuildConfig.DEBUG) {
@@ -155,7 +159,18 @@ fun SettingsScreen(
                 }
                 Switch(
                     checked = tripRemindersEnabled,
-                    onCheckedChange = viewModel::onTripRemindersToggled,
+                    onCheckedChange = { enabled ->
+                        if (enabled) {
+                            // Turning reminders on is a deliberate action — offer the permission
+                            // (force = ignore snooze). Only flip the setting on if it's actually
+                            // granted, so declining leaves the toggle off and reminders can fire.
+                            notificationPrimer.request(force = true) { granted ->
+                                viewModel.onTripRemindersToggled(granted)
+                            }
+                        } else {
+                            viewModel.onTripRemindersToggled(false)
+                        }
+                    },
                 )
             }
 

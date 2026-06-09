@@ -1,10 +1,5 @@
 package com.getmecookies.licenseplatequest.ui.screens.trips
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -45,15 +40,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.R
+import com.getmecookies.licenseplatequest.ui.components.rememberNotificationPermissionPrimer
 import com.getmecookies.licenseplatequest.domain.model.RegionOption
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.PlayerColors
@@ -100,20 +94,9 @@ fun NewTripScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showEndDatePicker by remember { mutableStateOf(false) }
 
-    // Setting an end date schedules an overdue reminder, so ask for notification permission the
-    // first time the user picks one (Android 13+). Granting is optional — the trip still saves.
-    val context = LocalContext.current
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { /* The outcome doesn't block trip creation; the worker checks permission before posting. */ }
-    fun maybeRequestNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-    }
+    // Setting an end date schedules an overdue reminder; offer notification permission via the
+    // pre-permission primer the first time one is picked (Android 13+). Optional — trip still saves.
+    val notificationPrimer = rememberNotificationPermissionPrimer()
 
     Scaffold(
         topBar = {
@@ -293,7 +276,7 @@ fun NewTripScreen(
             onPicked = {
                 viewModel.onEndDateChange(it)
                 showEndDatePicker = false
-                maybeRequestNotificationPermission()
+                notificationPrimer.request(force = false)
             },
             onDismiss = { showEndDatePicker = false },
         )

@@ -1,11 +1,6 @@
 package com.getmecookies.licenseplatequest.ui.screens.trips
 
-import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,16 +42,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
+import com.getmecookies.licenseplatequest.ui.components.rememberNotificationPermissionPrimer
 import com.getmecookies.licenseplatequest.ui.PlayerColors
 import com.getmecookies.licenseplatequest.ui.components.PlayerSelectChip
 import com.getmecookies.licenseplatequest.ui.components.RegionPickerField
@@ -99,20 +93,9 @@ fun ManageTripScreen(
     var showEndDatePicker by remember { mutableStateOf(false) }
     var showDiscardDialog by remember { mutableStateOf(false) }
 
-    // Changing the end date can schedule an overdue reminder, so ask for notification permission
-    // the first time one is set here (Android 13+). Granting is optional — saving isn't blocked.
-    val context = LocalContext.current
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { /* outcome doesn't block the edit; the worker re-checks permission before posting. */ }
-    fun maybeRequestNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
-    }
+    // Changing the end date can schedule an overdue reminder; offer notification permission via the
+    // pre-permission primer the first time one is set (Android 13+). Optional — saving isn't blocked.
+    val notificationPrimer = rememberNotificationPermissionPrimer()
 
     // Intercept back: warn before throwing away unsaved edits.
     fun attemptExit() {
@@ -310,7 +293,7 @@ fun ManageTripScreen(
             onPicked = {
                 viewModel.onEndDateChange(it)
                 showEndDatePicker = false
-                maybeRequestNotificationPermission()
+                notificationPrimer.request(force = false)
             },
             onDismiss = { showEndDatePicker = false },
         )

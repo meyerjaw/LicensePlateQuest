@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?><!-- Friendly notification bell on a sunny circle, for the notification primer dialog. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="56dp"
+    android:height="56dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+
+    <!-- Sunny circle -->
+    <path
+        android:fillColor="#FFB703"
+        android:pathData="M2,24 a22,22 0 1 0 44,0 a22,22 0 1 0 -44,0 z" />
+
+    <!-- Bell body -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,13 c-4.4,0 -8,3.6 -8,8 v4 l-2.4,3.6 c-0.5,0.8 0.1,1.9 1,1.9 h18.8 c0.9,0 1.5,-1.1 1,-1.9 l-2.4,-3.6 v-4 c0,-4.4 -3.6,-8 -8,-8 z" />
+    <!-- Top knob -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M22,12.2 a2,2 0 0 1 4,0 z" />
+    <!-- Clapper -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M20.7,32 a3.3,3.3 0 0 0 6.6,0 z" />
+
+    <!-- Sparkle -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M38,12 l0.9,2.1 2.1,0.9 -2.1,0.9 -0.9,2.1 -0.9,-2.1 -2.1,-0.9 2.1,-0.9 z" />
+</vector>
