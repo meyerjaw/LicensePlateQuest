@@ -14,10 +14,40 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
 - **Trip start & end dates.** `[playtest #12]` Add an optional end date alongside the existing start date (all-day granularity). Validate end ≥ start (push end forward if start moves past it). Derive status from dates — `upcoming` / `active` / `overdue` (past end, not ended) / `completed` — and show the range on the summary ("June 15 – June 22, 2026 · 7 days"). Pairs with overdue notifications `[playtest #13]`.
 - **Pit stops / multi-leg trips.** `[playtest #11]` Replace the single destination with an ordered `stops` array (first = start, last = final destination), each stop `{ id, city, regionCode, arrivalDate?, departureDate?, notes? }`; migrate existing trips to a 2-item array. UI: reorderable stop list with "+ Add stop" (opens the shared region selector), first/last visually distinguished. Map view draws stops in order with thin straight connecting lines and numbered pins (no real routing). Plate counting stays **global to the trip** for v1 (per-leg later). *Status: shipped 2026-06-08 — `trip_stop` table (DB v4, with migration tests), unified ordered stops, add/remove/up-down reorder in New Trip + Manage trip, and a route overlay (line + numbered pins at each stop state's visual-center) on the active-trip map. Still open: per-stop arrival/departure dates + notes; route on the summary/shared map; the city-pins item below.*
 - **Actual city pins for the route.** Today the route pins sit at each stop **state's** visual-center (the state we know from `region_code`), not the actual city the user typed. Upgrade to pin the **real city location**: resolve each stop's city to lat/lng (bundled city gazetteer, or on-device geocoding behind availability checks) and project geo → map viewBox to place the pin precisely (the geo↔viewBox projection doesn't exist yet — it'd be the first such mapping; the state visual-centers are viewBox-native). Falls back to the state center when a city can't be resolved. Improves accuracy for multi-stop routes within a single state and makes the route line follow the actual path. Pairs with multi-country expansion (same projection need).
-- **One-way trips.** `[playtest #22]` Add a round-trip / one-way toggle on trip create/edit (default round trip). One-way ends the route line at the final stop (round trip draws the return), affects end-date meaning, and at trip end can offer "Set [destination] as your new home" (ties to home location `[playtest #8]`). Store as a single `isOneWay` boolean. Show a small badge on summary, trip list, and shared screenshots.
 - **Overdue-trip reminders (long-term).** `[playtest #13]` Local notifications (no server): schedule on trip create/edit when an end date exists, cancel on end/delete/extend. Request permission contextually (first time an end date is set), fire at end-date +1 day with an optional +3 day follow-up, friendly copy, deep-link to the trip, and action buttons (End trip / Extend / Remind later). No end date → nothing scheduled; use UTC internally. Add a "Trip reminders" settings toggle. *Status: core shipped 2026-06-04 — per-trip WorkManager scheduling, one-nudge-per-trip dedup, tap-to-open, contextual permission, settings toggle. Still open: +3 day follow-up, notification action buttons (End trip / Extend / Remind later — Extend depends on the manage-trip flow `[playtest #14]`).*
 - **Pre-permission priming for notifications.** Before firing Android's system `POST_NOTIFICATIONS` dialog, show our own lightweight rationale ("primer") explaining *why* we want to notify — so a family doesn't miss the nudge to wrap up an overdue trip. Goal: lift grant rates and avoid the "Don't allow" dead-end (once the system dialog is permanently denied, it can't be re-shown, only deep-linked to settings). Flow: on the first trigger (currently when an end date is set on New Trip — `[playtest #13]`), present a friendly in-app dialog with a clear value statement and "Not now" / "Sounds good" actions; only on "Sounds good" launch the real system prompt. If the OS reports the request was permanently denied (`shouldShowRequestPermissionRationale` is false after a denial), swap the primer for a "turn it on in Settings" variant that deep-links to the app's notification settings. Keep copy warm and specific (mention overdue-trip reminders, not generic "notifications"). Make the primer reusable so any future notification need (not just reminders) can show context first. Pairs with the "Trip reminders" settings toggle and the contextual request already in place.
 - **Share a finished trip.** Export a shareable image of the colorful filled-in map plus celebration stats. `[playtest #4]` "Long screenshot" = render the full scrollable summary to a `Bitmap` at full content height and hand to the Android share sheet (`Intent.ACTION_SEND`); bake in a title ("My License Plate Quest — [trip name]") and an app-name + date footer; verify the map, fonts, and dark mode render before capture; no personal data beyond what the user entered. Depends on the filled summary map `[playtest #3]`.
+- **Lifetime "Plate Passport" (cross-trip collection).** `[2026-06-09]` Everything is per-trip
+  today; add a persistent, cross-trip record of every state ever spotted, so the family keeps a
+  long-term collection that grows across trips. A lifetime map (reuse the non-interactive map mode)
+  plus an all-time counter ("43 / 50 collected"), each state's **first-spotted date** and which trip
+  first caught it. Derived from existing `spotting` rows across all game instances — a
+  DISTINCT-by-region read, no new writes. Reachable from a top-level "Passport"/"Collection" entry.
+  Optionally a gentle "new for your collection!" accent the first time a state is added lifetime (
+  distinct from the normal per-trip find). Foundation for achievements below.
+- **Achievements / badges.** `[2026-06-09]` Award playful milestones: first plate, a regional
+  sweep (all of New England / the West Coast / a custom region), neighbor chains, a full 50 (per
+  trip *and* lifetime), a rare catch (see rare-plate moments), and quantity/time fun ("5 before
+  lunch"). Store earned achievements with an `earnedAt`; show a locked/unlocked grid and a small
+  celebration on unlock. Define each rule as a **pure, testable predicate** over the found set +
+  timestamps so they're easy to unit-test. Pairs with the Plate Passport (lifetime data) and the
+  existing celebration system.
+- **Rare-plate moments.** `[2026-06-09]` `PlateRegion.rarity_score` is bundled but unused. When a
+  high-rarity state is marked, layer a distinct "Rare!" flourish on top of the normal find
+  celebration (different accent / sound / animation, gated on a threshold), show a small "rare"
+  badge on that state's list/detail row and in the summary, and feed an achievement. Tune the
+  threshold from the bundled data; keep it subtle so common finds still feel good. Cheap,
+  high-delight, and makes existing data earn its keep.
+- **Photo capture for a find.** `[2026-06-09]` `Spotting.photo_path` is reserved but always null.
+  Let a player attach a photo of the actual plate when marking a state (system camera intent or
+  CameraX), stored in **app-private** storage with the path on the spotting; show a thumbnail on
+  State Detail and optionally in the shared summary; allow retake/remove. Entirely optional. Privacy
+  note: photos may show real plates and faces — keep them local, never uploaded, and exclude from
+  any share unless the user opts in.
+- **Home-screen widget.** `[2026-06-09]` A glanceable launcher widget for the active trip — X / 50,
+  last state found, day of trip, maybe a tiny filled map — built with **Glance** (Jetpack app
+  widgets), refreshed when spottings change; tapping opens the active trip. When no trip is active,
+  show a "start a trip" prompt. Handy during a real road trip with the phone on a mount.
 
 ## UX & polish
 
@@ -46,7 +76,19 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
 - **Playful empty states.** Add friendly illustration + copy to the Trip List and Players empty screens (e.g. the van/road art) instead of plain text — reinforces the family-friendly feel. *Status: shipped 2026-06-08 — shared `EmptyState` component (tinted icon + copy) used on the Trips and Players empty screens. Still open: replace the icon with the van/road illustration.*
 - **More celebratory "completed trip" treatment** in the Trip List (SPEC §6 calls for special styling for 50/50 trips — gold border, star, etc.). Currently minimal. *Status: shipped 2026-06-08 — completed trips get distinct styling in the trip list.*
 - **Map visual polish.** Theme the unfound-state/background colors to the new sunny palette (they're still hardcoded slate; note the four-color base `[playtest #6]` may supersede this); consider state labels when zoomed in `[playtest #10]`; double-check Alaska/Hawaii placement and tap-target sizes. *Status: shipped 2026-06-08 — map colors (states, outline, labels, route) now resolve from the Material color scheme instead of hardcoded slate. Still open: four-color base `[playtest #6]`, zoom labels, AK/HI placement audit.*
-- **First-run hint / onboarding.** A one-time tip ("Tap a state on the map when you spot its plate!") for new users.
+- **First-run hint / onboarding.** A one-time tip ("Tap a state on the map when you spot its
+  plate!") for new users. *Status: shipped 2026-06-09 — dismissible map overlay, persisted in
+  UiPreferences, auto-retired on the first find. Could later grow into a short first-launch
+  carousel.*
+- **Richer end-of-trip recap.** `[2026-06-09]` Expand the summary/celebration into a short "story":
+  a timeline of finds, busiest day, first / last / rarest catch, biggest single-day streak, and
+  per-player highlights — beyond the current stat strip. All derivable from existing spottings +
+  timestamps. Pairs with the shareable image so the recap is shareable too. Keep it skimmable and
+  celebratory, not a data dump.
+- **Fun facts on the State Detail (and on find).** `[2026-06-09]` The `PlateRegion` bird / motto /
+  flower / `fun_facts` fields are bundled but lightly used; surface a kid-friendly fun fact when a
+  state is marked (a quick reveal in the find flow) and make the State Detail's facts more playful.
+  Purely a content/presentation enhancement over data already on device.
 
 ## Settings
 
@@ -63,13 +105,20 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
 - **Automated tests.** Unit tests for repositories/ViewModels (one-active-trip rule, 50/50 fires once per trip, name validation/duplicates, trip-player add/remove) and a few Compose UI tests for the core flows (create trip → mark state → celebrate). New logic worth covering: date-derived trip status `[#12]`, four-color computation `[#6]`, attribution sets `[#17]`, and the undoable-delete buffer `[#15/#16]`.
 - **Debug-only sample-data seeding.** *Status: shipped 2026-06-08 — a "Developer" section in Settings (gated on `BuildConfig.DEBUG`, stripped from release) with a "Seed sample data" button that creates a few players and a multi-stop sample trip with finds, so a fresh debug install is one tap from a useful test state. Added to ease recovery after the intermittent uninstall/reinstall data wipes.*
 - **Localization.** The app is now i18n-ready (all strings in `strings.xml`). Add at least one real translation (e.g. Spanish) to validate the setup, and confirm dates/numbers format per locale.
-- **Schema cleanup + migration tests.** Eventually drop the unused `plate_image_path` column (needs a Room migration) and add migration tests, since the schema will keep evolving (stops array `[#11]`, attribution sets `[#17]`, player color `[#19]`, `isOneWay` `[#22]`, `celebrated` flag `[#20]` all touch it).
+- **Schema cleanup + migration tests.** Eventually drop the unused `plate_image_path` column (needs
+  a Room migration) and add migration tests, since the schema will keep evolving (stops array
+  `[#11]`, attribution sets `[#17]`, player color `[#19]`, `celebrated` flag `[#20]` all touch it).
 
 ## Future / larger bets
 
 - **Expand beyond the US 50.** The schema already keys on `country_code` + `region_code`, so adding DC, US territories, or other countries is mostly new rows + flag assets. `[playtest #7]` Concretely: Canada (13 provinces/territories) and Mexico (32), stored with ISO 3166-2 codes (`US-CA`, `CA-ON`, `MX-JAL`). *Open question — endpoints only or also findable on plates?* Endpoints-only is a small data addition; making them findable ripples into map geometry, the cross-border four-color scheme, the counter (combined vs per-country), and the summary. Recommend endpoints-first.
 - **Additional road-trip games** (slug bug, alphabet game, etc.) via the existing `GameType` → `GameInstance` → `Spotting` hierarchy, which was designed for this.
-- **Backup / restore or cloud sync.** Currently fully offline with backup disabled; a manual export/import or optional sync would protect trip history across devices.
+- **Backup / restore (manual export/import) or cloud sync.** Currently fully offline with system
+  backup disabled. Add an in-app **manual JSON export/import** so a family can save and restore
+  their trip history — and recover from the occasional dev/reinstall data wipe (`[2026-06-09]`, a
+  real user feature, not just a dev aid). Export all trips/players/spottings to a shareable file;
+  import merges or replaces behind a confirm, validating the schema/version. A lighter step before
+  any optional account-based **cloud sync** across devices.
 
 ## Cross-cutting concerns
 
@@ -80,4 +129,5 @@ Themes that span multiple items — build the shared piece once:
 - **Player color system** (`[playtest #17, #18, #19]`): palette tokens resolved via the theme, propagated through summary chips, attribution indicators, player rows, and celebration accents — centralize in `getPlayerColor(playerId)`.
 - **Visual-center positions for states** (`[playtest #5, #10, #20]`): one computed pole-of-inaccessibility position per state, reused for check marks, abbreviations, and animation anchors.
 - **Celebration / animation queue** (`[playtest #2, #18, #20]`): the deferred-celebration pattern could generalize so counter updates and leader changes also defer to the next view.
-- **Multi-country support** (`[playtest #7, #11, #22]`): if CA/MX become findable, effects ripple across counters, map geometry, summary, and stats.
+- **Multi-country support** (`[playtest #7, #11]`): if CA/MX become findable, effects ripple across
+  counters, map geometry, summary, and stats.
