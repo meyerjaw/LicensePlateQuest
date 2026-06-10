@@ -109,6 +109,53 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
   last state found, day of trip, maybe a tiny filled map — built with **Glance** (Jetpack app
   widgets), refreshed when spottings change; tapping opens the active trip. When no trip is active,
   show a "start a trip" prompt. Handy during a real road trip with the phone on a mount.
+- **First-time trip wizard (onboarding).** `[2026-06-10]` Guide a brand-new user from zero state to
+  "ready to play" in their first session instead of dropping them on an empty trip list with no idea
+  what to do — a friendly, *skippable* multi-step flow covering the essentials (what the game is,
+  create at least one player, optionally set home, create the first trip). Should feel like helpful
+  structure, not a mandatory tutorial.
+  - **Trigger:** first launch after install, gated by a `hasCompletedOnboarding` flag in user prefs.
+    Resume from where they left off if force-quit mid-wizard; re-runnable from Settings ("Restart
+    setup wizard") for users who skipped the first time.
+  - **Proposed steps:** (1) **Welcome** — app name + one-line pitch ("Spot all 50 state license
+    plates on your next road trip"), hero illustration, single "Get started" CTA, plus a corner
+    "Skip setup" that drops to an empty trip list. (2) **Set home (optional)** — "Where do you
+    usually start your trips?" via the full-screen region selector `[playtest #7]`; explains it
+    auto-fills the trip origin (changeable in Settings); prominent Skip; writes the home default
+    `[playtest #8]`. (3) **Add players** — "Who's playing?" inline add-player form (name + color
+    picker `[playtest #19]`) starting with one focused empty row + "+ Add another"; live color-chip
+    preview; minimum one player to proceed (or allow zero = solo / no-attribution). (4) **Create
+    your first trip** — the trip form with origin prefilled from home, destination, optional dates
+    `[playtest #12]`, round-trip/one-way toggle `[playtest #22]`; multi-leg `[playtest #11]` is
+    hidden here to keep it simple (add stops later from Manage trip); "Skip — I'll plan later".
+    (5) **You're ready** — confirmation ("start spotting whenever you're on the road") + "Let's go"
+    → active-trip map, with one or two lightweight, dismissable coachmarks ("Tap a state to mark it
+    found"). Keep it to a pointer or two, not a full tour.
+  - **Skip behavior:** every step after Welcome can Skip to the next; skipping the whole wizard
+    lands
+    the user on the trip list's "Plan your first trip" empty state (bypassed, not stuck). The
+    `hasCompletedOnboarding` flag flips true on either completion **or** an explicit skip — don't
+    keep nagging.
+  - **State persistence:** save partial progress per step (return them to the step they left off);
+    data created in earlier steps (players, home) is written immediately and real — *not* held in a
+    "wizard buffer" — so bailing never loses work.
+  - **Edge cases:** reinstall re-runs the wizard (expected); restoring from a backup / cloud sync
+    with existing data skips it (not really new); finishing then deleting all players/trips does
+    **not** re-trigger it; verify every step works on small/older screens without horizontal scroll
+    and with the keyboard not covering inputs.
+  - **Tone & a11y:** conversational copy ("Who's playing? Add the folks who'll be on the road with
+    you."), the app's own colors/fonts/components (not a separate world), a top progress indicator
+    (dots / thin bar); screen-reader navigable with announced transitions ("Step 3 of 5: Add
+    players"), keyboard-accessible labeled Skip, no focus trap, Back on every step except Welcome.
+  - **Future / implementation:** could later double as a "what's new" feature-discovery surface
+    after
+    big updates (a separate pattern, not core onboarding); keep the step config **data-driven** so
+    variants (3 vs 5 steps, mandatory vs optional players) are A/B-able without rewrites. Build as a
+    **stack-based navigation flow** (each step its own screen with its own
+    validation/animation/back),
+    with wizard-scoped state persisted to disk on each transition. Absorbs/extends the lightweight
+    first-run map hint already shipped (the `hasCompletedOnboarding` gate is broader than today's
+    one-time map tip).
 
 ## UX & polish
 
