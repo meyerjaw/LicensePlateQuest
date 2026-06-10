@@ -99,7 +99,12 @@
     <string name="notif_primer_settings_confirm">Open Settings</string>
     <string name="settings_debug">Developer</string>
     <string name="settings_seed_sample">Seed sample data</string>
-    <string name="settings_seed_desc">Adds a few players and a multi-stop trip with finds for testing.</string>
+    <string name="settings_seed_desc">Adds a roster, several trips (completed, in-progress, active), and finds for testing.</string>
+    <string name="settings_wipe">Wipe all data</string>
+    <string name="settings_wipe_desc">Deletes every trip, player, and bit of progress. Bundled states are kept.</string>
+    <string name="settings_wipe_confirm_title">Wipe all data?</string>
+    <string name="settings_wipe_confirm_body">This permanently deletes all trips, players, and progress on this device. This can\'t be undone.</string>
+    <string name="settings_wipe_confirm">Wipe everything</string>
     <string name="settings_seed_done">Sample data added</string>
     <string name="settings_seed_failed">Couldn\'t add sample data (already present or regions not ready)</string>
 

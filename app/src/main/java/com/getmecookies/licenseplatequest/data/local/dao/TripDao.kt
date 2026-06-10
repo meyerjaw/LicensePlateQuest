@@ -62,6 +62,10 @@ interface TripDao {
 
     @Delete
     suspend fun delete(trip: TripEntity)
+
+    /** Delete every trip (debug-only wipe). FK cascades clear stops, players, games, and spottings. */
+    @Query("DELETE FROM trip")
+    suspend fun deleteAll()
 }
 
 /** Projection for a trip's status and how many players are on it. */

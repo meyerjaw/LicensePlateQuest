@@ -155,7 +155,18 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
 ## Quality & engineering
 
 - **Automated tests.** Unit tests for repositories/ViewModels (one-active-trip rule, 50/50 fires once per trip, name validation/duplicates, trip-player add/remove) and a few Compose UI tests for the core flows (create trip → mark state → celebrate). New logic worth covering: date-derived trip status `[#12]`, four-color computation `[#6]`, attribution sets `[#17]`, and the undoable-delete buffer `[#15/#16]`.
-- **Debug-only sample-data seeding.** *Status: shipped 2026-06-08 — a "Developer" section in Settings (gated on `BuildConfig.DEBUG`, stripped from release) with a "Seed sample data" button that creates a few players and a multi-stop sample trip with finds, so a fresh debug install is one tap from a useful test state. Added to ease recovery after the intermittent uninstall/reinstall data wipes.*
+- **Debug-only sample-data seeding.** *Status: shipped 2026-06-08; **expanded 2026-06-10**. A "
+  Developer" section in Settings (gated on `BuildConfig.DEBUG`, stripped from release) with a "Seed
+  sample data" button. The seeder now lives in `SampleDataSeeder` and builds a rich, varied dataset:
+  a 6-player roster with distinct colors; three **completed** trips (including a full 50/50
+  cross-country sweep that lights up the completed-map styling and fills the Passport);
+  two **in-progress** trips (one **overdue**); and the **active** multi-stop trip — each with its
+  own finds, mixed single/multi-player/unattributed credit, and **back-dated** dates/timestamps so
+  durations, date ranges, Passport first-spotted dates, and the recap read like real history.
+  Achievements are pre-evaluated so earned badges show immediately. A separate **"Wipe all data"**
+  action (confirmed) clears all trips/players/progress while keeping the bundled regions, for a
+  clean slate between runs. Robolectric-tested. Eases recovery after the intermittent
+  uninstall/reinstall data wipes.*
 - **Localization.** The app is now i18n-ready (all strings in `strings.xml`). Add at least one real translation (e.g. Spanish) to validate the setup, and confirm dates/numbers format per locale.
 - **Schema cleanup + migration tests.** Eventually drop the unused `plate_image_path` column (needs
   a Room migration) and add migration tests, since the schema will keep evolving (stops array

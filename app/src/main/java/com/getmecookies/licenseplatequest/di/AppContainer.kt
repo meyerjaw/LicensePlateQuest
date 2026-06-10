@@ -12,6 +12,7 @@ import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
+import com.getmecookies.licenseplatequest.data.seed.SampleDataSeeder
 import com.getmecookies.licenseplatequest.domain.CelebrationTracker
 import com.getmecookies.licenseplatequest.domain.UiPreferences
 import com.getmecookies.licenseplatequest.notifications.ReminderScheduler
@@ -57,5 +58,15 @@ class AppContainer(context: Context) {
         context = context.applicationContext,
         plateRegionDao = database.plateRegionDao(),
         gameTypeDao = database.gameTypeDao(),
+    )
+
+    val sampleDataSeeder: SampleDataSeeder = SampleDataSeeder(
+        database = database,
+        regionRepository = regionRepository,
+        playerRepository = playerRepository,
+        tripRepository = tripRepository,
+        spottingRepository = spottingRepository,
+        achievementRepository = achievementRepository,
+        regionSeeder = regionSeeder,
     )
 }

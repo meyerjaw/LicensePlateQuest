@@ -69,6 +69,9 @@ fun SettingsScreen(
     // Pre-permission primer for the Trip reminders toggle (renders its own dialogs).
     val notificationPrimer = rememberNotificationPermissionPrimer()
 
+    // Debug-only: guard the destructive "wipe all data" action behind a confirm dialog.
+    var confirmWipe by remember { mutableStateOf(false) }
+
     // Debug-only: report the seed result (detailed message) via a Toast.
     if (BuildConfig.DEBUG) {
         val context = LocalContext.current
@@ -225,6 +228,18 @@ fun SettingsScreen(
                         TextButton(onClick = viewModel::seedSampleData) {
                             Text(stringResource(R.string.settings_seed_sample))
                         }
+
+                        Text(
+                            text = stringResource(R.string.settings_wipe_desc),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        TextButton(onClick = { confirmWipe = true }) {
+                            Text(
+                                text = stringResource(R.string.settings_wipe),
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
                     }
                 }
             }
@@ -239,6 +254,32 @@ fun SettingsScreen(
             onRegionSelected = viewModel::onHomeRegionSelected,
             onSave = viewModel::onHomeDialogSave,
             onDismiss = viewModel::onHomeDialogDismiss,
+        )
+    }
+
+    if (confirmWipe) {
+        AlertDialog(
+            onDismissRequest = { confirmWipe = false },
+            title = { Text(stringResource(R.string.settings_wipe_confirm_title)) },
+            text = { Text(stringResource(R.string.settings_wipe_confirm_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmWipe = false
+                        viewModel.wipeAllData()
+                    },
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_wipe_confirm),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmWipe = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
         )
     }
 }

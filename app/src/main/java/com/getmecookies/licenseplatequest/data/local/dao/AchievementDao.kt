@@ -19,4 +19,8 @@ interface AchievementDao {
 
     @Query("SELECT id FROM achievement")
     fun observeEarnedIds(): Flow<List<String>>
+
+    /** Delete every earned achievement (debug-only wipe). */
+    @Query("DELETE FROM achievement")
+    suspend fun deleteAll()
 }

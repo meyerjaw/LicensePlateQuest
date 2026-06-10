@@ -665,4 +665,25 @@ Several of these were resolved during build (noted inline):
   - Tested: a repository test (first-ever catch true; repeat on a later trip false) and a ViewModel
     test (a first catch emits the flourish).
   - Complements the Passport's existing **New!** badge on states first caught on the active trip.
+- **v1.16 (2026-06-10)** — Richer debug sample data (dev-only, no release impact):
+    - The debug "Seed sample data" action (Settings → Developer, `BuildConfig.DEBUG` only) now
+      builds a
+      full, varied dataset via a new `SampleDataSeeder`: a **6-player** roster with distinct colors;
+      **3 completed** trips (one a full **50/50** cross-country sweep — completed-map styling + a
+      filled
+      Passport); **2 in-progress** trips (one **overdue**); and the **active** multi-stop trip. Each
+      trip has its own finds with mixed single / multi-player / unattributed credit and **back-dated
+      **
+      dates + timestamps, so durations, date ranges, Passport first-spotted dates, and the recap all
+      read like real history. Achievements are pre-evaluated so earned badges show immediately.
+    - Built on the real repositories (create/mark/end), with direct DAO writes only to back-date
+      timestamps the public API stamps as "now" (`SpottingDao.backdateSpotting`).
+      `SettingsViewModel`
+      now delegates seeding to `SampleDataSeeder`. Robolectric-tested. No schema change.
+    - Added a separate **"Wipe all data"** developer action (confirmed, destructive-styled) that
+      erases
+      all trips, players, achievements, and the event log — keeping the bundled regions so the app
+      still works — for a clean slate between test runs (`SampleDataSeeder.wipeAllData()` via
+      FK-cascading
+      `deleteAll()` DAO methods, in a transaction). Also tested.
 

@@ -53,4 +53,8 @@ interface PlayerDao {
             "AND name = :name COLLATE NOCASE AND id != :excludeId"
     )
     suspend fun countActiveByName(name: String, excludeId: UUID): Int
+
+    /** Delete every player (debug-only wipe). */
+    @Query("DELETE FROM player")
+    suspend fun deleteAll()
 }
