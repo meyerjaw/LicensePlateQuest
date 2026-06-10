@@ -69,6 +69,10 @@ interface SpottingDao {
     )
     suspend fun getAllFinds(): List<SpottingFindRow>
 
+    /** Backdate a spotting's timestamps (debug-only sample seeding, to spread finds over time). */
+    @Query("UPDATE spotting SET timestamp = :ts, created_at = :ts WHERE id = :id")
+    suspend fun backdateSpotting(id: UUID, ts: Instant)
+
     /** The spotting for a given region in a game, if it's been marked. */
     @Query(
         "SELECT * FROM spotting WHERE game_instance_id = :gameInstanceId " +
