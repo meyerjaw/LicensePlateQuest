@@ -156,11 +156,17 @@ class ActiveTripViewModel(
     private val _achievementEvents = Channel<List<String>>(Channel.BUFFERED)
     val achievementEvents: Flow<List<String>> = _achievementEvents.receiveAsFlow()
 
+    /**
+     * Requests for an achievement re-evaluation. Conflated + consumed by a single collector (see
+     * init) so the (DB-touching) evaluation always runs on its own coroutine — never inline inside
+     * the state pipeline that processes finds — and never overlaps itself. This keeps the reactive
+     * found-states pipeline isolated from achievement bookkeeping.
+     */
+    private val _achievementTrigger = Channel<Unit>(Channel.CONFLATED)
+
+    /** Signal that something may have unlocked an achievement; the dedicated collector handles it. */
     private fun reevaluateAchievements() {
-        viewModelScope.launch {
-            val newly = achievementRepository.evaluateAndPersist()
-            if (newly.isNotEmpty()) _achievementEvents.send(newly.toList())
-        }
+        _achievementTrigger.trySend(Unit)
     }
 
     // Track the previous found count per trip so we only react to genuine increases.
@@ -180,6 +186,18 @@ class ActiveTripViewModel(
         viewModelScope.launch {
             rareCodes = regionRepository.getRareCodes()
             _uiState.update { it.copy(rareCodes = rareCodes) }
+        }
+        viewModelScope.launch {
+            // Single consumer for achievement re-evaluations: keeps the (DB) work off the
+            // find-processing pipeline and contains any failure so it can't disturb gameplay.
+            _achievementTrigger.receiveAsFlow().collect {
+                val newly = try {
+                    achievementRepository.evaluateAndPersist()
+                } catch (e: Exception) {
+                    emptySet()
+                }
+                if (newly.isNotEmpty()) _achievementEvents.send(newly.toList())
+            }
         }
         viewModelScope.launch {
             // The active trip's ordered stop codes, for the map route overlay (playtest #11).
@@ -422,8 +440,7 @@ class ActiveTripViewModel(
             viewModelScope.launch {
                 tripRepository.endTrip(tripId)
                 // Completing a trip can unlock achievements (first trip, team effort, 50/50).
-                val newly = achievementRepository.evaluateAndPersist()
-                if (newly.isNotEmpty()) _achievementEvents.send(newly.toList())
+                reevaluateAchievements()
             }
         }
     }

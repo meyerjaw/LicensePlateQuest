@@ -1,6 +1,14 @@
 package com.getmecookies.licenseplatequest.domain.model
 
+import java.time.Instant
 import java.util.UUID
+
+/** One stop on the trip's journey timeline (a found state, in the order it was caught). */
+data class TimelineFind(
+    val code: String,
+    val name: String,
+    val foundAt: Instant,
+)
 
 /**
  * One player's standing on the celebration leaderboard (playtest note #18): how many plates they
@@ -37,5 +45,9 @@ data class CelebrationStats(
     val estimatedDistanceText: String?,
     val furthestStateName: String?,
     val rarestStateName: String?,
+    /** The single day with the most finds, pre-formatted (e.g. "8 states · Jun 5"), or null. */
+    val busiestDayText: String? = null,
+    /** The finds in the order they were caught — the trip's journey (richer recap). */
+    val timeline: List<TimelineFind> = emptyList(),
     val playerNames: List<String>,
 )

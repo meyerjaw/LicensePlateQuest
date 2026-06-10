@@ -129,7 +129,12 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
   a timeline of finds, busiest day, first / last / rarest catch, biggest single-day streak, and
   per-player highlights — beyond the current stat strip. All derivable from existing spottings +
   timestamps. Pairs with the shareable image so the recap is shareable too. Keep it skimmable and
-  celebratory, not a data dump.
+  celebratory, not a data dump. *Status: v1 shipped 2026-06-09 — a one-line narrative recap ("You
+  spotted N states over <duration>, covering ~<distance>"), a **"Your journey"** timeline (flag
+  chips
+  in found order), and a **busiest day** highlight. Backed by `CelebrationStats.timeline` +
+  `busiestDayText` (CelebrationRepository; repo test). Still open: per-player highlights, biggest
+  single-day streak, and including the journey in the shared image.*
 - **Fun facts on the State Detail (and on find).** `[2026-06-09]` The `PlateRegion` bird / motto /
   flower / `fun_facts` fields are bundled but lightly used; surface a kid-friendly fun fact when a
   state is marked (a quick reveal in the find flow) and make the State Detail's facts more playful.

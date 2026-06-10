@@ -628,4 +628,29 @@ Several of these were resolved during build (noted inline):
     (`STATE_ADJACENCY`) so achievements and the map test share it.
   - **Still open (backlog):** per-achievement detail/share, more milestones, and a richer unlock
     animation.
+- **v1.13 (2026-06-09)** — Richer end-of-trip recap (v1):
+  - The celebration/summary screen now opens with a **one-line narrative recap** ("You spotted N
+    states over <duration>, covering ~<distance>"), shows a **"Your journey"** timeline (a scrolling
+    row of flag chips in the order states were found), and adds a **busiest day** highlight to the
+    stats. All derived from existing spottings — `CelebrationStats` gains `timeline` +
+    `busiestDayText` (computed in `CelebrationRepository`; repo test). The journey is on-screen only
+    (kept out of the shared image to bound its height); the busiest-day stat appears in both.
+  - **Still open (backlog):** per-player highlights, a biggest single-day streak, and folding the
+    journey into the shared image.
+- **v1.14 (2026-06-09)** — Test-stability hardening (no user-facing change):
+  - **Notification primer is now context-tolerant:** `rememberNotificationPermissionPrimer()`
+    resolves its prefs via a safe cast and **no-ops when the host isn't `LicensePlateQuestApp`** (
+    e.g.
+    an isolated Compose UI test, or any half-initialized state) instead of crashing composition.
+    This
+    keeps `NewTripScreen` / Manage trip / Settings renderable in tests without full app startup.
+  - **Achievement re-evaluation decoupled from the find pipeline:** on a find the Active Trip
+    ViewModel now only signals a **conflated channel**; a single dedicated collector runs
+    `evaluateAndPersist()` off the reactive `foundCodes` path, **non-overlapping** and wrapped in
+    try/catch, so achievement bookkeeping (and its background DB work) can never run inline within
+    or
+    disturb the state pipeline. Fixes flaky `ActiveTripViewModelTest` behavior.
+  - *(Ops note: a corrupt local git index — `bad index file sha1 signature` — was producing phantom
+    "modified" entries and unreliable diffs; rebuilt via `rm .git/index && git reset`, which leaves
+    working files untouched.)*
 

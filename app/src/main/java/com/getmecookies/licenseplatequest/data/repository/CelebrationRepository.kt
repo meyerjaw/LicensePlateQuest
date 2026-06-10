@@ -4,8 +4,11 @@ import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.dao.SpottingStatRow
 import com.getmecookies.licenseplatequest.domain.model.CelebrationStats
 import com.getmecookies.licenseplatequest.domain.model.PlayerScore
+import com.getmecookies.licenseplatequest.domain.model.TimelineFind
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -72,6 +75,18 @@ class CelebrationRepository(
 
         val rarestStateName = rows.maxByOrNull { it.rarityScore }?.name
 
+        // Richer recap: the journey in found order, and the single best day.
+        val timeline =
+            rows.map { TimelineFind(code = it.code, name = it.name, foundAt = it.timestamp) }
+        val zone = ZoneId.systemDefault()
+        val busiestDayText = rows
+            .groupBy { it.timestamp.atZone(zone).toLocalDate() }
+            .maxByOrNull { it.value.size }
+            ?.let { (date, finds) ->
+                val unit = if (finds.size == 1) "state" else "states"
+                "${finds.size} $unit · ${date.format(DAY_FORMAT)}"
+            }
+
         // Leaderboard (note #18): each trip player's credited-plate count, highest first, with a
         // crown for the (possibly tied) lead. Players with no credits still appear at score 0.
         val tripPlayers = tripPlayerDao.getPlayersForTrip(tripId)
@@ -108,8 +123,14 @@ class CelebrationRepository(
             estimatedDistanceText = estimatedDistanceText,
             furthestStateName = furthestStateName,
             rarestStateName = rarestStateName,
+            busiestDayText = busiestDayText,
+            timeline = timeline,
             playerNames = players,
         )
+    }
+
+    private companion object {
+        val DAY_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("MMM d")
     }
 
     private fun formatDuration(d: Duration): String {

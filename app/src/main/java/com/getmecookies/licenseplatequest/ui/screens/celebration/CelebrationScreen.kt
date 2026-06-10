@@ -3,6 +3,9 @@ package com.getmecookies.licenseplatequest.ui.screens.celebration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -61,13 +64,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.CelebrationStats
 import com.getmecookies.licenseplatequest.domain.model.PlayerScore
+import com.getmecookies.licenseplatequest.domain.model.TimelineFind
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
+import com.getmecookies.licenseplatequest.ui.components.FlagImage
 import com.getmecookies.licenseplatequest.ui.PlayerColors
 import com.getmecookies.licenseplatequest.ui.components.Confetti
 import com.getmecookies.licenseplatequest.ui.map.UsMap
@@ -163,6 +169,16 @@ fun CelebrationScreen(
                     }
                 }
 
+                // A one-line recap of the trip (richer recap).
+                if (stats.foundCount > 0) {
+                    Text(
+                        text = recapLine(stats),
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
                 // The colorful filled-in map as the summary hero (playtest note #3). Shown even
                 // at 0 found (blank) — it's part of the summary's identity. Non-interactive so it
                 // sits inside the scrolling column without capturing the scroll.
@@ -183,6 +199,11 @@ fun CelebrationScreen(
                                 .padding(12.dp),
                         )
                     }
+                }
+
+                // The journey: states in the order they were found (richer recap).
+                if (stats.timeline.isNotEmpty()) {
+                    JourneySection(stats.timeline)
                 }
 
                 StatsSections(stats)
@@ -352,6 +373,60 @@ private fun ShareableSummary(
 private data class Stat(val label: String, val value: String?, val info: String? = null)
 
 @Composable
+private fun recapLine(stats: CelebrationStats): String {
+    val distance = stats.estimatedDistanceText
+    return if (distance != null) {
+        stringResource(
+            R.string.celebration_recap_distance,
+            stats.foundCount,
+            stats.durationText,
+            distance
+        )
+    } else {
+        stringResource(R.string.celebration_recap, stats.foundCount, stats.durationText)
+    }
+}
+
+/** "Your journey": the states in the order they were found, as a scrolling row of flag chips. */
+@Composable
+private fun JourneySection(timeline: List<TimelineFind>) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.celebration_journey_title),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(vertical = 4.dp),
+        ) {
+            itemsIndexed(timeline) { index, find ->
+                Column(
+                    modifier = Modifier.width(52.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    FlagImage(
+                        code = find.code,
+                        modifier = Modifier.width(48.dp),
+                        placeholderFontSize = 13.sp,
+                    )
+                    Text(
+                        text = "${index + 1}. ${find.code}",
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun StatsSections(stats: CelebrationStats) {
     val timing = listOf(
         Stat(stringResource(R.string.celebration_stat_average_gap), stats.averageGapText),
@@ -361,6 +436,7 @@ private fun StatsSections(stats: CelebrationStats) {
     val highlights = listOf(
         Stat(stringResource(R.string.celebration_stat_first_state), stats.firstStateName),
         Stat(stringResource(R.string.celebration_stat_last_state), stats.lastStateName),
+        Stat(stringResource(R.string.celebration_stat_busiest_day), stats.busiestDayText),
         Stat(stringResource(R.string.celebration_stat_furthest_state), stats.furthestStateName),
         Stat(stringResource(R.string.celebration_stat_rarest_state), stats.rarestStateName),
     )

@@ -68,8 +68,10 @@ private enum class PrimerDialog { None, Primer, Settings }
 @Composable
 fun rememberNotificationPermissionPrimer(): NotificationPermissionPrimer {
     val context = LocalContext.current
+    // Null when the host app isn't LicensePlateQuestApp (e.g. an isolated Compose UI test); the
+    // primer then no-ops gracefully instead of crashing the composition.
     val prefs = remember(context) {
-        (context.applicationContext as LicensePlateQuestApp).container.uiPreferences
+        (context.applicationContext as? LicensePlateQuestApp)?.container?.uiPreferences
     }
     val activity = remember(context) { context.findActivity() }
 
@@ -80,13 +82,13 @@ fun rememberNotificationPermissionPrimer(): NotificationPermissionPrimer {
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { isGranted ->
-        prefs.notificationRequested = true
+        prefs?.notificationRequested = true
         pendingResult?.invoke(isGranted)
         pendingResult = null
     }
 
     fun snooze() {
-        prefs.notificationPrimerSnooze = NOTIFICATION_PRIMER_SNOOZE
+        prefs?.notificationPrimerSnooze = NOTIFICATION_PRIMER_SNOOZE
     }
 
     /** User backed out of the primer/settings dialog — snooze and report "not granted". */
@@ -105,6 +107,11 @@ fun rememberNotificationPermissionPrimer(): NotificationPermissionPrimer {
 
         if (granted) {
             onResult(true)
+            return
+        }
+        // Without prefs (non-app context, e.g. a test) we can't track snooze/asked — just bail.
+        if (prefs == null) {
+            onResult(false)
             return
         }
 

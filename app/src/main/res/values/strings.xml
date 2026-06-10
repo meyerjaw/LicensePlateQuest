@@ -300,6 +300,10 @@
     <string name="celebration_stat_last_state">Last state</string>
     <string name="celebration_stat_furthest_state">Furthest from home</string>
     <string name="celebration_stat_rarest_state">Rarest find</string>
+    <string name="celebration_stat_busiest_day">Busiest day</string>
+    <string name="celebration_journey_title">Your journey</string>
+    <string name="celebration_recap">You spotted %1$d states over %2$s.</string>
+    <string name="celebration_recap_distance">You spotted %1$d states over %2$s, covering about %3$s.</string>
     <string name="celebration_section_progress">Progress</string>
     <string name="celebration_section_timing">Timing</string>
     <string name="celebration_section_highlights">Highlights</string>
