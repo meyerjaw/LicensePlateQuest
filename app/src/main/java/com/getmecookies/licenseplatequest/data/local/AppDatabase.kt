@@ -8,6 +8,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.getmecookies.licenseplatequest.data.local.AppDatabase.Companion.VERSION
+import com.getmecookies.licenseplatequest.data.local.dao.AchievementDao
 import com.getmecookies.licenseplatequest.data.local.dao.EventLogDao
 import com.getmecookies.licenseplatequest.data.local.dao.GameInstanceDao
 import com.getmecookies.licenseplatequest.data.local.dao.GameTypeDao
@@ -18,6 +19,7 @@ import com.getmecookies.licenseplatequest.data.local.dao.SpottingPlayerDao
 import com.getmecookies.licenseplatequest.data.local.dao.TripDao
 import com.getmecookies.licenseplatequest.data.local.dao.TripPlayerDao
 import com.getmecookies.licenseplatequest.data.local.dao.TripStopDao
+import com.getmecookies.licenseplatequest.data.local.entity.AchievementEntity
 import com.getmecookies.licenseplatequest.data.local.entity.EventLogEntity
 import com.getmecookies.licenseplatequest.data.local.entity.GameInstanceEntity
 import com.getmecookies.licenseplatequest.data.local.entity.GameTypeEntity
@@ -49,6 +51,7 @@ import com.getmecookies.licenseplatequest.data.local.entity.TripStopEntity
         SpottingEntity::class,
         SpottingPlayerEntity::class,
         EventLogEntity::class,
+        AchievementEntity::class,
     ],
     version = AppDatabase.VERSION,
     exportSchema = true,
@@ -66,9 +69,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun spottingDao(): SpottingDao
     abstract fun spottingPlayerDao(): SpottingPlayerDao
     abstract fun eventLogDao(): EventLogDao
+    abstract fun achievementDao(): AchievementDao
 
     companion object {
-        const val VERSION = 5
+        const val VERSION = 6
         const val NAME = "license_plate_quest.db"
     }
 }
@@ -162,6 +166,19 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
 }
 
 /**
+ * v5 → v6 (achievements): add the `achievement` table that records earned achievement ids + when.
+ * DDL mirrors Room's generated schema (id TEXT PK, earned_at TEXT for the Instant converter).
+ */
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `achievement` (" +
+                    "`id` TEXT NOT NULL, `earned_at` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        )
+    }
+}
+
+/**
  * Process-wide singleton holder for [AppDatabase]. Manual DI (no Hilt in MVP) — the single
  * instance is created lazily and shared via [com.getmecookies.licenseplatequest.di.AppContainer].
  */
@@ -181,6 +198,12 @@ object DatabaseProvider {
             AppDatabase::class.java,
             AppDatabase.NAME,
         )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+            .addMigrations(
+                MIGRATION_1_2,
+                MIGRATION_2_3,
+                MIGRATION_3_4,
+                MIGRATION_4_5,
+                MIGRATION_5_6
+            )
             .build()
 }

@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.ui.screens.activetrip
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.getmecookies.licenseplatequest.data.map.MapRepository
+import com.getmecookies.licenseplatequest.data.repository.AchievementRepository
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
@@ -114,6 +115,7 @@ class ActiveTripViewModel(
     private val tripRepository: TripRepository,
     private val spottingRepository: SpottingRepository,
     private val regionRepository: RegionRepository,
+    private val achievementRepository: AchievementRepository,
     private val celebrationTracker: CelebrationTracker,
     private val uiPreferences: UiPreferences,
     settingsRepository: SettingsRepository,
@@ -149,6 +151,17 @@ class ActiveTripViewModel(
     /** One-shot: a rare plate was just marked — emits the state name for an extra flourish. */
     private val _rareFindEvents = Channel<String>(Channel.BUFFERED)
     val rareFindEvents: Flow<String> = _rareFindEvents.receiveAsFlow()
+
+    /** One-shot: ids of achievements just unlocked, for a celebratory toast. */
+    private val _achievementEvents = Channel<List<String>>(Channel.BUFFERED)
+    val achievementEvents: Flow<List<String>> = _achievementEvents.receiveAsFlow()
+
+    private fun reevaluateAchievements() {
+        viewModelScope.launch {
+            val newly = achievementRepository.evaluateAndPersist()
+            if (newly.isNotEmpty()) _achievementEvents.send(newly.toList())
+        }
+    }
 
     // Track the previous found count per trip so we only react to genuine increases.
     private var prevTripId: UUID? = null
@@ -331,6 +344,9 @@ class ActiveTripViewModel(
         // They clearly know how to mark a state now — retire the first-run map hint.
         if (_uiState.value.showMapHint) onDismissMapHint()
 
+        // A new find may unlock achievements (collection/geo/day/rarity milestones).
+        reevaluateAchievements()
+
         if (count >= TOTAL_STATES && !celebrationTracker.hasCelebratedFifty(tripId)) {
             celebrationTracker.markFiftyCelebrated(tripId)
             _uiState.update {
@@ -403,7 +419,12 @@ class ActiveTripViewModel(
             )
         }
         if (tripId != null) {
-            viewModelScope.launch { tripRepository.endTrip(tripId) }
+            viewModelScope.launch {
+                tripRepository.endTrip(tripId)
+                // Completing a trip can unlock achievements (first trip, team effort, 50/50).
+                val newly = achievementRepository.evaluateAndPersist()
+                if (newly.isNotEmpty()) _achievementEvents.send(newly.toList())
+            }
         }
     }
 

@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.ui.screens.passport
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.getmecookies.licenseplatequest.data.map.MapRepository
+import com.getmecookies.licenseplatequest.data.repository.AchievementRepository
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
@@ -27,6 +28,8 @@ data class PassportUiState(
     val newToCollection: Set<String> = emptySet(),
     /** Rare-plate state codes, for the "Rare" badge (rare-plate moments). */
     val rareCodes: Set<String> = emptySet(),
+    /** Earned achievement ids, for the achievements section. */
+    val earnedAchievements: Set<String> = emptySet(),
 ) {
     val collectedCount: Int get() = collected.size
     val remaining: Int get() = (PassportViewModel.TOTAL_STATES - collectedCount).coerceAtLeast(0)
@@ -38,6 +41,7 @@ class PassportViewModel(
     spottingRepository: SpottingRepository,
     tripRepository: TripRepository,
     regionRepository: RegionRepository,
+    achievementRepository: AchievementRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PassportUiState())
@@ -50,6 +54,11 @@ class PassportViewModel(
         }
         viewModelScope.launch {
             _uiState.update { it.copy(rareCodes = regionRepository.getRareCodes()) }
+        }
+        viewModelScope.launch {
+            achievementRepository.observeEarned().collect { earned ->
+                _uiState.update { it.copy(earnedAchievements = earned) }
+            }
         }
         viewModelScope.launch {
             // A state is "new to the collection" when its first-ever catch was on the active trip.

@@ -1,44 +1,34 @@
-package com.getmecookies.licenseplatequest.ui.screens.passport
+package com.getmecookies.licenseplatequest.data.repository
 
 import android.content.Context
-import android.os.Looper
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.entity.GameTypeEntity
 import com.getmecookies.licenseplatequest.data.local.entity.PlateRegionEntity
-import com.getmecookies.licenseplatequest.data.map.MapRepository
-import com.getmecookies.licenseplatequest.data.repository.AchievementRepository
-import com.getmecookies.licenseplatequest.data.repository.RegionRepository
-import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
-import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
 import com.getmecookies.licenseplatequest.notifications.FakeReminderScheduler
-import com.getmecookies.licenseplatequest.testutil.MainDispatcherRule
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
 import java.time.LocalDate
 import java.util.UUID
 
-/** The Passport VM aggregates spottings across trips into the lifetime collection. */
+/** Achievement evaluation + earned-once persistence over in-memory Room. */
 @RunWith(RobolectricTestRunner::class)
-class PassportViewModelTest {
-
-    @get:Rule
-    val mainDispatcherRule = MainDispatcherRule()
+class AchievementRepositoryTest {
 
     private lateinit var db: AppDatabase
     private lateinit var trips: TripRepository
     private lateinit var spotting: SpottingRepository
-    private lateinit var mapRepository: MapRepository
+    private lateinit var achievements: AchievementRepository
     private lateinit var txId: UUID
     private lateinit var coId: UUID
 
@@ -50,7 +40,7 @@ class PassportViewModelTest {
             .build()
         trips = TripRepository(db, FakeReminderScheduler())
         spotting = SpottingRepository(db)
-        mapRepository = MapRepository(context)
+        achievements = AchievementRepository(db, RegionRepository(db.plateRegionDao()))
 
         val tx = region("TX", 1)
         val co = region("CO", 2)
@@ -66,23 +56,21 @@ class PassportViewModelTest {
     fun tearDown() = db.close()
 
     @Test
-    fun collectsFoundStatesAcrossTrips_andFlagsNewOnesFromTheActiveTrip() = runBlocking {
-        createActiveTrip()
+    fun earnsAchievements_andOnlyReportsEachOnce() = runBlocking {
+        val tripId = createActiveTrip()
         spotting.markState("TX")
-        createActiveTrip() // demotes the first trip; this one is now active
-        spotting.markState("CO")
 
-        val regionRepository = RegionRepository(db.plateRegionDao())
-        val vm = PassportViewModel(
-            mapRepository, spotting, trips, regionRepository,
-            AchievementRepository(db, regionRepository),
-        )
-        awaitUntil { !vm.uiState.value.loading && vm.uiState.value.collectedCount == 2 }
+        // First find unlocks "first plate".
+        assertTrue(achievements.evaluateAndPersist().contains("first_plate"))
+        // Re-evaluating reports nothing new.
+        assertTrue(achievements.evaluateAndPersist().isEmpty())
 
-        assertEquals(setOf("TX", "CO"), vm.uiState.value.foundCodes)
-        assertEquals(48, vm.uiState.value.remaining)
-        // CO was first caught on the active trip -> new to the collection; TX was on the older trip.
-        assertEquals(setOf("CO"), vm.uiState.value.newToCollection)
+        // Completing the trip unlocks "first trip" on the next evaluation.
+        trips.endTrip(tripId)
+        assertTrue(achievements.evaluateAndPersist().contains("first_trip"))
+
+        assertEquals(setOf("first_plate", "first_trip"), achievements.observeEarned().first())
+        assertFalse(achievements.observeEarned().first().contains("collect_10"))
     }
 
     private suspend fun createActiveTrip(): UUID = trips.createTrip(
@@ -95,15 +83,6 @@ class PassportViewModelTest {
         endDate = null,
         playerIds = emptyList(),
     )
-
-    private fun awaitUntil(timeoutMs: Long = 5000, condition: () -> Boolean) {
-        val deadline = System.currentTimeMillis() + timeoutMs
-        while (!condition() && System.currentTimeMillis() < deadline) {
-            shadowOf(Looper.getMainLooper()).idle()
-            Thread.sleep(5)
-        }
-        assert(condition()) { "Condition not met within ${timeoutMs}ms" }
-    }
 
     private fun region(code: String, order: Int) = PlateRegionEntity(
         id = UUID.randomUUID(),

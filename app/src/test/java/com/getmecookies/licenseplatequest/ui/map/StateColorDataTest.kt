@@ -1,5 +1,6 @@
 package com.getmecookies.licenseplatequest.ui.map
 
+import com.getmecookies.licenseplatequest.domain.STATE_ADJACENCY
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

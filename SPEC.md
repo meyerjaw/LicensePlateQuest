@@ -611,4 +611,21 @@ Several of these were resolved during build (noted inline):
     rare plate is spotted. No schema change; classifier unit-tested.
   - **Still open (backlog):** a richer rare flourish (distinct animation/sound) and feeding a
     rare-catch achievement.
+- **v1.12 (2026-06-09)** — Achievements (v1):
+  - A **16-achievement** catalog earned from existing data: collection milestones (first plate,
+    10/25/40/50 lifetime), single-trip feats (first trip, 50/50, 10-in-a-day), rarity (rare catch,
+    treasure hunter), geography sweeps (New England / West Coast / Four Corners / "good neighbors" —
+    a 5-state connected cluster via the state-adjacency graph), and social/time (team effort, early
+    bird). Each is a **pure, unit-tested predicate** over an `AchievementStats` snapshot; titles and
+    icons live in the UI layer so the catalog stays Android-free.
+  - **Schema:** a new `achievement` table (id + earnedAt); DB bumped to **v6** with a v5→v6
+    migration
+    test. `AchievementRepository` builds the stats snapshot from spottings/trips, evaluates the
+    catalog, and persists newly-earned (earned-once) — no new writes to gameplay tables.
+  - **Surfacing:** re-evaluated on each find and on trip-end; newly-unlocked ones fire an
+    **"Achievement unlocked"** toast, and the **Passport** gains an **Achievements section** (earned
+    vs locked badges with an earned/total count). The state-adjacency data moved to the domain layer
+    (`STATE_ADJACENCY`) so achievements and the map test share it.
+  - **Still open (backlog):** per-achievement detail/share, more milestones, and a richer unlock
+    animation.
 

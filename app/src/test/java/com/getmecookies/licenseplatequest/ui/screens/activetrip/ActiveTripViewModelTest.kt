@@ -9,6 +9,7 @@ import com.getmecookies.licenseplatequest.data.local.entity.GameTypeEntity
 import com.getmecookies.licenseplatequest.data.local.entity.PlateRegionEntity
 import com.getmecookies.licenseplatequest.data.map.MapRepository
 import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
+import com.getmecookies.licenseplatequest.data.repository.AchievementRepository
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
@@ -52,6 +53,7 @@ class ActiveTripViewModelTest {
     private lateinit var uiPreferences: UiPreferences
     private lateinit var settings: SettingsRepository
     private lateinit var regionRepository: RegionRepository
+    private lateinit var achievements: AchievementRepository
     private lateinit var regions: List<PlateRegionEntity>
 
     @Before
@@ -67,6 +69,7 @@ class ActiveTripViewModelTest {
         uiPreferences = UiPreferences(context)
         settings = SettingsRepository(context)
         regionRepository = RegionRepository(db.plateRegionDao())
+        achievements = AchievementRepository(db, regionRepository)
 
         regions = (0 until 50).map { i -> region(code = "S%02d".format(i), order = i) }
         db.plateRegionDao().upsertAll(regions)
@@ -220,6 +223,7 @@ class ActiveTripViewModelTest {
             tripRepository = trips,
             spottingRepository = spotting,
             regionRepository = regionRepository,
+            achievementRepository = achievements,
             celebrationTracker = celebrationTracker,
             uiPreferences = uiPreferences,
             settingsRepository = settings,

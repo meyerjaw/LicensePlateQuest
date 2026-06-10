@@ -67,6 +67,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.R
+import com.getmecookies.licenseplatequest.domain.Achievement
+import com.getmecookies.licenseplatequest.ui.screens.passport.achievementMeta
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.components.Confetti
 import com.getmecookies.licenseplatequest.ui.components.FlagImage
@@ -135,6 +137,20 @@ fun ActiveTripScreen(
         viewModel.rareFindEvents.collect { stateName ->
             Toast.makeText(context, String.format(rareFindTemplate, stateName), Toast.LENGTH_LONG)
                 .show()
+        }
+    }
+
+    // Achievement-unlocked toasts. Resolve the template + titles at composable scope (locale-aware).
+    val unlockedTemplate = stringResource(R.string.ach_unlocked)
+    val achievementTitles =
+        Achievement.entries.associate { it.id to stringResource(achievementMeta(it).titleRes) }
+    LaunchedEffect(Unit) {
+        viewModel.achievementEvents.collect { ids ->
+            ids.forEach { id ->
+                val title = achievementTitles[id] ?: id
+                Toast.makeText(context, String.format(unlockedTemplate, title), Toast.LENGTH_LONG)
+                    .show()
+            }
         }
     }
 

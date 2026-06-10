@@ -1,64 +1,11 @@
 package com.getmecookies.licenseplatequest.ui.map
 
 /**
- * Pure (Color-free, Android-free) color/adjacency data for the US map, kept separate from
- * [UsMap] so it can be unit-tested on the plain JVM. [StateColorDataTest] verifies that
- * neighboring states never share a color index (four-color theorem; playtest note #6).
+ * Pure (Color-free, Android-free) color data for the US map, kept separate from [UsMap] so it can be
+ * unit-tested on the plain JVM. [StateColorDataTest] verifies that neighboring states never share a
+ * color index (four-color theorem; playtest note #6); the adjacency itself lives in
+ * [com.getmecookies.licenseplatequest.domain.STATE_ADJACENCY].
  */
-
-/** Land-border adjacency between the 50 states (symmetric). AK and HI have no neighbors. */
-internal val STATE_ADJACENCY: Map<String, Set<String>> = mapOf(
-    "AK" to setOf(),
-    "AL" to setOf("FL", "GA", "MS", "TN"),
-    "AR" to setOf("LA", "MO", "MS", "OK", "TN", "TX"),
-    "AZ" to setOf("CA", "CO", "NM", "NV", "UT"),
-    "CA" to setOf("AZ", "NV", "OR"),
-    "CO" to setOf("AZ", "KS", "NE", "NM", "OK", "UT", "WY"),
-    "CT" to setOf("MA", "NY", "RI"),
-    "DE" to setOf("MD", "NJ", "PA"),
-    "FL" to setOf("AL", "GA"),
-    "GA" to setOf("AL", "FL", "NC", "SC", "TN"),
-    "HI" to setOf(),
-    "IA" to setOf("IL", "MN", "MO", "NE", "SD", "WI"),
-    "ID" to setOf("MT", "NV", "OR", "UT", "WA", "WY"),
-    "IL" to setOf("IA", "IN", "KY", "MO", "WI"),
-    "IN" to setOf("IL", "KY", "MI", "OH"),
-    "KS" to setOf("CO", "MO", "NE", "OK"),
-    "KY" to setOf("IL", "IN", "MO", "OH", "TN", "VA", "WV"),
-    "LA" to setOf("AR", "MS", "TX"),
-    "MA" to setOf("CT", "NH", "NY", "RI", "VT"),
-    "MD" to setOf("DE", "PA", "VA", "WV"),
-    "ME" to setOf("NH"),
-    "MI" to setOf("IN", "OH", "WI"),
-    "MN" to setOf("IA", "ND", "SD", "WI"),
-    "MO" to setOf("AR", "IA", "IL", "KS", "KY", "NE", "OK", "TN"),
-    "MS" to setOf("AL", "AR", "LA", "TN"),
-    "MT" to setOf("ID", "ND", "SD", "WY"),
-    "NC" to setOf("GA", "SC", "TN", "VA"),
-    "ND" to setOf("MN", "MT", "SD"),
-    "NE" to setOf("CO", "IA", "KS", "MO", "SD", "WY"),
-    "NH" to setOf("MA", "ME", "VT"),
-    "NJ" to setOf("DE", "NY", "PA"),
-    "NM" to setOf("AZ", "CO", "OK", "TX", "UT"),
-    "NV" to setOf("AZ", "CA", "ID", "OR", "UT"),
-    "NY" to setOf("CT", "MA", "NJ", "PA", "VT"),
-    "OH" to setOf("IN", "KY", "MI", "PA", "WV"),
-    "OK" to setOf("AR", "CO", "KS", "MO", "NM", "TX"),
-    "OR" to setOf("CA", "ID", "NV", "WA"),
-    "PA" to setOf("DE", "MD", "NJ", "NY", "OH", "WV"),
-    "RI" to setOf("CT", "MA"),
-    "SC" to setOf("GA", "NC"),
-    "SD" to setOf("IA", "MN", "MT", "ND", "NE", "WY"),
-    "TN" to setOf("AL", "AR", "GA", "KY", "MO", "MS", "NC", "VA"),
-    "TX" to setOf("AR", "LA", "NM", "OK"),
-    "UT" to setOf("AZ", "CO", "ID", "NM", "NV", "WY"),
-    "VA" to setOf("KY", "MD", "NC", "TN", "WV"),
-    "VT" to setOf("MA", "NH", "NY"),
-    "WA" to setOf("ID", "OR"),
-    "WI" to setOf("IA", "IL", "MI", "MN"),
-    "WV" to setOf("KY", "MD", "OH", "PA", "VA"),
-    "WY" to setOf("CO", "ID", "MT", "NE", "SD", "UT"),
-)
 
 /**
  * Per-state index into the 8-color vibrant found palette ([UsMap]'s FOUND_PALETTE), chosen so

@@ -86,10 +86,25 @@ class MigrationTest {
     }
 
     @Test
+    fun migrate5To6_addsAchievementTable() {
+        helper.createDatabase(TEST_DB, 5).close()
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 6, true, MIGRATION_5_6)
+
+        // The new table exists and accepts a row.
+        db.execSQL("INSERT INTO `achievement` (`id`, `earned_at`) VALUES ('first_plate', '2026-06-09T00:00:00Z')")
+        db.query("SELECT `id` FROM `achievement`").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("first_plate", cursor.getString(0))
+        }
+    }
+
+    @Test
     fun allMigrations_validateAgainstExportedSchemas() {
         helper.createDatabase(TEST_DB, 1).close()
         helper.runMigrationsAndValidate(
-            TEST_DB, 5, true, MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
+            TEST_DB, 6, true,
+            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
         )
     }
 

@@ -4,6 +4,7 @@ import android.content.Context
 import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.DatabaseProvider
 import com.getmecookies.licenseplatequest.data.map.MapRepository
+import com.getmecookies.licenseplatequest.data.repository.AchievementRepository
 import com.getmecookies.licenseplatequest.data.repository.CelebrationRepository
 import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
@@ -38,6 +39,9 @@ class AppContainer(context: Context) {
     val tripRepository: TripRepository = TripRepository(database, reminderScheduler)
 
     val spottingRepository: SpottingRepository = SpottingRepository(database)
+
+    val achievementRepository: AchievementRepository =
+        AchievementRepository(database, regionRepository)
 
     val celebrationRepository: CelebrationRepository = CelebrationRepository(database)
 

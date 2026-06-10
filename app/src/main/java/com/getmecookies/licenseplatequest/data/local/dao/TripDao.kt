@@ -50,6 +50,22 @@ interface TripDao {
     @Query("SELECT * FROM trip WHERE id = :id")
     suspend fun getById(id: UUID): TripEntity?
 
+    /** Each trip's status + player count, for achievement stats (completed-trip + team feats). */
+    @Query(
+        """
+        SELECT t.status AS status,
+               (SELECT COUNT(*) FROM trip_player tp WHERE tp.trip_id = t.id) AS player_count
+        FROM trip t
+        """
+    )
+    suspend fun getStatusPlayerCounts(): List<TripStatusPlayerRow>
+
     @Delete
     suspend fun delete(trip: TripEntity)
 }
+
+/** Projection for a trip's status and how many players are on it. */
+data class TripStatusPlayerRow(
+    val status: TripStatus,
+    @androidx.room.ColumnInfo(name = "player_count") val playerCount: Int,
+)

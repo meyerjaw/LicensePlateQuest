@@ -29,6 +29,44 @@
     <string name="passport_new_badge">New!</string>
     <string name="passport_empty">States you spot on your trips are collected here for keeps. Start a trip and tap a state when you see its plate!</string>
 
+    <!-- Achievements -->
+    <string name="ach_section_title">Achievements</string>
+    <string name="ach_progress">%1$d / %2$d</string>
+    <string name="ach_unlocked">Achievement unlocked: %1$s</string>
+    <string name="ach_locked_cd">Locked achievement</string>
+    <string name="ach_first_plate_title">First Plate</string>
+    <string name="ach_first_plate_desc">Spotted your very first state.</string>
+    <string name="ach_collect_10_title">Getting Rolling</string>
+    <string name="ach_collect_10_desc">Collected 10 states in all.</string>
+    <string name="ach_collect_25_title">Halfway There</string>
+    <string name="ach_collect_25_desc">Collected 25 states in all.</string>
+    <string name="ach_collect_40_title">Almost Famous</string>
+    <string name="ach_collect_40_desc">Collected 40 states in all.</string>
+    <string name="ach_collect_50_title">Nifty Fifty</string>
+    <string name="ach_collect_50_desc">Collected all 50 states!</string>
+    <string name="ach_first_trip_title">Road Tripper</string>
+    <string name="ach_first_trip_desc">Finished your first trip.</string>
+    <string name="ach_fifty_one_trip_title">50/50 Champion</string>
+    <string name="ach_fifty_one_trip_desc">Found all 50 states on a single trip.</string>
+    <string name="ach_ten_in_a_day_title">On a Roll</string>
+    <string name="ach_ten_in_a_day_desc">Found 10 states in a single day.</string>
+    <string name="ach_rare_catch_title">Rare Catch</string>
+    <string name="ach_rare_catch_desc">Spotted your first rare plate.</string>
+    <string name="ach_treasure_hunter_title">Treasure Hunter</string>
+    <string name="ach_treasure_hunter_desc">Collected every rare state.</string>
+    <string name="ach_new_england_title">New England Sweep</string>
+    <string name="ach_new_england_desc">Collected all six New England states.</string>
+    <string name="ach_west_coast_title">West Coast</string>
+    <string name="ach_west_coast_desc">Collected California, Oregon, and Washington.</string>
+    <string name="ach_four_corners_title">Four Corners</string>
+    <string name="ach_four_corners_desc">Collected Arizona, Colorado, New Mexico, and Utah.</string>
+    <string name="ach_good_neighbors_title">Good Neighbors</string>
+    <string name="ach_good_neighbors_desc">Collected five states that all border each other.</string>
+    <string name="ach_team_effort_title">Team Effort</string>
+    <string name="ach_team_effort_desc">Finished a trip with three or more players.</string>
+    <string name="ach_early_bird_title">Early Bird</string>
+    <string name="ach_early_bird_desc">Spotted a plate before 8 a.m.</string>
+
     <string name="settings_title">Settings</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_theme_system">System default</string>

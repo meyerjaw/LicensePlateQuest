@@ -56,6 +56,19 @@ interface SpottingDao {
     )
     suspend fun markCelebrated(gameInstanceId: UUID, regionCodes: List<String>, now: Instant)
 
+    /** Every spotting across all trips, projected for achievement stats (code + time + trip). */
+    @Query(
+        """
+        SELECT pr.region_code AS region_code,
+               s.timestamp AS timestamp,
+               gi.trip_id AS trip_id
+        FROM spotting s
+        JOIN plate_region pr ON pr.id = s.plate_region_id
+        JOIN game_instance gi ON gi.id = s.game_instance_id
+        """
+    )
+    suspend fun getAllFinds(): List<SpottingFindRow>
+
     /** The spotting for a given region in a game, if it's been marked. */
     @Query(
         "SELECT * FROM spotting WHERE game_instance_id = :gameInstanceId " +

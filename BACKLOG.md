@@ -63,7 +63,15 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
   lunch"). Store earned achievements with an `earnedAt`; show a locked/unlocked grid and a small
   celebration on unlock. Define each rule as a **pure, testable predicate** over the found set +
   timestamps so they're easy to unit-test. Pairs with the Plate Passport (lifetime data) and the
-  existing celebration system.
+  existing celebration system. *Status: v1 shipped 2026-06-09 — a 16-achievement catalog (pure,
+  unit-tested predicates over an `AchievementStats` snapshot): collection milestones (10/25/40/50 +
+  first plate), single-trip feats (first trip, 50/50, 10-in-a-day), rarity (rare catch, treasure
+  hunter), geography sweeps (New England / West Coast / Four Corners / good-neighbors via the
+  state-adjacency graph), and social/time (team effort, early bird). New `achievement` table (DB
+  v5→v6 + migration test); `AchievementRepository` evaluates on each find / trip-end, persists
+  earned-once, emits an "unlocked!" toast; an **Achievements section** on the Passport (earned vs
+  locked badges + earned/total). Still open: per-achievement detail/share, more milestones, and
+  richer unlock animation.*
 - **Rare-plate moments.** `[2026-06-09]` `PlateRegion.rarity_score` is bundled but unused. When a
   high-rarity state is marked, layer a distinct "Rare!" flourish on top of the normal find
   celebration (different accent / sound / animation, gated on a threshold), show a small "rare"
