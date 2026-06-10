@@ -159,14 +159,62 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
 
 ## UX & polish
 
-- **Filled-in map on the summary screen.** `[playtest #3]` Reuse the map component in a non-interactive display mode (no pan/zoom/tap) as the hero element at the top of the summary, aspect-ratio locked. Show it even at 0 states (blank) — it's part of the summary's visual identity. Must survive the long-screenshot capture `[playtest #4]`.
-- **States-found counter on the map view.** `[playtest #2]` Add an `X / 50` pill/badge on the map tab (top corner, not covering content; match whatever the list counts re: DC/territories). Animate on change (count-up or scale bounce). Optional: tap → jump to list or open a quick-stats sheet.
-- **Clear the search field after marking a state found (list view).** `[playtest #1]` On *mark-as-found* (not unmark), clear the search box and dismiss the keyboard so the list re-expands (animate it), readying for the next spot. Announce "marked [state], search cleared" for screen readers.
-- **Make the region selectors more user-friendly.** The origin/destination **State** dropdowns on the New Trip screen (`NewTripScreen.kt`) feel clunky. `[playtest #7-selector]` Replace with a shared full-screen / sheet selector: a country filter chip row (All · 🇺🇸 · 🇨🇦 · 🇲🇽), a search box matching name/abbreviation/ISO code, rows showing flag + name + muted abbreviation, a pinned "recently used" section, and an optional "exclude" param so start and destination can't pick the same region. Build once, reuse for start, destination, stops, and home. `[playtest #9]` Also add per-field quick-clear (✕) icons (visible only when filled, subtle gray, labeled "Clear city/state"); clearing an auto-filled start should *not* re-fill from home.
-- **State abbreviations on unfound states.** `[playtest #10]` Show each unfound state's USPS abbreviation (CA, NY, TX) at its visual center; on mark-as-found crossfade (~150–200ms) the abbreviation out and the check mark in at the same anchor (reverse on unmark). Scale font to the state's bounding box; for the small east-coast cluster (RI, DE, CT, NJ, MD, MA, NH, VT) use external labels with leader lines. Compute AK/HI label positions *after* the inset transform. Decorative only — screen readers still announce name + status. Tightly coupled to visual-center positioning `[playtest #5]` and the color palette `[playtest #6]`.
-- **Check-mark positioning on irregular state shapes.** `[playtest #5]` Place marks at each state's **visual center** (pole of inaccessibility, e.g. via `polylabel`), cached once in the map data, rather than the geometric centroid which fails on LA/MI/FL/ID. Scale the mark down (or use a dot) for tiny states (RI, DE, CT, NJ); allow per-state `{ code: [dx, dy] }` manual offset overrides. Test MI, HI, AK, LA, FL. Shared anchor for check marks, abbreviations `[playtest #10]`, and animation `[playtest #20]`.
-- **Four-color base map (no same-color adjacent states).** `[playtest #6]` Precompute a 4-coloring of the 50 states (+DC if shown) at build time — build an adjacency list, run greedy graph coloring with backtracking, store as `{ code: colorIndex }`. Pick 4 colorblind-friendly, light/dark-safe muted colors (test deuteranopia/protanopia). This is the *base* unfound styling; found states keep their overlay treatment. AK/HI have no neighbors — color them for visual balance.
-- **Map view bottom stats strip.** `[playtest #21]` A tight (80–120pt) horizontally-scrolling row of stat cards under the map, each tappable to expand. v1 starter set: found count + percent (hero), last plate + how long ago, "Day X of Y", and a leader chip if multiplayer else closest-unfound-state if solo, plus a delight stat or two. Idea bank (recency/momentum, geographic, narrative, personality) captured in the original note. Gracefully hide stats that need more data (averages, projections) early in a trip. Some depend on systems not built yet (rarity, achievements).
+- **Filled-in map on the summary screen.** `[playtest #3]` Reuse the map component in a
+  non-interactive display mode (no pan/zoom/tap) as the hero element at the top of the summary,
+  aspect-ratio locked. Show it even at 0 states (blank) — it's part of the summary's visual
+  identity. Must survive the long-screenshot capture `[playtest #4]`. *Status: shipped 2026-06-04 (
+  v1.4) — the filled US map is the hero of the summary/celebration screen (non-interactive mode) and
+  is baked into the shared image.*
+- **States-found counter on the map view.** `[playtest #2]` Add an `X / 50` pill/badge on the map
+  tab (top corner, not covering content; match whatever the list counts re: DC/territories). Animate
+  on change (count-up or scale bounce). Optional: tap → jump to list or open a quick-stats sheet.
+  *Status: shipped 2026-06-04 (v1.4) — an X/50 pill on the map tab.*
+- **Clear the search field after marking a state found (list view).** `[playtest #1]` On
+  *mark-as-found* (not unmark), clear the search box and dismiss the keyboard so the list
+  re-expands (animate it), readying for the next spot. Announce "marked [state], search cleared" for
+  screen readers. *Status: shipped 2026-06-04 (v1.4) — the list search clears after a mark.*
+- **Make the region selectors more user-friendly.** The origin/destination **State** dropdowns on
+  the New Trip screen (`NewTripScreen.kt`) feel clunky. `[playtest #7-selector]` Replace with a
+  shared full-screen / sheet selector: a country filter chip row (All · 🇺🇸 · 🇨🇦 · 🇲🇽), a search box
+  matching name/abbreviation/ISO code, rows showing flag + name + muted abbreviation, a pinned "
+  recently used" section, and an optional "exclude" param so start and destination can't pick the
+  same region. Build once, reuse for start, destination, stops, and home. `[playtest #9]` Also add
+  per-field quick-clear (✕) icons (visible only when filled, subtle gray, labeled "Clear
+  city/state"); clearing an auto-filled start should *not* re-fill from home. *Status: shipped — the
+  shared searchable bottom-sheet `RegionPickerSheet` (search by name/abbreviation,
+  exclude-the-other-endpoint) on New Trip, Manage trip, and the home dialog (v1.5, 2026-06-05);
+  per-field quick-clear (#9) shipped 2026-06-04 (v1.4). Still open: country-filter chips +
+  recently-used (deferred until multi-country data exists).*
+- **State abbreviations on unfound states.** `[playtest #10]` Show each unfound state's USPS
+  abbreviation (CA, NY, TX) at its visual center; on mark-as-found crossfade (~150–200ms) the
+  abbreviation out and the check mark in at the same anchor (reverse on unmark). Scale font to the
+  state's bounding box; for the small east-coast cluster (RI, DE, CT, NJ, MD, MA, NH, VT) use
+  external labels with leader lines. Compute AK/HI label positions *after* the inset transform.
+  Decorative only — screen readers still announce name + status. Tightly coupled to visual-center
+  positioning `[playtest #5]` and the color palette `[playtest #6]`. *Status: shipped 2026-06-04 (
+  v1.4) — USPS abbreviations on unfound states, crossfading to the check mark on find.*
+- **Check-mark positioning on irregular state shapes.** `[playtest #5]` Place marks at each state's
+  **visual center** (pole of inaccessibility, e.g. via `polylabel`), cached once in the map data,
+  rather than the geometric centroid which fails on LA/MI/FL/ID. Scale the mark down (or use a dot)
+  for tiny states (RI, DE, CT, NJ); allow per-state `{ code: [dx, dy] }` manual offset overrides.
+  Test MI, HI, AK, LA, FL. Shared anchor for check marks, abbreviations `[playtest #10]`, and
+  animation `[playtest #20]`. *Status: shipped 2026-06-04 (v1.4) — marks/labels sit at each state's
+  visual center (pole of inaccessibility).*
+- **Four-color base map (no same-color adjacent states).** `[playtest #6]` Precompute a 4-coloring
+  of the 50 states (+DC if shown) at build time — build an adjacency list, run greedy graph coloring
+  with backtracking, store as `{ code: colorIndex }`. Pick 4 colorblind-friendly, light/dark-safe
+  muted colors (test deuteranopia/protanopia). This is the *base* unfound styling; found states keep
+  their overlay treatment. AK/HI have no neighbors — color them for visual balance. *Status: shipped
+  2026-06-08 (v1.7) — a 4-colored mosaic base (no two neighbors share a tint), in a pure,
+  unit-tested `StateColorData`.*
+- **Map view bottom stats strip.** `[playtest #21]` A tight (80–120pt) horizontally-scrolling row of
+  stat cards under the map, each tappable to expand. v1 starter set: found count + percent (hero),
+  last plate + how long ago, "Day X of Y", and a leader chip if multiplayer else
+  closest-unfound-state if solo, plus a delight stat or two. Idea bank (recency/momentum,
+  geographic, narrative, personality) captured in the original note. Gracefully hide stats that need
+  more data (averages, projections) early in a trip. Some depend on systems not built yet (rarity,
+  achievements). *Status: shipped 2026-06-04 (v1.4) — the at-a-glance stats strip under the map (
+  found X/50, percent, last find + how long ago, day of trip, found today).*
 - **Defer the state-found animation to the next map visit.** `[playtest #20]` When a state is marked
   from anywhere but the active map (e.g. the list), queue the celebration instead of firing it in
   the background; play queued ones in a satisfying batch on the next map visit. Add `celebrated` (
@@ -178,12 +226,35 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
   queue and animate on the next map visit, then get stamped celebrated so they never replay; on-map
   finds animate immediately via the same path. Still open: staggered cascade for 2–5, the 6+ "+N
   states" combo overlay, and the cross-restart "Welcome back" toast.*
-- **Map/List tab icons on the active trip screen.** `[playtest #23]` Give the Map and List tabs stacked icon + label (Material Symbols `map` / `list`), outline when inactive, filled + accent color when active, ~150ms transition, ≥48dp targets, real accessible labels. Iconify any future tabs too (don't half-iconify).
-- **Swipe-to-delete with undo (trip list).** `[playtest #15]` On swipe, animate the row out immediately and show a snackbar "Trip deleted · Undo" with a ~2s window; commit to storage after timeout/dismiss/background/navigation, restore from an in-memory buffer on undo. A second delete commits the first immediately. Light haptics on confirm/undo; "Trip deleted. Double-tap to undo." for TalkBack.
-- **Swipe-to-delete with undo (manage players).** `[playtest #16]` Same pattern as the trip list, refactored into a shared `SwipeToDeleteList` / undoable-delete component (gesture, 2s buffer, snackbar, restore, commit-on-background) configured per screen. Player specifics: allow deleting down to zero; keep the undo pattern even when a player has progress; snackbar "Player deleted · Undo".
-- **Playful empty states.** Add friendly illustration + copy to the Trip List and Players empty screens (e.g. the van/road art) instead of plain text — reinforces the family-friendly feel. *Status: shipped 2026-06-08 — shared `EmptyState` component (tinted icon + copy) used on the Trips and Players empty screens. Still open: replace the icon with the van/road illustration.*
+- **Map/List tab icons on the active trip screen.** `[playtest #23]` Give the Map and List tabs
+  stacked icon + label (Material Symbols `map` / `list`), outline when inactive, filled + accent
+  color when active, ~150ms transition, ≥48dp targets, real accessible labels. Iconify any future
+  tabs too (don't half-iconify). *Status: shipped 2026-06-04 (v1.4) — the Map/List tabs carry icon +
+  label.*
+- **Swipe-to-delete with undo (trip list).** `[playtest #15]` On swipe, animate the row out
+  immediately and show a snackbar "Trip deleted · Undo" with a ~2s window; commit to storage after
+  timeout/dismiss/background/navigation, restore from an in-memory buffer on undo. A second delete
+  commits the first immediately. Light haptics on confirm/undo; "Trip deleted. Double-tap to undo."
+  for TalkBack. *Status: shipped 2026-06-04 (v1.4) — swipe-to-delete with an in-place 3-second undo
+  on the Trip List, via a shared component.*
+- **Swipe-to-delete with undo (manage players).** `[playtest #16]` Same pattern as the trip list,
+  refactored into a shared `SwipeToDeleteList` / undoable-delete component (gesture, 2s buffer,
+  snackbar, restore, commit-on-background) configured per screen. Player specifics: allow deleting
+  down to zero; keep the undo pattern even when a player has progress; snackbar "Player deleted ·
+  Undo". *Status: shipped 2026-06-04 (v1.4) — the same shared swipe-to-delete + undo on the Players
+  roster.*
+- **Playful empty states.** Add friendly illustration + copy to the Trip List and Players empty
+  screens (e.g. the van/road art) instead of plain text — reinforces the family-friendly feel.
+  *Status: shipped 2026-06-08; illustration added 2026-06-08 — the Trips and Players empty screens
+  use the shared `EmptyState` with the road-trip illustration (`ic_empty_roadtrip`) + copy. Done.*
 - **More celebratory "completed trip" treatment** in the Trip List (SPEC §6 calls for special styling for 50/50 trips — gold border, star, etc.). Currently minimal. *Status: shipped 2026-06-08 — completed trips get distinct styling in the trip list.*
-- **Map visual polish.** Theme the unfound-state/background colors to the new sunny palette (they're still hardcoded slate; note the four-color base `[playtest #6]` may supersede this); consider state labels when zoomed in `[playtest #10]`; double-check Alaska/Hawaii placement and tap-target sizes. *Status: shipped 2026-06-08 — map colors (states, outline, labels, route) now resolve from the Material color scheme instead of hardcoded slate. Still open: four-color base `[playtest #6]`, zoom labels, AK/HI placement audit.*
+- **Map visual polish.** Theme the unfound-state/background colors to the new sunny palette (they're
+  still hardcoded slate; note the four-color base `[playtest #6]` may supersede this); consider
+  state labels when zoomed in `[playtest #10]`; double-check Alaska/Hawaii placement and tap-target
+  sizes. *Status: shipped 2026-06-08 — map colors (states, outline, labels, route) now resolve from
+  the Material color scheme instead of hardcoded slate. Four-color base `[playtest #6]` shipped (
+  v1.7) and the AK/HI placement + tap-target audit is done. Still open: state labels when zoomed
+  in.*
 - **First-run hint / onboarding.** A one-time tip ("Tap a state on the map when you spot its
   plate!") for new users. *Status: shipped 2026-06-09 — dismissible map overlay, persisted in
   UiPreferences, auto-retired on the first find. Could later grow into a short first-launch
@@ -205,9 +276,22 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
 
 ## Settings
 
-- **Settings screen.** Light/dark/system theme toggle, sound on/off, haptics on/off. Ties together the now-fixed theme and the (pending) celebration sound. (Out of scope in MVP.) Also hosts the toggles introduced by playtest items below.
-- **Default home location.** `[playtest #8]` A "Home location" row that opens the shared region selector `[playtest #7-selector]`, plus an "Unset" option. New trips auto-fill the start field from home as a *suggestion* (still editable; clearing it doesn't re-fill `[playtest #9]`). Optional separate "Use current location" on the trip screen via reverse geocoding behind a permission prompt. Store in user prefs, not trip data; make sure the selector's country filter includes the user's home country.
-- **Trip reminder notifications toggle.** `[playtest #13]` Let users disable overdue-trip reminders without revoking the OS-level notification permission.
+- **Settings screen.** Light/dark/system theme toggle, sound on/off, haptics on/off. Ties together
+  the now-fixed theme and the (pending) celebration sound. (Out of scope in MVP.) Also hosts the
+  toggles introduced by playtest items below. *Status: shipped 2026-06-04 (v1.4) — a Settings screen
+  with Light/Dark/System theme + a vibration (haptics) toggle, plus the Developer tools section.
+  Still open: the sound on/off toggle (waits on the celebration sound).*
+- **Default home location.** `[playtest #8]` A "Home location" row that opens the shared region
+  selector `[playtest #7-selector]`, plus an "Unset" option. New trips auto-fill the start field
+  from home as a *suggestion* (still editable; clearing it doesn't re-fill `[playtest #9]`).
+  Optional separate "Use current location" on the trip screen via reverse geocoding behind a
+  permission prompt. Store in user prefs, not trip data; make sure the selector's country filter
+  includes the user's home country. *Status: shipped 2026-06-04 (v1.4) — a Home location row (region
+  selector + Unset) that pre-fills the New Trip origin as an editable suggestion. Still open: the
+  optional "Use current location" reverse-geocoding.*
+- **Trip reminder notifications toggle.** `[playtest #13]` Let users disable overdue-trip reminders
+  without revoking the OS-level notification permission. *Status: shipped 2026-06-04/05 — a "Trip
+  reminders" Settings toggle.*
 
 ## Accessibility
 
@@ -215,7 +299,13 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
 
 ## Quality & engineering
 
-- **Automated tests.** Unit tests for repositories/ViewModels (one-active-trip rule, 50/50 fires once per trip, name validation/duplicates, trip-player add/remove) and a few Compose UI tests for the core flows (create trip → mark state → celebrate). New logic worth covering: date-derived trip status `[#12]`, four-color computation `[#6]`, attribution sets `[#17]`, and the undoable-delete buffer `[#15/#16]`.
+- **Automated tests.** Unit tests for repositories/ViewModels (one-active-trip rule, 50/50 fires
+  once per trip, name validation/duplicates, trip-player add/remove) and a few Compose UI tests for
+  the core flows (create trip → mark state → celebrate). New logic worth covering: date-derived trip
+  status `[#12]`, four-color computation `[#6]`, attribution sets `[#17]`, and the undoable-delete
+  buffer `[#15/#16]`. *Status: established 2026-06-05 (v1.5) and growing — a Robolectric JVM suite (
+  repositories / ViewModels / pure domain) + Compose UI tests + Room migration tests; new features
+  ship test-first. Ongoing as surfaces are added.*
 - **Debug-only sample-data seeding.** *Status: shipped 2026-06-08; **expanded 2026-06-10**. A "
   Developer" section in Settings (gated on `BuildConfig.DEBUG`, stripped from release) with a "Seed
   sample data" button. The seeder now lives in `SampleDataSeeder` and builds a rich, varied dataset:
