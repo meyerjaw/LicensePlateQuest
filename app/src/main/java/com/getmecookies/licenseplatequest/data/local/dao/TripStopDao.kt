@@ -27,6 +27,17 @@ interface TripStopDao {
     )
     fun observeStopCodesForTrip(tripId: UUID): Flow<List<String>>
 
+    /** Ordered stop places (region code + typed city) — for pinning real cities on the route. */
+    @Query(
+        "SELECT pr.region_code AS code, ts.city AS city FROM trip_stop ts " +
+                "JOIN plate_region pr ON pr.id = ts.region_id " +
+                "WHERE ts.trip_id = :tripId ORDER BY ts.position",
+    )
+    fun observeStopPlacesForTrip(tripId: UUID): Flow<List<StopPlaceRow>>
+
     @Query("DELETE FROM trip_stop WHERE trip_id = :tripId")
     suspend fun deleteForTrip(tripId: UUID)
 }
+
+/** A trip stop's region code + the city the user typed (for geocoding the route pin). */
+data class StopPlaceRow(val code: String, val city: String)

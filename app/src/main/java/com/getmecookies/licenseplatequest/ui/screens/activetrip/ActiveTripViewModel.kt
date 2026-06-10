@@ -8,7 +8,10 @@ import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
+import com.getmecookies.licenseplatequest.domain.AlbersUsaProjection
 import com.getmecookies.licenseplatequest.domain.CelebrationTracker
+import com.getmecookies.licenseplatequest.domain.CityLocator
+import com.getmecookies.licenseplatequest.domain.MapPoint
 import com.getmecookies.licenseplatequest.domain.UiPreferences
 import com.getmecookies.licenseplatequest.domain.model.FoundState
 import com.getmecookies.licenseplatequest.domain.model.StateSummary
@@ -20,6 +23,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -71,6 +75,11 @@ data class ActiveTripUiState(
     val foundCodes: Set<String> = emptySet(),
     /** Ordered state codes of the trip's stops, for the map route overlay (playtest #11). */
     val routeStops: List<String> = emptyList(),
+    /**
+     * Per-stop real-city map positions (parallel to [routeStops]); null = not resolved/geocoded,
+     * so the map falls back to that state's center. Lets the route pin actual cities.
+     */
+    val routeCityPoints: List<MapPoint?> = emptyList(),
     /** Found states whose fill animation hasn't played yet — the map animates these (playtest #20). */
     val pendingCelebrations: Set<String> = emptySet(),
     /** The rare-plate state codes, for the "Rare" badge on the list rows (rare-plate moments). */
@@ -116,6 +125,7 @@ class ActiveTripViewModel(
     private val spottingRepository: SpottingRepository,
     private val regionRepository: RegionRepository,
     private val achievementRepository: AchievementRepository,
+    private val cityLocator: CityLocator,
     private val celebrationTracker: CelebrationTracker,
     private val uiPreferences: UiPreferences,
     settingsRepository: SettingsRepository,
@@ -175,6 +185,24 @@ class ActiveTripViewModel(
      */
     private val _achievementTrigger = Channel<Unit>(Channel.CONFLATED)
 
+    // Geocoded + projected city positions cached per "city|code" so re-entering a trip (or a
+    // pending-celebration refresh) never re-geocodes the same stop. Null = a known miss (fall back).
+    private val cityPointCache = mutableMapOf<String, MapPoint?>()
+
+    /** Geocode a stop's city within its state and project it to map space, or null to fall back. */
+    private suspend fun resolveCityPoint(city: String, code: String): MapPoint? {
+        if (city.isBlank()) return null
+        val key = "${city.trim().lowercase()}|$code"
+        if (cityPointCache.containsKey(key)) return cityPointCache[key]
+        val point = try {
+            cityLocator.locate(city, code)?.let { AlbersUsaProjection.project(it.lat, it.lng) }
+        } catch (e: Exception) {
+            null
+        }
+        cityPointCache[key] = point
+        return point
+    }
+
     /** Signal that something may have unlocked an achievement; the dedicated collector handles it. */
     private fun reevaluateAchievements() {
         _achievementTrigger.trySend(Unit)
@@ -227,12 +255,26 @@ class ActiveTripViewModel(
             }
         }
         viewModelScope.launch {
-            // The active trip's ordered stop codes, for the map route overlay (playtest #11).
+            // The active trip's ordered stops (code + typed city) for the map route overlay
+            // (playtest #11). The codes drive the line/centroid fallback immediately; each city is
+            // then geocoded + projected to pin its real location (collectLatest cancels stale work).
             tripRepository.observeActiveTrip()
                 .flatMapLatest { trip ->
-                    if (trip == null) flowOf(emptyList()) else tripRepository.observeStopCodesForTrip(trip.id)
+                    if (trip == null) flowOf(emptyList()) else tripRepository.observeStopPlacesForTrip(
+                        trip.id
+                    )
                 }
-                .collect { codes -> _uiState.update { it.copy(routeStops = codes) } }
+                .collectLatest { places ->
+                    _uiState.update {
+                        it.copy(
+                            routeStops = places.map { p -> p.code },
+                            routeCityPoints = List<MapPoint?>(places.size) { null }, // reset; resolved below
+                        )
+                    }
+                    val points = ArrayList<MapPoint?>(places.size)
+                    for (place in places) points.add(resolveCityPoint(place.city, place.code))
+                    _uiState.update { it.copy(routeCityPoints = points) }
+                }
         }
         viewModelScope.launch {
             // Found states still awaiting their map animation (playtest #20) — fed straight to the

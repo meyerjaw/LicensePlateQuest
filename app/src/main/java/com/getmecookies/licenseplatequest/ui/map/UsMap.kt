@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.withResumed
 import com.getmecookies.licenseplatequest.R
+import com.getmecookies.licenseplatequest.domain.MapPoint
 
 /**
  * Interactive US map (SPEC section 6 "Active Trip View"). Renders each state from bundled
@@ -57,6 +58,11 @@ fun UsMap(
     outlineColor: Color = MaterialTheme.colorScheme.outline,
     labelColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     routeStops: List<String> = emptyList(),
+    /**
+     * Per-stop real-city positions (parallel to [routeStops], map viewBox coords); null = pin the
+     * state center instead. Lets the route follow the actual cities (playtest #11 follow-up).
+     */
+    routeCityPoints: List<MapPoint?> = emptyList(),
     routeColor: Color = MaterialTheme.colorScheme.primary,
     // Found states awaiting their fill animation (playtest #20). The map animates these, then calls
     // [onCelebrated] so they're stamped done and won't replay — even finds made off the map.
@@ -270,7 +276,10 @@ fun UsMap(
             // on top of any check marks/labels. Sizes use 1/scale to stay visually constant.
             if (routeStops.isNotEmpty()) {
                 val anchorByCode = shapes.states.associate { it.code to it.labelAnchor }
-                val routeAnchors = routeStops.mapNotNull { anchorByCode[it] }
+                // Pin each stop at its geocoded city when available, else the state's center.
+                val routeAnchors = routeStops.mapIndexedNotNull { i, code ->
+                    routeCityPoints.getOrNull(i)?.let { Offset(it.x, it.y) } ?: anchorByCode[code]
+                }
                 for (i in 0 until routeAnchors.size - 1) {
                     drawLine(
                         color = routeColor,

@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.di
 import android.content.Context
 import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.DatabaseProvider
+import com.getmecookies.licenseplatequest.data.location.AndroidCityLocator
 import com.getmecookies.licenseplatequest.data.map.MapRepository
 import com.getmecookies.licenseplatequest.data.repository.AchievementRepository
 import com.getmecookies.licenseplatequest.data.repository.CelebrationRepository
@@ -14,6 +15,7 @@ import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
 import com.getmecookies.licenseplatequest.data.seed.SampleDataSeeder
 import com.getmecookies.licenseplatequest.domain.CelebrationTracker
+import com.getmecookies.licenseplatequest.domain.CityLocator
 import com.getmecookies.licenseplatequest.domain.UiPreferences
 import com.getmecookies.licenseplatequest.notifications.ReminderScheduler
 import com.getmecookies.licenseplatequest.notifications.WorkManagerReminderScheduler
@@ -53,6 +55,8 @@ class AppContainer(context: Context) {
     val settingsRepository: SettingsRepository = SettingsRepository(context.applicationContext)
 
     val mapRepository: MapRepository = MapRepository(context.applicationContext)
+
+    val cityLocator: CityLocator = AndroidCityLocator(context.applicationContext)
 
     val regionSeeder: RegionSeeder = RegionSeeder(
         context = context.applicationContext,

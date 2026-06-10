@@ -686,4 +686,19 @@ Several of these were resolved during build (noted inline):
       still works — for a clean slate between test runs (`SampleDataSeeder.wipeAllData()` via
       FK-cascading
       `deleteAll()` DAO methods, in a transaction). Also tested.
+- **v1.17 (2026-06-10)** — Real city pins on the route (playtest #11 follow-up):
+  - The active-trip map route now pins each stop at its **actual city** rather than the state's
+    center. Two new pieces: a pure **`AlbersUsaProjection`** that reimplements the bundled map's
+    `geoAlbersUsa` composite (lower-48 Albers + Alaska/Hawaii insets) and the asset's crop shift, so
+    a latitude/longitude lands in the same viewBox space as the bundled centroids; and a
+    **`CityLocator`** seam (`AndroidCityLocator` over the platform `Geocoder`, run on IO, degrading
+    to null when no backend is present). The Active Trip ViewModel geocodes each stop's city,
+    projects it, and exposes per-stop points (`routeCityPoints`, parallel to `routeStops`); the map
+    pins the city when resolved and **falls back to the state center** otherwise. Results are cached
+    per city; no schema change.
+  - The projection was **validated offline** against the bundled geometry (a spread of known cities
+    each projects inside the correct state polygon) and is unit-tested with golden values; a
+    ViewModel test covers geocode → project → pin with state-center fallback.
+  - Still open: persisting resolved coordinates on the stop (currently re-geocoded per session), and
+    drawing the route on the summary/shared image.
 

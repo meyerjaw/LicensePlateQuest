@@ -9,6 +9,7 @@ import com.getmecookies.licenseplatequest.data.local.entity.TripEntity
 import com.getmecookies.licenseplatequest.data.local.entity.TripPlayerEntity
 import com.getmecookies.licenseplatequest.data.local.entity.TripStopEntity
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
+import com.getmecookies.licenseplatequest.domain.model.StopPlace
 import com.getmecookies.licenseplatequest.domain.model.TripListItem
 import com.getmecookies.licenseplatequest.domain.model.TripStatus
 import com.getmecookies.licenseplatequest.domain.model.TripStop
@@ -61,6 +62,12 @@ class TripRepository(
     /** Ordered region codes for a trip's stops (for drawing the map route — playtest #11). */
     fun observeStopCodesForTrip(tripId: UUID): Flow<List<String>> =
         tripStopDao.observeStopCodesForTrip(tripId)
+
+    /** Ordered stop places (state code + typed city) for the active trip's route, to pin real cities. */
+    fun observeStopPlacesForTrip(tripId: UUID): Flow<List<StopPlace>> =
+        tripStopDao.observeStopPlacesForTrip(tripId).map { rows ->
+            rows.map { StopPlace(code = it.code, city = it.city) }
+        }
 
     /** Player ids on a trip (join order), observed for the manage-players screen. */
     fun observePlayerIdsForTrip(tripId: UUID): Flow<List<UUID>> =

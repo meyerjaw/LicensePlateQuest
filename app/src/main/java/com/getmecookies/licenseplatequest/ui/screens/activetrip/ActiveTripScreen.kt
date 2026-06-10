@@ -251,6 +251,7 @@ fun ActiveTripScreen(
                                         foundCodes = uiState.foundCodes,
                                         onStateClick = onOpenState,
                                         routeStops = uiState.routeStops,
+                                        routeCityPoints = uiState.routeCityPoints,
                                         celebrateCodes = uiState.pendingCelebrations,
                                         onCelebrated = viewModel::onCelebrationsAnimated,
                                         modifier = Modifier

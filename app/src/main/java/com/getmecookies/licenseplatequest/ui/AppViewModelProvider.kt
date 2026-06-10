@@ -41,6 +41,7 @@ object AppViewModelProvider {
                 spottingRepository = lpqApp().container.spottingRepository,
                 regionRepository = lpqApp().container.regionRepository,
                 achievementRepository = lpqApp().container.achievementRepository,
+                cityLocator = lpqApp().container.cityLocator,
                 celebrationTracker = lpqApp().container.celebrationTracker,
                 uiPreferences = lpqApp().container.uiPreferences,
                 settingsRepository = lpqApp().container.settingsRepository,

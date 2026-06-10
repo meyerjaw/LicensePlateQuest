@@ -14,7 +14,10 @@ import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
+import com.getmecookies.licenseplatequest.domain.AlbersUsaProjection
 import com.getmecookies.licenseplatequest.domain.CelebrationTracker
+import com.getmecookies.licenseplatequest.domain.CityLocator
+import com.getmecookies.licenseplatequest.domain.GeoPoint
 import com.getmecookies.licenseplatequest.domain.UiPreferences
 import com.getmecookies.licenseplatequest.domain.model.TripStatus
 import com.getmecookies.licenseplatequest.notifications.FakeReminderScheduler
@@ -57,6 +60,7 @@ class ActiveTripViewModelTest {
     private lateinit var settings: SettingsRepository
     private lateinit var regionRepository: RegionRepository
     private lateinit var achievements: AchievementRepository
+    private val cityLocator = FakeCityLocator()
     private lateinit var regions: List<PlateRegionEntity>
 
     @Before
@@ -241,6 +245,24 @@ class ActiveTripViewModelTest {
         collector.cancel()
     }
 
+    @Test
+    fun routeCityPoints_projectGeocodedCities_andRouteStopsStillOrderStops() = runBlocking {
+        cityLocator.coords["austin"] = GeoPoint(30.27, -97.74) // origin city
+        createActiveTrip()
+        val vm = loadedViewModel()
+
+        // The ordered stop codes are still exposed for the line/centroid fallback.
+        awaitUntil { vm.uiState.value.routeStops == listOf("S00", "S01") }
+        // The origin city resolves to its projected map position.
+        awaitUntil { vm.uiState.value.routeCityPoints.firstOrNull() != null }
+        val p = vm.uiState.value.routeCityPoints.first()!!
+        val expected = AlbersUsaProjection.project(30.27, -97.74)!!
+        assertEquals(expected.x.toDouble(), p.x.toDouble(), 0.01)
+        assertEquals(expected.y.toDouble(), p.y.toDouble(), 0.01)
+        // The destination city wasn't geocodable, so it stays null (map falls back to state center).
+        assertNull(vm.uiState.value.routeCityPoints[1])
+    }
+
     private fun loadedViewModel(): ActiveTripViewModel {
         val vm = ActiveTripViewModel(
             mapRepository = mapRepository,
@@ -248,6 +270,7 @@ class ActiveTripViewModelTest {
             spottingRepository = spotting,
             regionRepository = regionRepository,
             achievementRepository = achievements,
+            cityLocator = cityLocator,
             celebrationTracker = celebrationTracker,
             uiPreferences = uiPreferences,
             settingsRepository = settings,
@@ -276,6 +299,13 @@ class ActiveTripViewModelTest {
             Thread.sleep(5)
         }
         assertTrue("Condition not met within ${timeoutMs}ms", condition())
+    }
+
+    /** In-memory geocoder: returns coords for cities placed in [coords] (keyed by lowercased name). */
+    private class FakeCityLocator : CityLocator {
+        val coords = mutableMapOf<String, GeoPoint>()
+        override suspend fun locate(city: String, regionCode: String): GeoPoint? =
+            coords[city.trim().lowercase()]
     }
 
     private fun region(code: String, order: Int) = PlateRegionEntity(
