@@ -152,6 +152,17 @@ class ActiveTripViewModel(
     private val _rareFindEvents = Channel<String>(Channel.BUFFERED)
     val rareFindEvents: Flow<String> = _rareFindEvents.receiveAsFlow()
 
+    /** One-shot: a state brand-new to the lifetime collection was just caught — emits its name. */
+    private val _newCollectionEvents = Channel<String>(Channel.BUFFERED)
+    val newCollectionEvents: Flow<String> = _newCollectionEvents.receiveAsFlow()
+
+    /**
+     * Newly-found (code to name) pairs awaiting a lifetime-collection check. Consumed by a single
+     * collector (see init) so the (DB) check runs off the find-processing pipeline, mirroring the
+     * achievement decoupling.
+     */
+    private val _newCollectionCandidates = Channel<Pair<String, String>>(Channel.BUFFERED)
+
     /** One-shot: ids of achievements just unlocked, for a celebratory toast. */
     private val _achievementEvents = Channel<List<String>>(Channel.BUFFERED)
     val achievementEvents: Flow<List<String>> = _achievementEvents.receiveAsFlow()
@@ -178,6 +189,10 @@ class ActiveTripViewModel(
     private var rareBaselineTripId: UUID? = null
     private var prevRareFound: Set<String>? = null
 
+    // Per-trip baseline for detecting newly-found codes to check against the lifetime collection.
+    private var collectionBaselineTripId: UUID? = null
+    private var prevCollectionFound: Set<String>? = null
+
     init {
         viewModelScope.launch {
             val shapes = mapRepository.loadShapes()
@@ -197,6 +212,18 @@ class ActiveTripViewModel(
                     emptySet()
                 }
                 if (newly.isNotEmpty()) _achievementEvents.send(newly.toList())
+            }
+        }
+        viewModelScope.launch {
+            // Single consumer for the lifetime-collection check: keeps the (DB) read off the
+            // find-processing pipeline; emits a flourish only for a brand-new lifetime catch.
+            _newCollectionCandidates.receiveAsFlow().collect { (code, name) ->
+                val isNew = try {
+                    spottingRepository.isNewToCollection(code)
+                } catch (e: Exception) {
+                    false
+                }
+                if (isNew) _newCollectionEvents.send(name)
             }
         }
         viewModelScope.launch {
@@ -231,6 +258,7 @@ class ActiveTripViewModel(
                     val (trip, found, allStates) = data
                     detectCelebrations(trip?.id, found.size)
                     detectRareFinds(trip?.id, found)
+                    detectNewCollection(trip?.id, found)
                     val list = buildList(found, allStates, control)
                     _uiState.update {
                         it.copy(
@@ -339,6 +367,26 @@ class ActiveTripViewModel(
             if (code in rareCodes) {
                 _rareFindEvents.trySend(found.firstOrNull { it.code == code }?.name ?: code)
             }
+        }
+    }
+
+    /**
+     * Hand each newly-found state to the lifetime-collection check (off-pipeline), which fires a
+     * "new for your collection!" flourish for a brand-new lifetime catch. Baseline resets per trip.
+     */
+    private fun detectNewCollection(tripId: UUID?, found: List<FoundState>) {
+        val codes = found.mapTo(HashSet()) { it.code }
+        if (tripId != collectionBaselineTripId) {
+            collectionBaselineTripId = tripId
+            prevCollectionFound = codes
+            return
+        }
+        val prev = prevCollectionFound
+        prevCollectionFound = codes
+        if (tripId == null || prev == null) return
+        (codes - prev).forEach { code ->
+            val name = found.firstOrNull { it.code == code }?.name ?: code
+            _newCollectionCandidates.trySend(code to name)
         }
     }
 

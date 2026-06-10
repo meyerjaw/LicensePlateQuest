@@ -81,6 +81,16 @@ class SpottingRepository(
             }
         }
 
+    /**
+     * Whether marking [regionCode] just added a brand-new state to the lifetime collection — i.e.
+     * no trip other than the active one has ever spotted it (Passport "new for your collection!"
+     * flourish). No active trip ⇒ false.
+     */
+    suspend fun isNewToCollection(regionCode: String): Boolean {
+        val activeTrip = tripDao.getByStatus(TripStatus.ACTIVE) ?: return false
+        return spottingDao.countOtherTripsWithRegion(regionCode, activeTrip.id) == 0
+    }
+
     /** Mark the given found states' animations as played, so they won't re-animate (#20). */
     suspend fun markCelebrated(regionCodes: Set<String>) {
         if (regionCodes.isEmpty()) return

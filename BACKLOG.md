@@ -55,8 +55,10 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
   schema
   change; repo + VM tests. Follow-ups shipped 2026-06-09: which-trip-first attribution ("First
   spotted <date> · <trip>"), a **New!** badge on states first caught on the active trip, and tapping
-  a collected state to open its State Detail. Still open: an at-catch "new for your collection!"
-  flourish on the map/celebration when a brand-new lifetime state is marked.*
+  a collected state to open its State Detail. **At-catch "new for your collection!" flourish shipped
+  2026-06-10** — a gentle toast fires when a state brand-new to the lifetime collection is caught
+  (`isNewToCollection`; off-pipeline event → toast; repo + VM tests). Still open: a richer on-map /
+  celebration treatment for the moment (beyond the toast).*
 - **Achievements / badges.** `[2026-06-09]` Award playful milestones: first plate, a regional
   sweep (all of New England / the West Coast / a custom region), neighbor chains, a full 50 (per
   trip *and* lifetime), a rare catch (see rare-plate moments), and quantity/time fun ("5 before

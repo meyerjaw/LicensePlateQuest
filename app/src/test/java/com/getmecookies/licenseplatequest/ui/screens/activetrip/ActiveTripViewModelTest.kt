@@ -20,6 +20,9 @@ import com.getmecookies.licenseplatequest.domain.model.TripStatus
 import com.getmecookies.licenseplatequest.notifications.FakeReminderScheduler
 import com.getmecookies.licenseplatequest.testutil.MainDispatcherRule
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -134,7 +137,12 @@ class ActiveTripViewModelTest {
         val vm = loadedViewModel()
 
         spotting.markState(regions[0].regionCode) // "S00"
-        awaitUntil { vm.uiState.value.pendingCelebrations.contains("S00") }
+        // The found set and the pending-celebration set are independent reactive streams; wait for
+        // both to register the find before animating it.
+        awaitUntil {
+            vm.uiState.value.pendingCelebrations.contains("S00") &&
+                    vm.uiState.value.foundCodes.contains("S00")
+        }
 
         // The map reports it animated; the find clears from pending but stays found (#20).
         vm.onCelebrationsAnimated(setOf("S00"))
@@ -215,6 +223,22 @@ class ActiveTripViewModelTest {
 
         awaitUntil { vm.uiState.value.rareCodes.contains(regions[0].regionCode) }
         assertTrue(regions[1].regionCode !in vm.uiState.value.rareCodes)
+    }
+
+    @Test
+    fun firstEverCatch_emitsNewCollectionFlourish() = runBlocking {
+        createActiveTrip()
+        val vm = loadedViewModel()
+
+        val events = mutableListOf<String>()
+        val collector = CoroutineScope(Dispatchers.Main).launch {
+            vm.newCollectionEvents.collect { events += it }
+        }
+
+        spotting.markState(regions[0].regionCode) // "S00", brand-new to the lifetime collection
+        awaitUntil { events.contains(regions[0].name) }
+
+        collector.cancel()
     }
 
     private fun loadedViewModel(): ActiveTripViewModel {

@@ -653,4 +653,16 @@ Several of these were resolved during build (noted inline):
   - *(Ops note: a corrupt local git index — `bad index file sha1 signature` — was producing phantom
     "modified" entries and unreliable diffs; rebuilt via `rm .git/index && git reset`, which leaves
     working files untouched.)*
+- **v1.15 (2026-06-10)** — "New for your collection!" at-catch flourish (Passport follow-up):
+  - Catching a state that's **brand-new to the lifetime collection** (no other trip has ever spotted
+    it) now fires a gentle, non-blocking toast — "✨ <State> — new for your collection!" — alongside
+    the usual find confetti. It's purely additive (a short toast), so it doesn't interrupt the
+    marking flow.
+  - Backed by `SpottingRepository.isNewToCollection(code)` (`SpottingDao.countOtherTripsWithRegion`
+    == 0). The Active Trip ViewModel detects newly-found codes and routes them through a dedicated
+    off-pipeline collector (like the achievement check) that runs the DB lookup and emits
+    `newCollectionEvents`. No schema change.
+  - Tested: a repository test (first-ever catch true; repeat on a later trip false) and a ViewModel
+    test (a first catch emits the flourish).
+  - Complements the Passport's existing **New!** badge on states first caught on the active trip.
 

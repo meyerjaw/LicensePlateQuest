@@ -181,6 +181,22 @@ class SpottingRepositoryTest {
         assertEquals(2, lifetime.size)
     }
 
+    @Test
+    fun isNewToCollection_trueForFirstEverCatch_falseForRepeatOnLaterTrip() = runBlocking {
+        // Trip 1 catches TX for the first time ever.
+        createActiveTrip()
+        spotting.markState("TX")
+        assertTrue(spotting.isNewToCollection("TX"))
+
+        // Trip 2 becomes active and catches TX again — no longer new (an earlier trip has it).
+        createActiveTrip()
+        spotting.markState("TX")
+        assertFalse(spotting.isNewToCollection("TX"))
+        // CO is caught for the first time on trip 2 — still new to the collection.
+        spotting.markState("CO")
+        assertTrue(spotting.isNewToCollection("CO"))
+    }
+
     private suspend fun createActiveTrip(playerIds: List<UUID> = emptyList()): UUID =
         trips.createTrip(
             name = "Trip",

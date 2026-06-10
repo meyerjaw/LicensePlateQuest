@@ -148,4 +148,19 @@ interface SpottingDao {
         """
     )
     suspend fun countUnattributedForGame(gameInstanceId: UUID): Int
+
+    /**
+     * How many *other* trips (excluding [excludeTripId]) have ever spotted this region. Zero means
+     * the region is brand-new to the lifetime collection — its at-catch "new for your collection!"
+     * flourish (Passport follow-up).
+     */
+    @Query(
+        """
+        SELECT COUNT(DISTINCT gi.trip_id) FROM spotting s
+        JOIN plate_region pr ON pr.id = s.plate_region_id
+        JOIN game_instance gi ON gi.id = s.game_instance_id
+        WHERE pr.region_code = :regionCode AND gi.trip_id != :excludeTripId
+        """
+    )
+    suspend fun countOtherTripsWithRegion(regionCode: String, excludeTripId: UUID): Int
 }

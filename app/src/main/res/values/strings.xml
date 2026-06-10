@@ -224,6 +224,7 @@
     <string name="active_trip_not_found_yet">Not found yet</string>
     <string name="active_trip_spotted">Spotted %1$s</string>
     <string name="active_trip_rare_find">Rare plate! You spotted %1$s ✦</string>
+    <string name="active_trip_new_collection">✨ %1$s — new for your collection!</string>
     <string name="state_rare_badge">Rare</string>
 
     <!-- State detail -->

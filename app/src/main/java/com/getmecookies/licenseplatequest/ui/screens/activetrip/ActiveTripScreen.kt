@@ -140,6 +140,19 @@ fun ActiveTripScreen(
         }
     }
 
+    // Gentle flourish when a state is brand-new to the lifetime collection (Passport follow-up).
+    val newCollectionTemplate = stringResource(R.string.active_trip_new_collection)
+    LaunchedEffect(Unit) {
+        viewModel.newCollectionEvents.collect { stateName ->
+            Toast.makeText(
+                context,
+                String.format(newCollectionTemplate, stateName),
+                Toast.LENGTH_SHORT
+            )
+                .show()
+        }
+    }
+
     // Achievement-unlocked toasts. Resolve the template + titles at composable scope (locale-aware).
     val unlockedTemplate = stringResource(R.string.ach_unlocked)
     val achievementTitles =
