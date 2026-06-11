@@ -346,7 +346,10 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
   their trip history — and recover from the occasional dev/reinstall data wipe (`[2026-06-09]`, a
   real user feature, not just a dev aid). Export all trips/players/spottings to a shareable file;
   import merges or replaces behind a confirm, validating the schema/version. A lighter step before
-  any optional account-based **cloud sync** across devices.
+  any optional account-based **cloud sync** across devices. *Deprioritized 2026-06-11 — the JSON
+  export/import is on hold in favor of a planned future **online backup / cloud sync** feature;
+  revisit
+  the manual file approach only if a stopgap is needed before that lands.*
 
 ## Cross-cutting concerns
 
