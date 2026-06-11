@@ -732,4 +732,10 @@ Several of these were resolved during build (noted inline):
     `RegionSeeder` bug surfaced by the seeder test: re-seed when the data-version flag is current
     but
     the region table is empty (flag/table divergence), via a new `PlateRegionDao.count()`.
-
+- **v1.20 (2026-06-11)** — Distinct rare-plate animation:
+  - Catching a rare plate now fires a bold gold **`RareSparkle`** overlay — a bright central glow, a
+    gold ring bursting outward, a large 8-point "hero" star that pops in with overshoot and lingers,
+    and a scatter of twinkling stars drifting up and out — layered over the usual find confetti so a
+    rare catch reads as clearly *more*. Pure Compose Canvas (no dependencies), trigger-keyed like
+    `Confetti`, fired from the same rare-find event as the rare sound + badge.
+  - This completes the rare-plate moment (badge + sound + animation + the `rare_catch` achievement).

@@ -73,6 +73,7 @@ import com.getmecookies.licenseplatequest.ui.screens.passport.achievementMeta
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.components.Confetti
 import com.getmecookies.licenseplatequest.ui.components.FlagImage
+import com.getmecookies.licenseplatequest.ui.components.RareSparkle
 import com.getmecookies.licenseplatequest.ui.components.StateCard
 import com.getmecookies.licenseplatequest.ui.map.UsMap
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode
@@ -129,6 +130,7 @@ fun ActiveTripScreen(
     // from State Detail.
     val haptics = LocalHapticFeedback.current
     var confettiKey by remember { mutableStateOf(0) }
+    var rareKey by remember { mutableStateOf(0) }
     LaunchedEffect(Unit) {
         viewModel.confettiEvents.collect {
             confettiKey++
@@ -146,6 +148,7 @@ fun ActiveTripScreen(
     LaunchedEffect(Unit) {
         viewModel.rareFindEvents.collect { stateName ->
             soundPlayer?.playRare()
+            rareKey++
             Toast.makeText(context, String.format(rareFindTemplate, stateName), Toast.LENGTH_LONG)
                 .show()
         }
@@ -327,6 +330,14 @@ fun ActiveTripScreen(
                 trigger = confettiKey,
                 particleCount = 150,
                 durationMillis = 1500,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        // Distinct gold sparkle layered on top for a rare plate (pairs with the rare sound + badge).
+        if (rareKey > 0) {
+            RareSparkle(
+                trigger = rareKey,
                 modifier = Modifier.fillMaxSize(),
             )
         }

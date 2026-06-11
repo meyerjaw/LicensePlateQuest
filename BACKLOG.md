@@ -107,8 +107,10 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
   when
   a rare plate is marked. **Distinct rare sound shipped 2026-06-11** — a sparkly twinkle
   (`sfx_rare.wav`) layered over the find chime via `CelebrationSounds.playRare()`, on the rare-find
-  event. A rare-catch achievement (`rare_catch`) also already ships with the achievements. Still
-  open: a distinct on-screen rare *animation* (the sound + badge are done).*
+  event. A rare-catch achievement (`rare_catch`) also already ships with the achievements.
+  **Distinct rare animation shipped 2026-06-11** — a gold `RareSparkle` overlay (central flash +
+  4-point twinkling stars that drift up and out) layered over the find confetti on a rare catch.
+  **Done** (badge + sound + animation + achievement).*
 - **Photo capture for a find.** `[2026-06-09]` `Spotting.photo_path` is reserved but always null.
   Let a player attach a photo of the actual plate when marking a state (system camera intent or
   CameraX), stored in **app-private** storage with the path on the spotting; show a thumbnail on
