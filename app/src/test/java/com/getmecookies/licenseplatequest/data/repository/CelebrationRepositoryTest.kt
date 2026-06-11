@@ -12,6 +12,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -65,6 +66,34 @@ class CelebrationRepositoryTest {
         assertEquals(listOf("TX", "CO"), stats.timeline.map { it.code })
         assertNotNull(stats.busiestDayText)
         assertTrue(stats.busiestDayText!!.startsWith("2 states"))
+        // Both finds are today, so there's no multi-day streak.
+        assertNull(stats.longestStreakText)
+    }
+
+    @Test
+    fun stats_includePerPlayerHighlights_withRarestCatch() = runBlocking {
+        // TX is a rare plate, CO is common.
+        db.plateRegionDao().upsertAll(listOf(region("TX", 1).copy(id = txId, rarityScore = 0.9)))
+        val players = PlayerRepository(db.playerDao(), db.tripPlayerDao(), db.eventLogDao())
+        val alice = players.addPlayer("Alice")
+        val tripId = trips.createTrip(
+            name = "Trip",
+            originCity = "Austin",
+            originRegionId = txId,
+            destinationCity = "Denver",
+            destinationRegionId = coId,
+            startDate = LocalDate.now(),
+            endDate = null,
+            playerIds = listOf(alice),
+        )
+        spotting.markState("TX", listOf(alice))
+        spotting.markState("CO", listOf(alice))
+
+        val highlight = celebration.getStats(tripId)!!.playerHighlights.single()
+        assertEquals("Alice", highlight.name)
+        assertEquals(2, highlight.count)
+        assertEquals("TX", highlight.rarestStateName) // name == code in the test fixtures
+        assertTrue(highlight.rarestIsRare)
     }
 
     private suspend fun createActiveTrip(): UUID = trips.createTrip(

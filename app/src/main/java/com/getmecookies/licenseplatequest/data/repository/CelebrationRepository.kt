@@ -2,7 +2,10 @@ package com.getmecookies.licenseplatequest.data.repository
 
 import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.dao.SpottingStatRow
+import com.getmecookies.licenseplatequest.domain.isRarePlate
+import com.getmecookies.licenseplatequest.domain.longestConsecutiveDayStreak
 import com.getmecookies.licenseplatequest.domain.model.CelebrationStats
+import com.getmecookies.licenseplatequest.domain.model.PlayerHighlight
 import com.getmecookies.licenseplatequest.domain.model.PlayerScore
 import com.getmecookies.licenseplatequest.domain.model.TimelineFind
 import java.time.Duration
@@ -87,6 +90,11 @@ class CelebrationRepository(
                 "${finds.size} $unit · ${date.format(DAY_FORMAT)}"
             }
 
+        // Longest run of consecutive days with a find (only shown when it's an actual streak).
+        val streak =
+            longestConsecutiveDayStreak(rows.map { it.timestamp.atZone(zone).toLocalDate() })
+        val longestStreakText = if (streak >= 2) "$streak-day streak" else null
+
         // Leaderboard (note #18): each trip player's credited-plate count, highest first, with a
         // crown for the (possibly tied) lead. Players with no credits still appear at score 0.
         val tripPlayers = tripPlayerDao.getPlayersForTrip(tripId)
@@ -108,6 +116,26 @@ class CelebrationRepository(
             .sortedWith(compareByDescending<PlayerScore> { it.score }.thenBy { it.name.lowercase() })
         val unattributedCount = game?.let { spottingDao.countUnattributedForGame(it.id) } ?: 0
 
+        // Per-player highlights (richer recap): each credited player's count + their rarest catch.
+        val findsByPlayer = game
+            ?.let { g -> spottingPlayerDao.creditedFindsForGame(g.id).groupBy { it.player_id } }
+            ?: emptyMap()
+        val playerHighlights = tripPlayers
+            .mapNotNull { p ->
+                val finds = findsByPlayer[p.id].orEmpty()
+                if (finds.isEmpty()) return@mapNotNull null
+                val rarest = finds.maxByOrNull { it.rarity_score }
+                PlayerHighlight(
+                    id = p.id,
+                    name = p.name,
+                    colorToken = p.color,
+                    count = finds.size,
+                    rarestStateName = rarest?.name,
+                    rarestIsRare = rarest != null && isRarePlate(rarest.rarity_score),
+                )
+            }
+            .sortedWith(compareByDescending<PlayerHighlight> { it.count }.thenBy { it.name.lowercase() })
+
         return CelebrationStats(
             tripName = trip.name,
             foundCount = rows.size,
@@ -124,6 +152,8 @@ class CelebrationRepository(
             furthestStateName = furthestStateName,
             rarestStateName = rarestStateName,
             busiestDayText = busiestDayText,
+            longestStreakText = longestStreakText,
+            playerHighlights = playerHighlights,
             timeline = timeline,
             playerNames = players,
         )

@@ -739,3 +739,14 @@ Several of these were resolved during build (noted inline):
     rare catch reads as clearly *more*. Pure Compose Canvas (no dependencies), trigger-keyed like
     `Confetti`, fired from the same rare-find event as the rare sound + badge.
   - This completes the rare-plate moment (badge + sound + animation + the `rare_catch` achievement).
+- **v1.21 (2026-06-11)** — Recap follow-ups: per-player highlights + longest streak:
+  - The end-of-trip recap gains a **"Player highlights"** section — each credited player (color
+    dot +
+    name) with their plate count and a **✦ <state>** flourish for anyone who caught a rare plate.
+    The section only appears when **at least one player caught a rare plate** (otherwise it's just a
+    duplicate of the leaderboard). Also a **"Longest streak"** stat (the longest run of consecutive
+    days with a find).
+  - Backed by `CelebrationStats.playerHighlights` + `longestStreakText`
+    (`SpottingPlayerDao.creditedFindsForGame` for per-player finds/rarity; pure, unit-tested
+    `longestConsecutiveDayStreak`). Repo tests added. No schema change.
+  - Still open on the recap: folding the journey/route into the shared summary image.

@@ -14,6 +14,13 @@ data class PlayerCreditRow(
     val count: Int,
 )
 
+/** One credited find (player + the region's name + rarity), for per-player recap highlights. */
+data class PlayerFindRow(
+    val player_id: UUID,
+    val name: String,
+    val rarity_score: Double,
+)
+
 @Dao
 interface SpottingPlayerDao {
 
@@ -44,4 +51,16 @@ interface SpottingPlayerDao {
         """
     )
     suspend fun creditCountsForGame(gameInstanceId: UUID): List<PlayerCreditRow>
+
+    /** Every credited find in a game with the region's name + rarity, for per-player highlights. */
+    @Query(
+        """
+        SELECT sp.player_id AS player_id, pr.name AS name, pr.rarity_score AS rarity_score
+        FROM spotting_player sp
+        JOIN spotting s ON s.id = sp.spotting_id
+        JOIN plate_region pr ON pr.id = s.plate_region_id
+        WHERE s.game_instance_id = :gameInstanceId
+        """
+    )
+    suspend fun creditedFindsForGame(gameInstanceId: UUID): List<PlayerFindRow>
 }

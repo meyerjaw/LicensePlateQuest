@@ -281,8 +281,12 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
   spotted N states over <duration>, covering ~<distance>"), a **"Your journey"** timeline (flag
   chips
   in found order), and a **busiest day** highlight. Backed by `CelebrationStats.timeline` +
-  `busiestDayText` (CelebrationRepository; repo test). Still open: per-player highlights, biggest
-  single-day streak, and including the journey in the shared image.*
+  `busiestDayText` (CelebrationRepository; repo test). **Per-player highlights + longest streak
+  shipped 2026-06-11** — a "Player highlights" section (each credited player's plate count + a ✦
+  flag for anyone who caught a rare; the section only shows when at least one player caught a rare)
+  and a "Longest streak" stat (longest run of consecutive days with a find, pure
+  `longestConsecutiveDayStreak` + test). Still open: including the journey/route in
+  the shared image.*
 - **Fun facts on the State Detail (and on find).** `[2026-06-09]` The `PlateRegion` bird / motto /
   flower / `fun_facts` fields are bundled but lightly used; surface a kid-friendly fun fact when a
   state is marked (a quick reveal in the find flow) and make the State Detail's facts more playful.

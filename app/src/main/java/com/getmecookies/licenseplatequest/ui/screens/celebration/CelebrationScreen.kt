@@ -59,6 +59,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -70,6 +71,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.CelebrationStats
+import com.getmecookies.licenseplatequest.domain.model.PlayerHighlight
 import com.getmecookies.licenseplatequest.domain.model.PlayerScore
 import com.getmecookies.licenseplatequest.domain.model.TimelineFind
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
@@ -437,6 +439,7 @@ private fun StatsSections(stats: CelebrationStats) {
         Stat(stringResource(R.string.celebration_stat_first_state), stats.firstStateName),
         Stat(stringResource(R.string.celebration_stat_last_state), stats.lastStateName),
         Stat(stringResource(R.string.celebration_stat_busiest_day), stats.busiestDayText),
+        Stat(stringResource(R.string.celebration_stat_streak), stats.longestStreakText),
         Stat(stringResource(R.string.celebration_stat_furthest_state), stats.furthestStateName),
         Stat(stringResource(R.string.celebration_stat_rarest_state), stats.rarestStateName),
     )
@@ -450,6 +453,73 @@ private fun StatsSections(stats: CelebrationStats) {
                 leaderboard = stats.leaderboard,
                 unattributed = stats.unattributedCount,
             )
+        }
+        // Only worth showing when there's a rare catch to celebrate.
+        if (stats.playerHighlights.any { it.rarestIsRare }) {
+            PlayerHighlightsSection(stats.playerHighlights)
+        }
+    }
+}
+
+/** Per-player highlights (richer recap): credited count + a ✦ flag for anyone who caught a rare. */
+@Composable
+private fun PlayerHighlightsSection(highlights: List<PlayerHighlight>) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.celebration_section_player_highlights),
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                highlights.forEachIndexed { index, h ->
+                    if (index > 0) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    }
+                    val plates =
+                        pluralStringResource(R.plurals.celebration_player_plates, h.count, h.count)
+                    val detail = if (h.rarestIsRare && h.rarestStateName != null) {
+                        "$plates · ✦ ${h.rarestStateName}"
+                    } else {
+                        plates
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(14.dp)
+                                .clip(CircleShape)
+                                .background(PlayerColors.resolve(h.colorToken, h.id.toString())),
+                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = h.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = detail,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

@@ -310,6 +310,12 @@
     <string name="celebration_stat_furthest_state">Furthest from home</string>
     <string name="celebration_stat_rarest_state">Rarest find</string>
     <string name="celebration_stat_busiest_day">Busiest day</string>
+    <string name="celebration_stat_streak">Longest streak</string>
+    <string name="celebration_section_player_highlights">Player highlights</string>
+    <plurals name="celebration_player_plates">
+        <item quantity="one">%1$d plate</item>
+        <item quantity="other">%1$d plates</item>
+    </plurals>
     <string name="celebration_journey_title">Your journey</string>
     <string name="celebration_recap">You spotted %1$d states over %2$s.</string>
     <string name="celebration_recap_distance">You spotted %1$d states over %2$s, covering about %3$s.</string>
