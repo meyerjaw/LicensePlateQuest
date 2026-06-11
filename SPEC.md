@@ -701,4 +701,17 @@ Several of these were resolved during build (noted inline):
     ViewModel test covers geocode → project → pin with state-center fallback.
   - Still open: persisting resolved coordinates on the stop (currently re-geocoded per session), and
     drawing the route on the summary/shared image.
+- **v1.18 (2026-06-10)** — Deferred-find celebration: cascade + combo (playtest #20 follow-up):
+  - A batch of queued finds no longer all flash at once on the next map visit. **2–5** finds now
+    play as a **staggered cascade** (a spatial top-left→bottom-right sweep), and **6+** play as a
+    fast **combo** with a brief **"+N states!"** overlay banner over the map. A single find is
+    unchanged.
+  - Timing/thresholds live in a pure, unit-tested `celebrationTiming(count)` (`CelebrationTiming`:
+    stagger, fill duration, combo flag) so the feel is tunable without touching the renderer;
+    `UsMap`
+    drives one master clock and computes each state's own fill progress from its cascade slot. No
+    schema change; no new gameplay data.
+  - Still open (the remaining #20 piece): the cross-restart "Welcome back · N states added" toast
+    for
+    finds queued in a previous session, with a ~24h silent expiry.
 

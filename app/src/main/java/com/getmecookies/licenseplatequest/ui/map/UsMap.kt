@@ -1,6 +1,8 @@
 package com.getmecookies.licenseplatequest.ui.map
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -10,11 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -29,6 +34,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.withResumed
@@ -80,24 +86,46 @@ fun UsMap(
     // wasn't on screen still play their sweep on the next visit (playtest #20).
     val lifecycleOwner = LocalLifecycleOwner.current
     var newlyFound by remember { mutableStateOf(emptySet<String>()) }
-    val fillProgress = remember { Animatable(1f) }
+    // Per-state cascade index + the chosen timing, so the draw can compute each state's own progress
+    // from one master clock. A batch of 2–5 ripples; 6+ plays fast and shows the combo overlay.
+    var cascadeIndex by remember { mutableStateOf(emptyMap<String, Int>()) }
+    var fillMs by remember { mutableIntStateOf(STATE_FILL_ANIM_MS) }
+    var staggerMs by remember { mutableIntStateOf(0) }
+    var animTotalMs by remember { mutableIntStateOf(STATE_FILL_ANIM_MS) }
+    var comboCount by remember { mutableIntStateOf(0) }
+    val clockMs = remember { Animatable(0f) }
     LaunchedEffect(celebrateCodes) {
         if (celebrateCodes.isNotEmpty()) {
-            val animating = celebrateCodes
-            // Reset these to the base color *first*: foundCodes already contains them, so they'd
-            // otherwise render fully filled and then visibly "unfill" the moment we snap to 0. Doing
-            // it before the wait means that reset happens behind the nav transition, unseen.
-            newlyFound = animating
-            fillProgress.snapTo(0f)
+            val timing = celebrationTiming(celebrateCodes.size)
+            // Cascade top-left → bottom-right (the map has no found-order timestamps, and a spatial
+            // sweep reads as a satisfying wave).
+            val anchorByCode = shapes.states.associate { it.code to it.labelAnchor }
+            val ordered = celebrateCodes.sortedWith(
+                compareBy({ anchorByCode[it]?.y ?: 0f }, { anchorByCode[it]?.x ?: 0f }),
+            )
+            cascadeIndex = ordered.withIndex().associate { (i, code) -> code to i }
+            fillMs = timing.fillMs
+            staggerMs = timing.staggerMs
+            animTotalMs = timing.totalMs(celebrateCodes.size)
+            // Reset to the base color *first*: foundCodes already contains them, so they'd otherwise
+            // render fully filled and then visibly "unfill" the moment we snap to 0. Doing it before
+            // the wait means that reset happens behind the nav transition, unseen.
+            newlyFound = celebrateCodes
+            clockMs.snapTo(0f)
             // Then wait until the map is actually on screen before sweeping. Returning from State
             // Detail runs a nav transition during which this composable is only STARTED, not RESUMED
             // — animating then would finish the sweep behind the transition and never be seen (a tab
             // switch works without this only because it has no transition). Resolves immediately when
             // already resumed (on-map find / tab switch), so those are unchanged.
             lifecycleOwner.lifecycle.withResumed {}
-            fillProgress.animateTo(1f, animationSpec = tween(durationMillis = STATE_FILL_ANIM_MS))
+            if (timing.combo) comboCount = celebrateCodes.size
+            clockMs.animateTo(
+                animTotalMs.toFloat(),
+                animationSpec = tween(durationMillis = animTotalMs, easing = LinearEasing),
+            )
             newlyFound = emptySet()
-            onCelebrated(animating)
+            comboCount = 0
+            onCelebrated(celebrateCodes)
         }
     }
 
@@ -132,6 +160,15 @@ fun UsMap(
         R.string.us_map_cd,
         foundCodes.size,
         shapes.states.size,
+    )
+
+    // "+N states!" combo banner (resolved at composable scope so the Canvas draw can use them).
+    val comboBg = MaterialTheme.colorScheme.primary
+    val comboTemplate = stringResource(R.string.active_trip_combo_overlay)
+    val comboTextStyle = TextStyle(
+        color = MaterialTheme.colorScheme.onPrimary,
+        fontSize = 16.sp,
+        fontWeight = FontWeight.Bold,
     )
 
     Canvas(
@@ -201,8 +238,12 @@ fun UsMap(
                 val target = foundColorFor(state.code)
                 val base = baseColorFor(state.code, unfoundColor)
                 val fill = when {
-                    state.code in foundCodes && state.code in newlyFound ->
-                        lerp(base, target, fillProgress.value)
+                    state.code in foundCodes && state.code in newlyFound -> {
+                        // This state's local progress: starts at its cascade slot, eases over fillMs.
+                        val startAt = (cascadeIndex[state.code] ?: 0) * staggerMs
+                        val local = ((clockMs.value - startAt) / fillMs).coerceIn(0f, 1f)
+                        lerp(base, target, FastOutSlowInEasing.transform(local))
+                    }
                     state.code in foundCodes -> target
                     else -> base
                 }
@@ -306,6 +347,33 @@ fun UsMap(
                     )
                 }
             }
+        }
+
+        // "+N states!" combo overlay for a big batch of queued finds, drawn in screen space (outside
+        // the pan/zoom transform). Fades in, holds, then fades out across the cascade.
+        if (comboCount > 0) {
+            val e = clockMs.value
+            val alpha = when {
+                e < 150f -> e / 150f
+                e > animTotalMs - 250f -> (animTotalMs - e) / 250f
+                else -> 1f
+            }.coerceIn(0f, 1f)
+            val label = String.format(comboTemplate, comboCount)
+            val measured = textMeasurer.measure(label, comboTextStyle)
+            val padH = 18.dp.toPx()
+            val padV = 10.dp.toPx()
+            val w = measured.size.width + padH * 2
+            val h = measured.size.height + padV * 2
+            val left = (canvasSize.width - w) / 2f
+            val top = 28.dp.toPx()
+            drawRoundRect(
+                color = comboBg,
+                topLeft = Offset(left, top),
+                size = Size(w, h),
+                cornerRadius = CornerRadius(h / 2f, h / 2f),
+                alpha = alpha,
+            )
+            drawText(measured, topLeft = Offset(left + padH, top + padV), alpha = alpha)
         }
     }
 }

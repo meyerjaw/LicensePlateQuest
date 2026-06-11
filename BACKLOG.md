@@ -224,8 +224,10 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
   silent mark + "Welcome back · N states added" toast. *Status: core shipped 2026-06-08 —
   nullable `spotting.celebrated_at` (DB v5 + migration test); off-map finds (list/State Detail)
   queue and animate on the next map visit, then get stamped celebrated so they never replay; on-map
-  finds animate immediately via the same path. Still open: staggered cascade for 2–5, the 6+ "+N
-  states" combo overlay, and the cross-restart "Welcome back" toast.*
+  finds animate immediately via the same path. **Cascade + combo shipped 2026-06-10** — a 2–5
+  staggered cascade (a spatial top-left→bottom-right sweep) and a 6+ fast combo with a "+N states!"
+  overlay, driven by a pure, unit-tested `celebrationTiming` helper. Still open: the cross-restart
+  "Welcome back · N states added" toast (+ ~24h silent expiry).*
 - **Map/List tab icons on the active trip screen.** `[playtest #23]` Give the Map and List tabs
   stacked icon + label (Material Symbols `map` / `list`), outline when inactive, filled + accent
   color when active, ~150ms transition, ≥48dp targets, real accessible labels. Iconify any future
