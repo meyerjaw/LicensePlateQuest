@@ -343,7 +343,42 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
 
 ## Future / larger bets
 
-- **Expand beyond the US 50.** The schema already keys on `country_code` + `region_code`, so adding DC, US territories, or other countries is mostly new rows + flag assets. `[playtest #7]` Concretely: Canada (13 provinces/territories) and Mexico (32), stored with ISO 3166-2 codes (`US-CA`, `CA-ON`, `MX-JAL`). *Open question — endpoints only or also findable on plates?* Endpoints-only is a small data addition; making them findable ripples into map geometry, the cross-border four-color scheme, the counter (combined vs per-country), and the summary. Recommend endpoints-first.
+- **Expand beyond the US 50 — Canada & Mexico.** The schema already keys on `country_code` +
+  `region_code` (and `RegionBundleDto`/`RegionDto` carry `country_code`), so adding regions is data,
+  not a migration. Canada (13 provinces/territories) and Mexico (32), stored with ISO 3166-2 codes
+  (`CA-ON`, `MX-JAL`). `[playtest #7]` **Planned phasing (decided 2026-06-11): A → B, door open to
+  C.**
+    - **Phase A — endpoints only (small).** CA/MX selectable as trip start/destination/stops; game
+      stays "spot the 50 US plates." Work: add CA/MX region rows (code, name, center lat/lng); turn
+      on
+      the region selector's country-filter chips (the deferred placeholder) + per-row flags; teach
+      `RegionSeeder` to load multiple bundles (separate `ca.json`/`mx.json`, each with its own
+      `data_version` guard). One wrinkle: the route can't be drawn to a foreign endpoint on the
+      US-only
+      map — skip the foreign leg or clamp it to the edge (drawing it needs CA/MX geometry).
+    - **Phase B — findable as a *bonus* (medium; best fit).** US-50 stays the core goal and the
+      50/50
+      is unchanged; CA/MX (could also fold in DC/territories) become **bonus catches** that count
+      toward
+      the Passport and feed the rare-catch system — *without* changing the "X / 50" denominator or
+      completion. Leans into the existing rare-plate moments (a Québec/Yukon plate on a US trip is
+      genuinely rare). Open sub-question: show bonus regions on the map (needs geometry) or
+      list-only.
+    - **Phase C — fully first-class (large; future major version).** CA/MX count like US states.
+      Ripples:
+      rebuild the map asset for a North America projection (replaces `AlbersUsaProjection` + golden
+      tests, centroids, four-color map, AK/HI insets, route pins); rework `TOTAL_STATES = 50` and
+      the
+      50/50 completion + `CelebrationTracker` + achievements (`COLLECT_50`, `reachedFiftyOnATrip`)
+      into
+      a configurable/per-country goal model (likely a "countries in play" field on a trip → schema
+      migration); region-set + adjacency for the geography sweep achievements; ~45 flag assets +
+      rarity
+      data; and graceful handling where US-specific State Detail fields (bird/motto/flower) don't
+      apply.
+      *Data layer is already multi-country-ready; the map geometry and the "50" assumption are what
+      make
+      C big — A and B avoid both.*
 - **Additional road-trip games** (slug bug, alphabet game, etc.) via the existing `GameType` → `GameInstance` → `Spotting` hierarchy, which was designed for this.
 - **Backup / restore (manual export/import) or cloud sync.** Currently fully offline with system
   backup disabled. Add an in-app **manual JSON export/import** so a family can save and restore
@@ -364,5 +399,8 @@ Themes that span multiple items — build the shared piece once:
 - **Player color system** (`[playtest #17, #18, #19]`): palette tokens resolved via the theme, propagated through summary chips, attribution indicators, player rows, and celebration accents — centralize in `getPlayerColor(playerId)`.
 - **Visual-center positions for states** (`[playtest #5, #10, #20]`): one computed pole-of-inaccessibility position per state, reused for check marks, abbreviations, and animation anchors.
 - **Celebration / animation queue** (`[playtest #2, #18, #20]`): the deferred-celebration pattern could generalize so counter updates and leader changes also defer to the next view.
-- **Multi-country support** (`[playtest #7, #11]`): if CA/MX become findable, effects ripple across
-  counters, map geometry, summary, and stats.
+- **Multi-country support** (`[playtest #7, #11]`): phased A → B → C (see "Expand beyond the US
+  50").
+  A (endpoints) and B (bonus finds) avoid the two big ripples — map geometry and the
+  `TOTAL_STATES=50`
+  /completion/achievement model — which only Phase C (first-class findable) forces.
