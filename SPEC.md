@@ -750,3 +750,27 @@ Several of these were resolved during build (noted inline):
     (`SpottingPlayerDao.creditedFindsForGame` for per-player finds/rarity; pure, unit-tested
     `longestConsecutiveDayStreak`). Repo tests added. No schema change.
   - Still open on the recap: folding the journey/route into the shared summary image.
+- **v1.22 (2026-06-11)** — Achievements v2: progress, more milestones, detail/share, richer unlock:
+  - **Six new badges** (catalog now 22): three geography sweeps (**Great Lakes**, **Deep South**,
+    **Mountain West**), **Coast to Coast** (a Pacific- and an Atlantic-coast state), **Night Owl**
+    (a find after 9 p.m.), and **Weekend Warrior** (finds on both a Saturday and a Sunday). New
+    region sets + the supporting stats (`maxStatesOnATrip`, `latestFindHour`,
+    `foundOnSaturday/Sunday`)
+    are pure and unit-tested.
+  - **Progress model:** each achievement now exposes a pure `progress(stats) → AchievementProgress`
+    (current / target); `evaluateAchievements` derives "earned" from it. Locked, multi-step badges
+    on
+    the Passport show a **progress bar + "3 / 6"** so kids can see how close they are. No schema
+    change for any of this (still a read-derive over existing data).
+  - **Tap-to-detail + share:** tapping any badge opens a bottom sheet with the full description and
+    either the **earned date** or live progress; earned badges get a **Share** button (plain-text
+    system share). Backed by a new `AchievementDao.observeEarned()` (ids + `earned_at`).
+  - **Richer unlock moment:** the plain toast is replaced by a celebratory **badge-reveal banner**
+    (`AchievementUnlockBanner`, a bouncy scale/fade pop-in) on the Active Trip screen, with a
+    fanfare
+    sound; multiple simultaneous unlocks queue and show one at a time.
+  - **Passport perf:** the progress snapshot is computed off the critical render path (it no longer
+    gates first paint), and `PassportContent` is now a `LazyColumn` so the map, ~22 badges, and up
+    to
+    50 state cards compose lazily instead of all at once — fixes the slow Passport open.
+  - Still open: a richer (image) share card for a badge, and per-country sweeps once CA/MX land.

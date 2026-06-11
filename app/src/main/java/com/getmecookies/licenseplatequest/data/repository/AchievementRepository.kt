@@ -7,6 +7,7 @@ import com.getmecookies.licenseplatequest.domain.evaluateAchievements
 import com.getmecookies.licenseplatequest.domain.model.TripStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
 
@@ -26,6 +27,10 @@ class AchievementRepository(
     /** The set of earned achievement ids, observed for the Passport's achievements section. */
     fun observeEarned(): Flow<Set<String>> = achievementDao.observeEarnedIds().map { it.toSet() }
 
+    /** Earned achievement ids → unlock time, for the detail sheet's "Earned <date>" line. */
+    fun observeEarnedDates(): Flow<Map<String, Instant>> =
+        achievementDao.observeEarned().map { rows -> rows.associate { it.id to it.earnedAt } }
+
     /** Build the current progress snapshot from the database. */
     suspend fun getStats(): AchievementStats {
         val zone = ZoneId.systemDefault()
@@ -36,9 +41,14 @@ class AchievementRepository(
             .groupBy({ it.timestamp.atZone(zone).toLocalDate() }, { it.code })
             .values.maxOfOrNull { it.toSet().size } ?: 0
         val earliestFindHour = finds.minOfOrNull { it.timestamp.atZone(zone).hour }
-        val reachedFiftyOnATrip = finds
+        val latestFindHour = finds.maxOfOrNull { it.timestamp.atZone(zone).hour }
+        val maxStatesOnATrip = finds
             .groupBy({ it.tripId }, { it.code })
-            .values.any { it.toSet().size >= 50 }
+            .values.maxOfOrNull { it.toSet().size } ?: 0
+        val reachedFiftyOnATrip = maxStatesOnATrip >= 50
+        val weekdays = finds.mapTo(HashSet()) { it.timestamp.atZone(zone).dayOfWeek }
+        val foundOnSaturday = DayOfWeek.SATURDAY in weekdays
+        val foundOnSunday = DayOfWeek.SUNDAY in weekdays
 
         val tripRows = tripDao.getStatusPlayerCounts()
         val completed = tripRows.filter { it.status == TripStatus.COMPLETED }
@@ -48,9 +58,13 @@ class AchievementRepository(
             allRareCodes = regionRepository.getRareCodes(),
             completedTripCount = completed.size,
             reachedFiftyOnATrip = reachedFiftyOnATrip,
+            maxStatesOnATrip = maxStatesOnATrip,
             maxStatesInOneDay = maxStatesInOneDay,
             maxPlayersOnCompletedTrip = completed.maxOfOrNull { it.playerCount } ?: 0,
             earliestFindHour = earliestFindHour,
+            latestFindHour = latestFindHour,
+            foundOnSaturday = foundOnSaturday,
+            foundOnSunday = foundOnSunday,
         )
     }
 

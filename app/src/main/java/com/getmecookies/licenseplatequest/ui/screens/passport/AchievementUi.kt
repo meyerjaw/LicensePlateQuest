@@ -4,20 +4,26 @@ import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DirectionsCar
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Landscape
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Stars
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Terrain
+import androidx.compose.material.icons.filled.Water
 import androidx.compose.material.icons.filled.Waves
 import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material.icons.filled.Weekend
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.Achievement
@@ -109,10 +115,34 @@ fun achievementMeta(achievement: Achievement): AchievementMeta = when (achieveme
         Icons.Filled.Terrain
     )
 
+    Achievement.GREAT_LAKES -> AchievementMeta(
+        R.string.ach_great_lakes_title,
+        R.string.ach_great_lakes_desc,
+        Icons.Filled.Water
+    )
+
+    Achievement.DEEP_SOUTH -> AchievementMeta(
+        R.string.ach_deep_south_title,
+        R.string.ach_deep_south_desc,
+        Icons.Filled.Spa
+    )
+
+    Achievement.MOUNTAIN_WEST -> AchievementMeta(
+        R.string.ach_mountain_west_title,
+        R.string.ach_mountain_west_desc,
+        Icons.Filled.Landscape
+    )
+
     Achievement.GOOD_NEIGHBORS -> AchievementMeta(
         R.string.ach_good_neighbors_title,
         R.string.ach_good_neighbors_desc,
         Icons.Filled.People
+    )
+
+    Achievement.COAST_TO_COAST -> AchievementMeta(
+        R.string.ach_coast_to_coast_title,
+        R.string.ach_coast_to_coast_desc,
+        Icons.Filled.SwapHoriz
     )
 
     Achievement.TEAM_EFFORT -> AchievementMeta(
@@ -125,5 +155,17 @@ fun achievementMeta(achievement: Achievement): AchievementMeta = when (achieveme
         R.string.ach_early_bird_title,
         R.string.ach_early_bird_desc,
         Icons.Filled.WbSunny
+    )
+
+    Achievement.NIGHT_OWL -> AchievementMeta(
+        R.string.ach_night_owl_title,
+        R.string.ach_night_owl_desc,
+        Icons.Filled.DarkMode
+    )
+
+    Achievement.WEEKEND_WARRIOR -> AchievementMeta(
+        R.string.ach_weekend_warrior_title,
+        R.string.ach_weekend_warrior_desc,
+        Icons.Filled.Weekend
     )
 }

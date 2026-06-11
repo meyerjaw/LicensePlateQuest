@@ -66,6 +66,25 @@
     <string name="ach_team_effort_desc">Finished a trip with three or more players.</string>
     <string name="ach_early_bird_title">Early Bird</string>
     <string name="ach_early_bird_desc">Spotted a plate before 8 a.m.</string>
+    <string name="ach_great_lakes_title">Great Lakes</string>
+    <string name="ach_great_lakes_desc">Collected all eight Great Lakes states.</string>
+    <string name="ach_deep_south_title">Deep South</string>
+    <string name="ach_deep_south_desc">Collected Alabama, Georgia, Louisiana, Mississippi, and South Carolina.</string>
+    <string name="ach_mountain_west_title">Mountain West</string>
+    <string name="ach_mountain_west_desc">Collected all eight Mountain West states.</string>
+    <string name="ach_coast_to_coast_title">Coast to Coast</string>
+    <string name="ach_coast_to_coast_desc">Collected a Pacific-coast and an Atlantic-coast state.</string>
+    <string name="ach_night_owl_title">Night Owl</string>
+    <string name="ach_night_owl_desc">Spotted a plate after 9 p.m.</string>
+    <string name="ach_weekend_warrior_title">Weekend Warrior</string>
+    <string name="ach_weekend_warrior_desc">Spotted plates on both a Saturday and a Sunday.</string>
+    <string name="ach_detail_earned">Earned %1$s</string>
+    <string name="ach_detail_locked">Not earned yet</string>
+    <string name="ach_detail_progress_label">Progress</string>
+    <string name="ach_detail_share">Share</string>
+    <string name="ach_detail_share_subject">LP Quest achievement</string>
+    <string name="ach_share_text">I earned the \"%1$s\" badge in LP Quest — %2$s</string>
+    <string name="ach_unlocked_banner_title">Achievement unlocked!</string>
 
     <string name="settings_title">Settings</string>
     <string name="settings_theme">Theme</string>

@@ -94,8 +94,12 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
   state-adjacency graph), and social/time (team effort, early bird). New `achievement` table (DB
   v5→v6 + migration test); `AchievementRepository` evaluates on each find / trip-end, persists
   earned-once, emits an "unlocked!" toast; an **Achievements section** on the Passport (earned vs
-  locked badges + earned/total). Still open: per-achievement detail/share, more milestones, and
-  richer unlock animation.*
+  locked badges + earned/total). **v2 shipped 2026-06-11** — catalog grown to **22** (Great Lakes,
+  Deep South, Mountain West, Coast to Coast, Night Owl, Weekend Warrior); a pure
+  `progress(stats) → AchievementProgress` per badge driving **progress bars on locked badges**;
+  **tap-to-detail bottom sheet** (full description, earned date or progress, plain-text **share**);
+  and a celebratory **badge-reveal banner + fanfare** (queued) replacing the unlock toast. Still
+  open: a richer image share-card for a badge, and per-country sweeps once CA/MX land.*
 - **Rare-plate moments.** `[2026-06-09]` `PlateRegion.rarity_score` is bundled but unused. When a
   high-rarity state is marked, layer a distinct "Rare!" flourish on top of the normal find
   celebration (different accent / sound / animation, gated on a threshold), show a small "rare"

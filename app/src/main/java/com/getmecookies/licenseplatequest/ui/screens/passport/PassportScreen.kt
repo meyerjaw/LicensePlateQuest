@@ -3,45 +3,65 @@ package com.getmecookies.licenseplatequest.ui.screens.passport
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ShareCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.Achievement
+import com.getmecookies.licenseplatequest.domain.AchievementProgress
+import com.getmecookies.licenseplatequest.domain.AchievementStats
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
 import com.getmecookies.licenseplatequest.ui.components.EmptyState
 import com.getmecookies.licenseplatequest.ui.components.StateCard
 import com.getmecookies.licenseplatequest.ui.map.UsMap
+import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -95,66 +115,79 @@ fun PassportScreen(
 
 @Composable
 private fun PassportContent(uiState: PassportUiState, onOpenState: (String) -> Unit) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+    // Lazy so opening the Passport only composes what's on screen — the map, ~22 achievement badges,
+    // and up to 50 state cards are otherwise all composed eagerly, which makes the screen sluggish.
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // Hero count.
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = stringResource(
-                    R.string.passport_count,
-                    uiState.collectedCount,
-                    PassportViewModel.TOTAL_STATES,
-                ),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = if (uiState.remaining == 0) {
-                    stringResource(R.string.passport_complete)
-                } else {
-                    stringResource(R.string.passport_remaining, uiState.remaining)
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-
-        // Lifetime filled map (display-only).
-        uiState.shapes?.let { shapes ->
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
+        item(key = "hero") {
+            Column(
                 modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                UsMap(
-                    shapes = shapes,
-                    foundCodes = uiState.foundCodes,
-                    onStateClick = {},
-                    interactive = false,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(shapes.width / shapes.height)
-                        .padding(12.dp),
+                Text(
+                    text = stringResource(
+                        R.string.passport_count,
+                        uiState.collectedCount,
+                        PassportViewModel.TOTAL_STATES,
+                    ),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = if (uiState.remaining == 0) {
+                        stringResource(R.string.passport_complete)
+                    } else {
+                        stringResource(R.string.passport_remaining, uiState.remaining)
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
 
-        AchievementsSection(earned = uiState.earnedAchievements)
+        // Lifetime filled map (display-only).
+        uiState.shapes?.let { shapes ->
+            item(key = "map") {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    UsMap(
+                        shapes = shapes,
+                        foundCodes = uiState.foundCodes,
+                        onStateClick = {},
+                        interactive = false,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(shapes.width / shapes.height)
+                            .padding(12.dp),
+                    )
+                }
+            }
+        }
 
-        Text(
-            text = stringResource(R.string.passport_collected_header),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-        )
-        uiState.collected.forEach { state ->
+        item(key = "achievements") {
+            AchievementsSection(
+                earned = uiState.earnedAchievements,
+                stats = uiState.achievementStats,
+                earnedAt = uiState.achievementEarnedAt,
+            )
+        }
+
+        item(key = "collected_header") {
+            Text(
+                text = stringResource(R.string.passport_collected_header),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+
+        items(uiState.collected, key = { it.code }) { state ->
             StateCard(
                 code = state.code,
                 name = state.name,
@@ -178,7 +211,12 @@ private fun PassportContent(uiState: PassportUiState, onOpenState: (String) -> U
 
 /** Earned vs locked achievement badges, with a header showing earned/total (playtest: achievements). */
 @Composable
-private fun AchievementsSection(earned: Set<String>) {
+private fun AchievementsSection(
+    earned: Set<String>,
+    stats: AchievementStats,
+    earnedAt: Map<String, Instant>,
+) {
+    var selected by remember { mutableStateOf<Achievement?>(null) }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -197,11 +235,18 @@ private fun AchievementsSection(earned: Set<String>) {
             )
         }
         Achievement.entries.chunked(2).forEach { pair ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // IntrinsicSize.Max + fillMaxHeight on the cards makes both cells in a row match the
+            // taller one, so a badge with a progress bar doesn't leave its neighbor looking stunted.
+            Row(
+                modifier = Modifier.height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 pair.forEach { achievement ->
                     AchievementBadge(
                         achievement = achievement,
                         earned = achievement.id in earned,
+                        progress = achievement.progress(stats),
+                        onClick = { selected = achievement },
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -209,17 +254,30 @@ private fun AchievementsSection(earned: Set<String>) {
             }
         }
     }
+
+    selected?.let { achievement ->
+        AchievementDetailSheet(
+            achievement = achievement,
+            earned = achievement.id in earned,
+            progress = achievement.progress(stats),
+            earnedAt = earnedAt[achievement.id],
+            onDismiss = { selected = null },
+        )
+    }
 }
 
 @Composable
 private fun AchievementBadge(
     achievement: Achievement,
     earned: Boolean,
+    progress: AchievementProgress,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val meta = achievementMeta(achievement)
     Card(
-        modifier = modifier,
+        onClick = onClick,
+        modifier = modifier.fillMaxHeight(),
         colors = CardDefaults.cardColors(
             containerColor = if (earned) {
                 MaterialTheme.colorScheme.primaryContainer
@@ -228,44 +286,171 @@ private fun AchievementBadge(
             },
         ),
     ) {
-        Row(
+        Column(
             modifier = Modifier.padding(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(
+                    imageVector = meta.icon,
+                    contentDescription = if (earned) null else stringResource(R.string.ach_locked_cd),
+                    tint = if (earned) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    modifier = Modifier
+                        .size(28.dp)
+                        .alpha(if (earned) 1f else 0.45f),
+                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(meta.titleRes),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        color = if (earned) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                    Text(
+                        text = stringResource(meta.descRes),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                    )
+                }
+            }
+            // For multi-step, not-yet-earned badges, show how close the player is.
+            if (!earned && !progress.isBinary) {
+                LinearProgressIndicator(
+                    progress = { progress.fraction },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    text = stringResource(R.string.ach_progress, progress.current, progress.target),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+/** Bottom sheet shown when a badge is tapped: full description, earned date or progress, and share. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AchievementDetailSheet(
+    achievement: Achievement,
+    earned: Boolean,
+    progress: AchievementProgress,
+    earnedAt: Instant?,
+    onDismiss: () -> Unit,
+) {
+    val meta = achievementMeta(achievement)
+    val context = LocalContext.current
+    val title = stringResource(meta.titleRes)
+    val desc = stringResource(meta.descRes)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp)
+                .windowInsetsPadding(WindowInsets.navigationBars),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
                 imageVector = meta.icon,
-                contentDescription = if (earned) null else stringResource(R.string.ach_locked_cd),
+                contentDescription = null,
                 tint = if (earned) {
                     MaterialTheme.colorScheme.primary
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },
                 modifier = Modifier
-                    .size(28.dp)
+                    .size(56.dp)
                     .alpha(if (earned) 1f else 0.45f),
             )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(meta.titleRes),
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                text = desc,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            when {
+                earned -> Text(
+                    text = stringResource(
+                        R.string.ach_detail_earned,
+                        (earnedAt ?: Instant.now())
+                            .atZone(ZoneId.systemDefault()).toLocalDate().format(DATE_FORMAT),
+                    ),
                     style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    color = if (earned) {
-                        MaterialTheme.colorScheme.onSurface
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
+                    color = MaterialTheme.colorScheme.primary,
                 )
-                Text(
-                    text = stringResource(meta.descRes),
-                    style = MaterialTheme.typography.bodySmall,
+
+                !progress.isBinary -> {
+                    LinearProgressIndicator(
+                        progress = { progress.fraction },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.ach_progress,
+                            progress.current,
+                            progress.target
+                        ),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                else -> Text(
+                    text = stringResource(R.string.ach_detail_locked),
+                    style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
                 )
+            }
+            if (earned) {
+                Button(onClick = { shareAchievement(context, title, desc) }) {
+                    Icon(
+                        Icons.Filled.Share,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.size(8.dp))
+                    Text(stringResource(R.string.ach_detail_share))
+                }
             }
         }
     }
+}
+
+/** Fire a plain-text share for an earned achievement (reuses the system share sheet). */
+private fun shareAchievement(
+    context: android.content.Context,
+    title: String,
+    desc: String,
+) {
+    val message = context.getString(R.string.ach_share_text, title, desc)
+    ShareCompat.IntentBuilder(context)
+        .setType("text/plain")
+        .setSubject(context.getString(R.string.ach_detail_share_subject))
+        .setText(message)
+        .startChooser()
 }
 
 private val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")

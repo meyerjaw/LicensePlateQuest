@@ -20,6 +20,10 @@ interface AchievementDao {
     @Query("SELECT id FROM achievement")
     fun observeEarnedIds(): Flow<List<String>>
 
+    /** Earned achievements with their unlock timestamps, for the detail sheet. */
+    @Query("SELECT * FROM achievement")
+    fun observeEarned(): Flow<List<AchievementEntity>>
+
     /** Delete every earned achievement (debug-only wipe). */
     @Query("DELETE FROM achievement")
     suspend fun deleteAll()

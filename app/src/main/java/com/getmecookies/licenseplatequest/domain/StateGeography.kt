@@ -65,6 +65,22 @@ val NEW_ENGLAND_STATES = setOf("CT", "ME", "MA", "NH", "RI", "VT")
 val WEST_COAST_STATES = setOf("CA", "OR", "WA")
 val FOUR_CORNERS_STATES = setOf("AZ", "CO", "NM", "UT")
 
+/** The eight states bordering the Great Lakes. */
+val GREAT_LAKES_STATES = setOf("MN", "WI", "IL", "IN", "MI", "OH", "PA", "NY")
+
+/** The Deep South. */
+val DEEP_SOUTH_STATES = setOf("AL", "GA", "LA", "MS", "SC")
+
+/** The Mountain West (Census Mountain division). */
+val MOUNTAIN_WEST_STATES = setOf("MT", "ID", "WY", "NV", "UT", "CO", "AZ", "NM")
+
+/** Pacific-coast states (incl. Alaska & Hawaii) — for the coast-to-coast achievement. */
+val PACIFIC_COAST_STATES = setOf("CA", "OR", "WA", "AK", "HI")
+
+/** Atlantic-seaboard states — for the coast-to-coast achievement. */
+val ATLANTIC_COAST_STATES =
+    setOf("ME", "NH", "MA", "RI", "CT", "NY", "NJ", "DE", "MD", "VA", "NC", "SC", "GA", "FL")
+
 /**
  * The size of the largest cluster of [found] states that are connected through [adjacency]
  * (border-to-border). Used by the "good neighbors" achievement. Pure BFS over the found subgraph.

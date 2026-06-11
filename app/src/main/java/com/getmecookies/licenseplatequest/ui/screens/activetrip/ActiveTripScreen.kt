@@ -48,6 +48,8 @@ import androidx.compose.runtime.Composable
 import android.widget.Toast
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -71,12 +73,14 @@ import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.Achievement
 import com.getmecookies.licenseplatequest.ui.screens.passport.achievementMeta
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
+import com.getmecookies.licenseplatequest.ui.components.AchievementUnlockBanner
 import com.getmecookies.licenseplatequest.ui.components.Confetti
 import com.getmecookies.licenseplatequest.ui.components.FlagImage
 import com.getmecookies.licenseplatequest.ui.components.RareSparkle
 import com.getmecookies.licenseplatequest.ui.components.StateCard
 import com.getmecookies.licenseplatequest.ui.map.UsMap
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationMode
+import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -167,17 +171,18 @@ fun ActiveTripScreen(
         }
     }
 
-    // Achievement-unlocked toasts. Resolve the template + titles at composable scope (locale-aware).
-    val unlockedTemplate = stringResource(R.string.ach_unlocked)
-    val achievementTitles =
-        Achievement.entries.associate { it.id to stringResource(achievementMeta(it).titleRes) }
+    // Achievement unlocks: queue ids and show a celebratory banner one at a time (replaces the old
+    // toast). The banner pops in, plays a fanfare, and auto-dismisses after a beat.
+    val unlockQueue = remember { mutableStateListOf<String>() }
     LaunchedEffect(Unit) {
-        viewModel.achievementEvents.collect { ids ->
-            ids.forEach { id ->
-                val title = achievementTitles[id] ?: id
-                Toast.makeText(context, String.format(unlockedTemplate, title), Toast.LENGTH_LONG)
-                    .show()
-            }
+        viewModel.achievementEvents.collect { ids -> unlockQueue.addAll(ids) }
+    }
+    val currentUnlockId = unlockQueue.firstOrNull()
+    LaunchedEffect(currentUnlockId) {
+        if (currentUnlockId != null) {
+            soundPlayer?.playFifty()
+            delay(2800)
+            if (unlockQueue.isNotEmpty()) unlockQueue.removeAt(0)
         }
     }
 
@@ -340,6 +345,22 @@ fun ActiveTripScreen(
                 trigger = rareKey,
                 modifier = Modifier.fillMaxSize(),
             )
+        }
+
+        // Celebratory banner when an achievement unlocks. key(...) restarts the pop-in per unlock.
+        val unlockAchievement = currentUnlockId?.let { Achievement.byId(it) }
+        if (unlockAchievement != null) {
+            val meta = achievementMeta(unlockAchievement)
+            key(currentUnlockId) {
+                AchievementUnlockBanner(
+                    title = stringResource(meta.titleRes),
+                    unlockedLabel = stringResource(R.string.ach_unlocked_banner_title),
+                    icon = meta.icon,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 24.dp, start = 16.dp, end = 16.dp),
+                )
+            }
         }
     }
 
