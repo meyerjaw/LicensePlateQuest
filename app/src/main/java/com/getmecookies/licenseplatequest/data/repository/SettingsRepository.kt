@@ -24,6 +24,9 @@ class SettingsRepository(context: Context) {
     private val _hapticsEnabled = MutableStateFlow(prefs.getBoolean(KEY_HAPTICS, true))
     val hapticsEnabled: StateFlow<Boolean> = _hapticsEnabled.asStateFlow()
 
+    private val _soundEnabled = MutableStateFlow(prefs.getBoolean(KEY_SOUND, true))
+    val soundEnabled: StateFlow<Boolean> = _soundEnabled.asStateFlow()
+
     private val _tripRemindersEnabled = MutableStateFlow(prefs.getBoolean(KEY_TRIP_REMINDERS, true))
     val tripRemindersEnabled: StateFlow<Boolean> = _tripRemindersEnabled.asStateFlow()
 
@@ -38,6 +41,11 @@ class SettingsRepository(context: Context) {
     fun setHapticsEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_HAPTICS, enabled) }
         _hapticsEnabled.value = enabled
+    }
+
+    fun setSoundEnabled(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_SOUND, enabled) }
+        _soundEnabled.value = enabled
     }
 
     fun setTripRemindersEnabled(enabled: Boolean) {
@@ -75,6 +83,7 @@ class SettingsRepository(context: Context) {
         const val PREFS = "settings_prefs"
         const val KEY_THEME = "theme_mode"
         const val KEY_HAPTICS = "haptics_enabled"
+        const val KEY_SOUND = "sound_enabled"
         const val KEY_TRIP_REMINDERS = "trip_reminders_enabled"
         const val KEY_HOME_REGION = "home_region_id"
         const val KEY_HOME_CITY = "home_city"

@@ -6,7 +6,15 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
 
 ## Features
 
-- **Celebration sound (deferred from MVP).** Add a short, playful celebration sound (Android `SoundPool`) for per-find and the 50/50 moment, respecting silent mode and media volume. The firework + haptics are already in place; this is the missing half of the celebration. Gate behind the planned sound setting. (Explicitly deferred during build.)
+- **Celebration sound (deferred from MVP).** Add a short, playful celebration sound (Android
+  `SoundPool`) for per-find and the 50/50 moment, respecting silent mode and media volume. The
+  firework + haptics are already in place; this is the missing half of the celebration. Gate behind
+  the planned sound setting. (Explicitly deferred during build.) *Status: shipped 2026-06-11 —
+  synthesized chimes bundled in `res/raw` (a bright rising triad on a find, an ascending fanfare for
+  50/50), played via a `CelebrationSounds` seam (`SoundPoolCelebrationSounds` on the media stream)
+  that self-gates on the new Sound setting, the device ringer (stays quiet when silenced), and media
+  volume. Wired to the per-find confetti event and the 50/50 celebration. The two `.wav` files are
+  trivially swappable. Repo test for the setting.*
 - **Per-player attribution on found plates.** `Spotting.spotter_player_id` is reserved but always null today. `[playtest #17]` Make attribution *optional and multi-select* — a plate can be credited to several players (treat the column as a set; empty = unattributed). Flow: tap still marks found; with 2+ players an attribution sheet appears with a prominent "Skip", remembering the last selection for rapid entry; with 0–1 players no attribution UI shows. Surface credits as small player indicators on the list/map rows, allow editing attribution from a found-state detail sheet, and keep attribution records even if a player is later soft-deleted ("Deleted player"). Feeds the summary leaderboard `[playtest #18]` and depends on player colors `[playtest #19]`.
 - **Player favorite color.** `[playtest #19]` Give each player a color chosen from a curated 8–12 swatch palette (not a free-form picker) on the add/edit player screen, with light/dark variants and a live sample-chip preview. Auto-pick the first unused color by default; dim already-taken swatches to encourage uniqueness. Store as a palette token (`"teal"`), not raw hex, and resolve via the theme. Powers attribution indicators, summary chips, and celebration accents — centralize in a `getPlayerColor(playerId)` helper. Always pair color with initials/name so colorblind users aren't lost.
 - **Summary screen player leaderboard.** `[playtest #18]` Replace the plain player list on the celebration/summary screens with sorted chips (color dot · name · score, crown 👑 on the leader). Sort by score desc, alphabetical tiebreak; all tied leaders get crowns; no crown when everyone's at zero. Show unattributed plates as a separate muted row excluded from crown logic. Depends on attribution `[playtest #17]` and colors `[playtest #19]`.
@@ -97,8 +105,10 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
   `isRarePlate(rarityScore)` (threshold 0.6 → ~6 states) + unit test; a **Rare** badge on the Active
   Trip list + Passport rows, a **✦ Rare find** chip on State Detail, and a **Rare plate!** toast
   when
-  a rare plate is marked. Still open: a richer rare flourish (distinct animation/sound) and feeding
-  an achievement.*
+  a rare plate is marked. **Distinct rare sound shipped 2026-06-11** — a sparkly twinkle
+  (`sfx_rare.wav`) layered over the find chime via `CelebrationSounds.playRare()`, on the rare-find
+  event. A rare-catch achievement (`rare_catch`) also already ships with the achievements. Still
+  open: a distinct on-screen rare *animation* (the sound + badge are done).*
 - **Photo capture for a find.** `[2026-06-09]` `Spotting.photo_path` is reserved but always null.
   Let a player attach a photo of the actual plate when marking a state (system camera intent or
   CameraX), stored in **app-private** storage with the path on the spotting; show a thumbnail on
@@ -281,8 +291,8 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
 - **Settings screen.** Light/dark/system theme toggle, sound on/off, haptics on/off. Ties together
   the now-fixed theme and the (pending) celebration sound. (Out of scope in MVP.) Also hosts the
   toggles introduced by playtest items below. *Status: shipped 2026-06-04 (v1.4) — a Settings screen
-  with Light/Dark/System theme + a vibration (haptics) toggle, plus the Developer tools section.
-  Still open: the sound on/off toggle (waits on the celebration sound).*
+  with Light/Dark/System theme + a vibration (haptics) toggle, plus the Developer tools section and
+  a **Sound** on/off toggle (shipped 2026-06-11 with the celebration sound).*
 - **Default home location.** `[playtest #8]` A "Home location" row that opens the shared region
   selector `[playtest #7-selector]`, plus an "Unset" option. New trips auto-fill the start field
   from home as a *suggestion* (still editable; clearing it doesn't re-fill `[playtest #9]`).

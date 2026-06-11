@@ -33,8 +33,16 @@ class SettingsRepositoryTest {
     fun defaults() {
         assertEquals(ThemeMode.SYSTEM, repo.themeMode.value)
         assertTrue(repo.hapticsEnabled.value)
+        assertTrue(repo.soundEnabled.value)
         assertTrue(repo.tripRemindersEnabled.value)
         assertNull(repo.home.value)
+    }
+
+    @Test
+    fun sound_persistsAcrossInstances() {
+        repo.setSoundEnabled(false)
+        assertFalse(repo.soundEnabled.value)
+        assertFalse(SettingsRepository(context).soundEnabled.value)
     }
 
     @Test

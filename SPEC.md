@@ -714,4 +714,22 @@ Several of these were resolved during build (noted inline):
   - Still open (the remaining #20 piece): the cross-restart "Welcome back · N states added" toast
     for
     finds queued in a previous session, with a ~24h silent expiry.
+- **v1.19 (2026-06-11)** — Celebration sound (the deferred MVP item):
+  - A short **chime** now plays on each find and an **ascending fanfare** on the 50/50 win, finally
+    completing the celebration (firework + haptics + sound). The two sounds are **synthesized**
+    (procedurally generated bell-ish tones) and bundled in `res/raw` (`sfx_find.wav`,
+    `sfx_fifty.wav`), so they're swappable without code changes.
+  - Played through a `CelebrationSounds` seam (`SoundPoolCelebrationSounds`, media stream) that
+    **self-gates** on a new **Sound** setting, the device ringer (silent/vibrate → quiet), and media
+    volume. Wired to the per-find confetti event and the FIFTY_FIFTY celebration in
+    `ActiveTripScreen`.
+  - New `SettingsRepository.soundEnabled` (default on) + a **Sound** toggle in Settings (mirrors the
+    vibration toggle). Repo test added. No schema change.
+  - A distinct **rare-plate sound** (a sparkly twinkle, `sfx_rare.wav`) layers over the find chime
+    on
+    a rare catch (`CelebrationSounds.playRare()`, fired from the rare-find event). Also fixed a
+    latent
+    `RegionSeeder` bug surfaced by the seeder test: re-seed when the data-version flag is current
+    but
+    the region table is empty (flag/table divergence), via a new `PlateRegionDao.count()`.
 

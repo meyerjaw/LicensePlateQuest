@@ -31,7 +31,11 @@ class RegionSeeder(
         val appliedVersion = prefs.getInt(KEY_DATA_VERSION, -1)
 
         val bundle = readBundle()
-        if (appliedVersion >= bundle.data_version) return
+        // Re-seed when the version is current AND the regions are actually present. The version flag
+        // (SharedPreferences) and the region table can diverge — e.g. the table is cleared but the
+        // flag isn't (a partial data reset, or an in-memory DB in tests) — and an empty map would
+        // leave the app unusable.
+        if (appliedVersion >= bundle.data_version && plateRegionDao.count() > 0) return
 
         val entities = bundle.regions.map { it.toEntity() }
         plateRegionDao.upsertAll(entities)

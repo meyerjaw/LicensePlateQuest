@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.getmecookies.licenseplatequest.LicensePlateQuestApp
 import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.Achievement
 import com.getmecookies.licenseplatequest.ui.screens.passport.achievementMeta
@@ -107,9 +108,17 @@ fun ActiveTripScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var menuOpen by remember { mutableStateOf(false) }
 
-    // Fire one-shot celebration navigation (50/50 or manual end).
+    // Celebration sounds, pulled from the app container; null when the host isn't LicensePlateQuestApp
+    // (keeps the screen renderable in isolation/tests). Playback self-gates on the sound setting.
+    val soundContext = LocalContext.current
+    val soundPlayer = remember(soundContext) {
+        (soundContext.applicationContext as? LicensePlateQuestApp)?.container?.soundPlayer
+    }
+
+    // Fire one-shot celebration navigation (50/50 or manual end); the 50/50 win plays its fanfare.
     LaunchedEffect(uiState.celebration) {
         uiState.celebration?.let {
+            if (it.mode == CelebrationMode.FIFTY_FIFTY) soundPlayer?.playFifty()
             onCelebrate(it.tripId, it.mode)
             viewModel.onCelebrationConsumed()
         }
@@ -123,6 +132,7 @@ fun ActiveTripScreen(
     LaunchedEffect(Unit) {
         viewModel.confettiEvents.collect {
             confettiKey++
+            soundPlayer?.playFind()
             if (viewModel.hapticsEnabled.value) {
                 haptics.performHapticFeedback(HapticFeedbackType.LongPress)
             }
@@ -135,6 +145,7 @@ fun ActiveTripScreen(
     val rareFindTemplate = stringResource(R.string.active_trip_rare_find)
     LaunchedEffect(Unit) {
         viewModel.rareFindEvents.collect { stateName ->
+            soundPlayer?.playRare()
             Toast.makeText(context, String.format(rareFindTemplate, stateName), Toast.LENGTH_LONG)
                 .show()
         }

@@ -17,6 +17,9 @@ interface PlateRegionDao {
     @Query("SELECT COUNT(*) FROM plate_region")
     fun observeCount(): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM plate_region")
+    suspend fun count(): Int
+
     @Query("SELECT * FROM plate_region ORDER BY display_order")
     suspend fun getAll(): List<PlateRegionEntity>
 

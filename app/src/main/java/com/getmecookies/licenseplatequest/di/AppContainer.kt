@@ -5,6 +5,7 @@ import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.DatabaseProvider
 import com.getmecookies.licenseplatequest.data.location.AndroidCityLocator
 import com.getmecookies.licenseplatequest.data.map.MapRepository
+import com.getmecookies.licenseplatequest.data.sound.SoundPoolCelebrationSounds
 import com.getmecookies.licenseplatequest.data.repository.AchievementRepository
 import com.getmecookies.licenseplatequest.data.repository.CelebrationRepository
 import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
@@ -14,6 +15,7 @@ import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
 import com.getmecookies.licenseplatequest.data.seed.SampleDataSeeder
+import com.getmecookies.licenseplatequest.domain.CelebrationSounds
 import com.getmecookies.licenseplatequest.domain.CelebrationTracker
 import com.getmecookies.licenseplatequest.domain.CityLocator
 import com.getmecookies.licenseplatequest.domain.UiPreferences
@@ -57,6 +59,9 @@ class AppContainer(context: Context) {
     val mapRepository: MapRepository = MapRepository(context.applicationContext)
 
     val cityLocator: CityLocator = AndroidCityLocator(context.applicationContext)
+
+    val soundPlayer: CelebrationSounds =
+        SoundPoolCelebrationSounds(context.applicationContext, settingsRepository)
 
     val regionSeeder: RegionSeeder = RegionSeeder(
         context = context.applicationContext,

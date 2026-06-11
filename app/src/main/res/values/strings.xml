@@ -74,6 +74,8 @@
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_haptics">Vibration</string>
     <string name="settings_haptics_desc">Buzz when you find a state</string>
+    <string name="settings_sound">Sound</string>
+    <string name="settings_sound_desc">Play a chime when you find a state</string>
     <string name="settings_home">Home location</string>
     <string name="settings_home_none">Not set</string>
     <string name="settings_home_value">%1$s, %2$s</string>
