@@ -69,7 +69,11 @@ class AchievementRepositoryTest {
         trips.endTrip(tripId)
         assertTrue(achievements.evaluateAndPersist().contains("first_trip"))
 
-        assertEquals(setOf("first_plate", "first_trip"), achievements.observeEarned().first())
+        // Contains (not equals): a find recorded via Instant.now() can also legitimately earn a
+        // time-of-day badge like "night_owl"/"early_bird" depending on when the suite runs.
+        assertTrue(
+            achievements.observeEarned().first().containsAll(setOf("first_plate", "first_trip")),
+        )
         assertFalse(achievements.observeEarned().first().contains("collect_10"))
     }
 

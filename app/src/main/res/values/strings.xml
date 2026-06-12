@@ -86,6 +86,39 @@
     <string name="ach_share_text">I earned the \"%1$s\" badge in LP Quest — %2$s</string>
     <string name="ach_unlocked_banner_title">Achievement unlocked!</string>
 
+    <!-- First-run onboarding wizard -->
+    <string name="onb_welcome_pitch">Spot all 50 state license plates on your next road trip.</string>
+    <string name="onb_get_started">Get started</string>
+    <string name="onb_skip_setup">Skip setup</string>
+    <string name="onb_back">Back</string>
+    <string name="onb_step_indicator">Step %1$d of %2$d</string>
+    <string name="onb_continue">Continue</string>
+    <string name="onb_skip">Skip for now</string>
+    <string name="onb_home_title">Where do you usually start?</string>
+    <string name="onb_home_subtitle">We\'ll use this to pre-fill your trip\'s starting point. You can change it later in Settings.</string>
+    <string name="onb_home_state">Home state</string>
+    <string name="onb_home_city">Home city</string>
+    <string name="onb_players_title">Who\'s playing?</string>
+    <string name="onb_players_subtitle">Add the folks who\'ll be on the road with you. You can add more anytime.</string>
+    <string name="onb_players_empty">No players yet — add one above, or continue and add them later.</string>
+    <string name="onb_player_name">Player name</string>
+    <string name="onb_player_add">Add player</string>
+    <string name="onb_trip_title">Plan your first trip</string>
+    <string name="onb_trip_subtitle">Where are you headed? You can add stops and dates later from Manage trip.</string>
+    <string name="onb_trip_name">Trip name</string>
+    <string name="onb_trip_from_state">From state</string>
+    <string name="onb_trip_from_city">From city</string>
+    <string name="onb_trip_to_state">To state</string>
+    <string name="onb_trip_to_city">To city</string>
+    <string name="onb_trip_create">Create trip</string>
+    <string name="onb_trip_skip">Skip — I\'ll plan later</string>
+    <string name="onb_ready_title">You\'re all set!</string>
+    <string name="onb_ready_subtitle">Start spotting whenever you\'re on the road. Tap a state on the map to mark it found.</string>
+    <string name="onb_ready_go">Let\'s go</string>
+    <string name="settings_help">Help</string>
+    <string name="settings_restart_wizard">Restart setup wizard</string>
+    <string name="settings_restart_wizard_summary">Run the first-time setup guide again</string>
+
     <string name="settings_title">Settings</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_theme_system">System default</string>

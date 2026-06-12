@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.seed.SampleDataSeeder
+import com.getmecookies.licenseplatequest.domain.UiPreferences
 import com.getmecookies.licenseplatequest.domain.model.HomeLocation
 import com.getmecookies.licenseplatequest.domain.model.RegionOption
 import com.getmecookies.licenseplatequest.domain.model.ThemeMode
@@ -28,6 +29,7 @@ class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
     private val regionRepository: RegionRepository,
     private val sampleDataSeeder: SampleDataSeeder,
+    private val uiPreferences: UiPreferences,
 ) : ViewModel() {
 
     val themeMode: StateFlow<ThemeMode> = settingsRepository.themeMode
@@ -75,6 +77,15 @@ class SettingsViewModel(
     }
 
     fun onClearHome() = settingsRepository.clearHome()
+
+    /**
+     * Re-run the first-run onboarding wizard. Clears the completion flag and resets the saved step;
+     * the app root observes the flag and swaps the wizard back in immediately.
+     */
+    fun restartOnboarding() {
+        uiPreferences.onboardingStep = 0
+        uiPreferences.setOnboardingComplete(false)
+    }
 
     /**
      * One-shot human-readable result of the debug-only "Seed sample data" action. Debug-only, so the

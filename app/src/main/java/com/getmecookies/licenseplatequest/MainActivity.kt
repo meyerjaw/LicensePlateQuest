@@ -13,6 +13,7 @@ import androidx.lifecycle.lifecycleScope
 import com.getmecookies.licenseplatequest.domain.model.ThemeMode
 import com.getmecookies.licenseplatequest.notifications.TripReminders
 import com.getmecookies.licenseplatequest.ui.navigation.AppRoot
+import com.getmecookies.licenseplatequest.ui.screens.onboarding.OnboardingFlow
 import com.getmecookies.licenseplatequest.ui.theme.LicensePlateQuestTheme
 import kotlinx.coroutines.launch
 import java.util.UUID
@@ -31,7 +32,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         handleReminderIntent(intent)
-        val settings = (application as LicensePlateQuestApp).container.settingsRepository
+        val container = (application as LicensePlateQuestApp).container
+        val settings = container.settingsRepository
         setContent {
             val themeMode by settings.themeMode.collectAsStateWithLifecycle()
             val darkTheme = when (themeMode) {
@@ -39,11 +41,18 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.LIGHT -> false
                 ThemeMode.DARK -> true
             }
+            val onboardingComplete by container.uiPreferences.onboardingComplete
+                .collectAsStateWithLifecycle()
             LicensePlateQuestTheme(darkTheme = darkTheme) {
-                AppRoot(
-                    editTripRequest = pendingEditTripId.value,
-                    onEditTripRequestConsumed = { pendingEditTripId.value = null },
-                )
+                if (!onboardingComplete) {
+                    // First run (or a Settings-triggered restart): guide setup before the app shell.
+                    OnboardingFlow()
+                } else {
+                    AppRoot(
+                        editTripRequest = pendingEditTripId.value,
+                        onEditTripRequestConsumed = { pendingEditTripId.value = null },
+                    )
+                }
             }
         }
     }

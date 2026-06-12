@@ -774,3 +774,21 @@ Several of these were resolved during build (noted inline):
     to
     50 state cards compose lazily instead of all at once — fixes the slow Passport open.
   - Still open: a richer (image) share card for a badge, and per-country sweeps once CA/MX land.
+- **v1.23 (2026-06-11)** — First-run onboarding wizard:
+  - A skippable, five-step first-run flow — **Welcome → Set home (optional) → Add players → Create
+    first trip → Ready** — shown instead of an empty trip list on a fresh install. Each step is its
+    own screen with Back, a top progress indicator (dots + an announced "Step X of 5"), and a Skip;
+    the Welcome corner "Skip setup" bypasses the whole thing.
+  - **Reuses** the shared `RegionPickerField` and `PlayerColorPicker`, and writes through the real
+    repositories **as the user advances** (players on add, home on the home step, the trip on the
+    trip step) — so bailing out never loses work. Players are optional (zero = solo); the first
+    trip's origin pre-fills from the chosen home and auto-includes the added players.
+  - **Gating:** a `hasCompletedOnboarding` flag in `UiPreferences`, exposed as an observable
+    `onboardingComplete` flow the app root watches to swap between the wizard and the main app. The
+    flag flips on completion **or** an explicit skip; the current step is persisted for force-quit
+    resume. A **"Restart setup wizard"** row in Settings clears the flag and re-shows the wizard
+    immediately. Lands on the active-trip map, where the existing "tap a state" coachmark takes
+    over.
+  - `OnboardingViewModel` orchestration is unit-tested (step nav, validation gate, completion). No
+    schema change. Still open v1.1: optional dates / round-trip toggle in the in-wizard trip step
+    (today the trip starts undated; add stops/dates later from Manage trip).

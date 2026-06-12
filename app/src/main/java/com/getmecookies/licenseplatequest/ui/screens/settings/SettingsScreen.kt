@@ -233,6 +233,22 @@ fun SettingsScreen(
                 }
             }
 
+            SettingsSection(title = stringResource(R.string.settings_help)) {
+                Column(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_restart_wizard_summary),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    TextButton(onClick = viewModel::restartOnboarding) {
+                        Text(stringResource(R.string.settings_restart_wizard))
+                    }
+                }
+            }
+
             // Debug-only developer tools (stripped from release builds).
             if (BuildConfig.DEBUG) {
                 SettingsSection(title = stringResource(R.string.settings_debug)) {

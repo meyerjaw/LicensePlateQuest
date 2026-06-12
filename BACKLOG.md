@@ -172,6 +172,16 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
     with wizard-scoped state persisted to disk on each transition. Absorbs/extends the lightweight
     first-run map hint already shipped (the `hasCompletedOnboarding` gate is broader than today's
     one-time map tip).
+  - *Status: shipped 2026-06-11 (v1.23) — the full five-step flow (Welcome / Set home / Add players
+    / Create first trip / Ready), skippable, with a step-dots progress indicator + announced "Step X
+    of 5", Back on every step but Welcome, and a per-step Skip. Reuses `RegionPickerField` +
+    `PlayerColorPicker`; writes through the real repositories as the user advances (no wizard
+    buffer); players optional (zero = solo); the trip origin pre-fills from the chosen home and
+    auto-includes the added players. Gated by an observable `UiPreferences.onboardingComplete`
+    (current step persisted for force-quit resume); a **"Restart setup wizard"** Settings row
+    re-shows it immediately. `OnboardingViewModel` unit-tested. Still open: optional dates /
+    round-trip toggle `[playtest #22]` in the in-wizard trip step (undated for now — add later from
+    Manage trip), and the "what's new" feature-discovery variant.*
 
 ## UX & polish
 
