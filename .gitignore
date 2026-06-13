@@ -13,6 +13,10 @@ build/
 # Local config (machine-specific; never commit)
 local.properties
 
+# Firebase config (project identifiers — keep out of the public repo)
+google-services.json
+**/google-services.json
+
 # IDE
 .idea/
 *.iws
