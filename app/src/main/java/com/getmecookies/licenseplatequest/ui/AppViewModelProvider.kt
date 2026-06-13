@@ -77,6 +77,7 @@ object AppViewModelProvider {
                 regionRepository = lpqApp().container.regionRepository,
                 playerRepository = lpqApp().container.playerRepository,
                 settingsRepository = lpqApp().container.settingsRepository,
+                analytics = lpqApp().container.analytics,
             )
         }
         initializer {

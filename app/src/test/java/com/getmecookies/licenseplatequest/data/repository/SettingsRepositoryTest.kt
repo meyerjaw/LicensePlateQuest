@@ -35,7 +35,15 @@ class SettingsRepositoryTest {
         assertTrue(repo.hapticsEnabled.value)
         assertTrue(repo.soundEnabled.value)
         assertTrue(repo.tripRemindersEnabled.value)
+        assertTrue(repo.analyticsEnabled.value)
         assertNull(repo.home.value)
+    }
+
+    @Test
+    fun analytics_persistsAcrossInstances() {
+        repo.setAnalyticsEnabled(false)
+        assertFalse(repo.analyticsEnabled.value)
+        assertFalse(SettingsRepository(context).analyticsEnabled.value)
     }
 
     @Test

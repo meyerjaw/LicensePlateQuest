@@ -15,8 +15,11 @@ import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
 import com.getmecookies.licenseplatequest.data.seed.SampleDataSeeder
+import com.getmecookies.licenseplatequest.domain.Analytics
 import com.getmecookies.licenseplatequest.domain.CelebrationSounds
 import com.getmecookies.licenseplatequest.domain.CelebrationTracker
+import com.getmecookies.licenseplatequest.domain.ConsentGatedAnalytics
+import com.getmecookies.licenseplatequest.domain.NoOpAnalytics
 import com.getmecookies.licenseplatequest.domain.CityLocator
 import com.getmecookies.licenseplatequest.domain.UiPreferences
 import com.getmecookies.licenseplatequest.notifications.ReminderScheduler
@@ -55,6 +58,14 @@ class AppContainer(context: Context) {
     val uiPreferences: UiPreferences = UiPreferences(context.applicationContext)
 
     val settingsRepository: SettingsRepository = SettingsRepository(context.applicationContext)
+
+    // Product analytics. Provider-agnostic seam, gated on the user's analytics setting (read live).
+    // The real sink is NoOp until a provider (e.g. Firebase) is wired in — see ANALYTICS.md; swap
+    // NoOpAnalytics for the real client there and everything downstream keeps working.
+    val analytics: Analytics = ConsentGatedAnalytics(
+        delegate = NoOpAnalytics,
+        isEnabled = { settingsRepository.analyticsEnabled.value },
+    )
 
     val mapRepository: MapRepository = MapRepository(context.applicationContext)
 

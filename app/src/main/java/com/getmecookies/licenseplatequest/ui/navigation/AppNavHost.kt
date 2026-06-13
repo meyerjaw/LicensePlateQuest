@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -24,6 +25,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.getmecookies.licenseplatequest.LicensePlateQuestApp
 import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerScreen
 import com.getmecookies.licenseplatequest.ui.screens.passport.PassportScreen
@@ -76,6 +78,16 @@ fun AppRoot(
     val showBottomBar = currentRoute !in fullScreenRoutes &&
         !(mapViewActive && currentRoute == TopDestination.Trips.route)
 
+    // Analytics: log a screen view whenever the destination (or the Trips map/list split) changes.
+    // Null when the host isn't the real app (e.g. an isolated Compose UI test) — safely skipped.
+    val analyticsContext = LocalContext.current
+    val analytics = remember(analyticsContext) {
+        (analyticsContext.applicationContext as? LicensePlateQuestApp)?.container?.analytics
+    }
+    LaunchedEffect(currentRoute, mapViewActive) {
+        screenKey(currentRoute, mapViewActive)?.let { key -> analytics?.screen(key) }
+    }
+
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
@@ -118,16 +130,23 @@ fun AppRoot(
         ) {
             composable(TopDestination.Trips.route) {
                 TripsTab(
-                    onNewTrip = { navController.navigate(Routes.NEW_TRIP) },
+                    onNewTrip = {
+                        analytics?.event("tap_new_trip_fab")
+                        navController.navigate(Routes.NEW_TRIP)
+                    },
                     onOpenState = { code -> navController.navigate(Routes.stateDetail(code)) },
                     onCelebrate = { tripId, mode ->
                         navController.navigate(Routes.celebration(tripId.toString(), mode.name))
                     },
                     onManageTrip = { tripId ->
+                        analytics?.event("tap_manage_trip")
                         navController.navigate(Routes.editTrip(tripId.toString()))
                     },
                     onMapViewActiveChange = { mapViewActive = it },
-                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    onOpenSettings = {
+                        analytics?.event("tap_settings")
+                        navController.navigate(Routes.SETTINGS)
+                    },
                 )
             }
             composable(TopDestination.Passport.route) {
@@ -140,7 +159,10 @@ fun AppRoot(
                     }
                 }
                 PassportScreen(
-                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    onOpenSettings = {
+                        analytics?.event("tap_settings")
+                        navController.navigate(Routes.SETTINGS)
+                    },
                     onOpenState = { code -> navController.navigate(Routes.stateDetail(code)) },
                 )
             }
@@ -156,7 +178,10 @@ fun AppRoot(
                 }
                 PlayersScreen(
                     onAddPlayer = { navController.navigate(Routes.ADD_PLAYER) },
-                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    onOpenSettings = {
+                        analytics?.event("tap_settings")
+                        navController.navigate(Routes.SETTINGS)
+                    },
                 )
             }
             composable(Routes.ADD_PLAYER) {
@@ -224,4 +249,23 @@ fun AppRoot(
             }
         }
     }
+}
+
+/**
+ * Maps a nav route to a stable analytics screen key (snake_case). The Trips tab hosts both the
+ * trip list and the full-screen active-trip map, so it splits on [mapActive]. Returns null for an
+ * unknown/absent route so nothing is logged.
+ */
+private fun screenKey(route: String?, mapActive: Boolean): String? = when (route) {
+    null -> null
+    TopDestination.Trips.route -> if (mapActive) "active_trip" else "trip_list"
+    TopDestination.Passport.route -> "passport"
+    TopDestination.Players.route -> "players"
+    Routes.ADD_PLAYER -> "add_player"
+    Routes.NEW_TRIP -> "new_trip"
+    Routes.STATE_DETAIL -> "state_detail"
+    Routes.CELEBRATION -> "celebration"
+    Routes.EDIT_TRIP -> "manage_trip"
+    Routes.SETTINGS -> "settings"
+    else -> route
 }

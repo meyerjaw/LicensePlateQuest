@@ -139,6 +139,8 @@
     <string name="settings_home_state">State</string>
     <string name="settings_trip_reminders">Trip reminders</string>
     <string name="settings_trip_reminders_desc">Get a nudge when a trip passes its end date</string>
+    <string name="settings_analytics">Anonymous usage data</string>
+    <string name="settings_analytics_desc">Share anonymous, non-personal usage stats to help improve the app</string>
 
     <!-- Notification pre-permission primer (shown before Android's POST_NOTIFICATIONS dialog). -->
     <string name="notif_primer_title">Want a heads-up when your trip wraps up?</string>

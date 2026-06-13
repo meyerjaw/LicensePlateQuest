@@ -63,6 +63,7 @@ fun SettingsScreen(
     val hapticsEnabled by viewModel.hapticsEnabled.collectAsStateWithLifecycle()
     val soundEnabled by viewModel.soundEnabled.collectAsStateWithLifecycle()
     val tripRemindersEnabled by viewModel.tripRemindersEnabled.collectAsStateWithLifecycle()
+    val analyticsEnabled by viewModel.analyticsEnabled.collectAsStateWithLifecycle()
     val home by viewModel.home.collectAsStateWithLifecycle()
     val regionOptions by viewModel.regionOptions.collectAsStateWithLifecycle()
     val homeDialog by viewModel.homeDialog.collectAsStateWithLifecycle()
@@ -195,6 +196,26 @@ fun SettingsScreen(
                         }
                     },
                 )
+            }
+
+            // Anonymous usage analytics (opt-out). Gates all analytics events when off.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.settings_analytics),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_analytics_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Switch(checked = analyticsEnabled, onCheckedChange = viewModel::onAnalyticsToggled)
             }
 
             // Home location (#8): pre-fills the New Trip "From" field.

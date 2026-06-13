@@ -36,6 +36,7 @@ class SettingsViewModel(
     val hapticsEnabled: StateFlow<Boolean> = settingsRepository.hapticsEnabled
     val soundEnabled: StateFlow<Boolean> = settingsRepository.soundEnabled
     val tripRemindersEnabled: StateFlow<Boolean> = settingsRepository.tripRemindersEnabled
+    val analyticsEnabled: StateFlow<Boolean> = settingsRepository.analyticsEnabled
     val home: StateFlow<HomeLocation?> = settingsRepository.home
 
     val regionOptions: StateFlow<List<RegionOption>> =
@@ -53,6 +54,8 @@ class SettingsViewModel(
 
     fun onTripRemindersToggled(enabled: Boolean) =
         settingsRepository.setTripRemindersEnabled(enabled)
+
+    fun onAnalyticsToggled(enabled: Boolean) = settingsRepository.setAnalyticsEnabled(enabled)
 
     fun onEditHome() {
         val current = home.value
