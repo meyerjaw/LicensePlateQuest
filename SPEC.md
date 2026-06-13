@@ -2,7 +2,7 @@
 
 **Project:** License Plate Quest (launcher label "LP Quest")
 **Platform:** Android (Native, Kotlin + Jetpack Compose)
-**Document version:** 1.6
+**Document version:** 1.23
 **Status:** MVP shipped; in active post-MVP iteration
 **Development approach:** Test-Driven Development (TDD) — see §9 "Testing & development approach". New behavior starts with a failing test.
 

@@ -103,11 +103,11 @@ The app was built collaboratively using **Claude Cowork** (Claude desktop). To k
 3. Start a new session and point it at the repo.
 
 **Important:** Cowork's local working memory/notes from the old machine do **not** transfer automatically. That's by design here — the durable context lives in the repo:
-- `SPEC.md` — the complete spec **and** a dated change log (v1.0 → v1.3) describing every feature and decision.
+- `SPEC.md` — the complete spec **and** a dated change log (v1.0 → v1.23) describing every feature and decision.
 - `BACKLOG.md` — what's intentionally not done yet.
 - `HANDOVER.md` — this file.
 
-A fresh Cowork session that reads those three files will have everything it needs to continue. (`SPEC.md` is at **v1.6** as of this writing; its change log runs v1.0 → v1.6.)
+A fresh Cowork session that reads those three files will have everything it needs to continue. (`SPEC.md` is at **v1.23** as of this writing; its change log runs v1.0 → v1.23.)
 
 > **Working style:** new work is done **test-first (TDD)** — see `TESTING.md` for the test layers and the standing rule that every Room migration ships with a migration test.
 
@@ -119,7 +119,7 @@ A fresh Cowork session that reads those three files will have everything it need
 app/src/main/
   java/com/getmecookies/licenseplatequest/
     di/AppContainer.kt              – manual dependency container
-    data/                           – Room (entities incl. trip_stop, DAOs, AppDatabase @ DB v4), repositories, seeding
+    data/                           – Room (entities incl. trip_stop, DAOs, AppDatabase @ DB v6), repositories, seeding
     domain/                         – domain models, CelebrationTracker, UiPreferences
     notifications/                  – ReminderScheduler (WorkManager), ReminderWorker, ReminderActionReceiver (overdue-trip reminders)
     ui/
