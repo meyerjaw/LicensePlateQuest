@@ -160,7 +160,7 @@ means switching providers is a one-file change.
 1. ✅ Seam + consent gate + setting + DI + tests (done 2026-06-13).
 2. ✅ Auto screen tracking in `AppNavHost` (logs `screen` on route change, with the active_trip /
    trip_list split) plus `tab_selected` for the Map/List tabs inside the active trip.
-3. ◑ Feature events + taps (test-first). **Done:** `trip_created` (in `NewTripViewModel`),
+3. ✅ Feature events + taps + user properties (test-first). **Done:** `trip_created` (in `NewTripViewModel`),
    `state_marked`/`state_unmarked` (in `StateDetailViewModel`, gated so `state_marked` only fires on
    a brand-new mark), `tab_selected` (in `ActiveTripViewModel`), `achievement_unlocked` (one per
    newly-earned id, in `ActiveTripViewModel`'s achievement collector), `setting_changed` (key + new
@@ -181,9 +181,10 @@ means switching providers is a one-file change.
    `has_completed_trip`, `lifetime_states_bucket`, `theme_pref`) live in the pure `UserProperties`
    (bucketed counts only, no raw values) and are pushed once per launch by
    `LicensePlateQuestApp.syncAnalyticsUserProperties()` (consent-gated; theme_pref reflects the
-   launch value). Tests: `UserPropertiesTest`.
-   **Remaining:** only the `tap_share` tap — same pattern (inject `analytics` with a `NoOpAnalytics`
-   default; wire the real one in the factory; assert with `FakeAnalytics`).
+   launch value). Tests: `UserPropertiesTest`. The `tap_share` tap is wired in `CelebrationScreen`'s
+   share button `onClick` (a composable tap, like the `AppNavHost` taps — no unit test).
+   **✅ The event catalog (§3) is now fully instrumented.** What's left is the provider + compliance
+   (steps 5–6 below).
 4. ✅ **Analytics** toggle in Settings (mirrors Sound/Vibration; default on; gates all events).
 5. Create the Firebase project, add `google-services.json` + deps, implement `FirebaseAnalyticsClient`,
    swap `NoOpAnalytics` → it in `AppContainer`.

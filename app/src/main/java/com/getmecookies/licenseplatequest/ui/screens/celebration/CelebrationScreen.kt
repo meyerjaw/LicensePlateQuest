@@ -235,7 +235,7 @@ fun CelebrationScreen(
 
                 // Share a long-screenshot image of this summary (playtest note #4).
                 OutlinedButton(
-                    onClick = { shareRequested = true },
+                    onClick = { analytics.event("tap_share"); shareRequested = true },
                     enabled = uiState.mapShapes != null && !shareRequested,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
