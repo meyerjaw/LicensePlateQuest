@@ -177,10 +177,13 @@ means switching providers is a one-file change.
    `ReminderActionReceiver`, `extend` in `MainActivity`'s deep-link branch — both read
    `container.analytics`, since a `BroadcastReceiver`/`Activity` can't take constructor injection).
    The action→label mapping is the pure `TripReminders.actionLabel(...)`, covered by
-   `TripRemindersTest`.
-   **Remaining:** the `tap_share` tap and the user properties — all follow the same pattern (inject
-   `analytics` with a `NoOpAnalytics` default so existing tests/constructors keep compiling; wire the
-   real one in the factory; assert with `FakeAnalytics`).
+   `TripRemindersTest`. **User properties** are done too: the four cohorts (`player_count_bucket`,
+   `has_completed_trip`, `lifetime_states_bucket`, `theme_pref`) live in the pure `UserProperties`
+   (bucketed counts only, no raw values) and are pushed once per launch by
+   `LicensePlateQuestApp.syncAnalyticsUserProperties()` (consent-gated; theme_pref reflects the
+   launch value). Tests: `UserPropertiesTest`.
+   **Remaining:** only the `tap_share` tap — same pattern (inject `analytics` with a `NoOpAnalytics`
+   default; wire the real one in the factory; assert with `FakeAnalytics`).
 4. ✅ **Analytics** toggle in Settings (mirrors Sound/Vibration; default on; gates all events).
 5. Create the Firebase project, add `google-services.json` + deps, implement `FirebaseAnalyticsClient`,
    swap `NoOpAnalytics` → it in `AppContainer`.

@@ -2,6 +2,7 @@ package com.getmecookies.licenseplatequest
 
 import android.app.Application
 import com.getmecookies.licenseplatequest.di.AppContainer
+import com.getmecookies.licenseplatequest.domain.UserProperties
 import com.getmecookies.licenseplatequest.domain.model.TripStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +27,25 @@ class LicensePlateQuestApp : Application() {
         applicationScope.launch {
             container.regionSeeder.seedIfNeeded()
             reconcileTripReminders()
+            syncAnalyticsUserProperties()
         }
+    }
+
+    /**
+     * Refresh the non-PII analytics cohort properties on each launch (consent-gated like every
+     * event). Bucketed counts only — see [UserProperties]. theme_pref reflects the value at launch;
+     * an in-session theme change takes effect on the next launch, which is fine for cohorting.
+     */
+    private suspend fun syncAnalyticsUserProperties() {
+        val playerCount = container.playerRepository.observePlayers().first().size
+        val stats = container.achievementRepository.getStats()
+        UserProperties.apply(
+            analytics = container.analytics,
+            playerCount = playerCount,
+            hasCompletedTrip = stats.completedTripCount > 0,
+            lifetimeStatesFound = stats.lifetimeFound.size,
+            theme = container.settingsRepository.themeMode.value,
+        )
     }
 
     /**
