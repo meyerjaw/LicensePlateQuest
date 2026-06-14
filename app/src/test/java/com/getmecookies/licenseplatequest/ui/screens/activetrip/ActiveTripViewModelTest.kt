@@ -265,6 +265,22 @@ class ActiveTripViewModelTest {
     }
 
     @Test
+    fun firstFind_logsAchievementUnlocked() = runBlocking {
+        createActiveTrip()
+        val analytics = FakeAnalytics()
+        val vm = loadedViewModel(analytics)
+
+        spotting.markState(regions[0].regionCode)
+        awaitUntil { analytics.eventNames().contains("achievement_unlocked") }
+
+        // The very first lifetime find unlocks "first_plate".
+        val ids = analytics.events
+            .filter { it.name == "achievement_unlocked" }
+            .map { it.params["achievement_id"] }
+        assertTrue("first_plate should unlock", ids.contains("first_plate"))
+    }
+
+    @Test
     fun onTabSelected_logsTabSelectedEvent() = runBlocking {
         createActiveTrip()
         val analytics = FakeAnalytics()

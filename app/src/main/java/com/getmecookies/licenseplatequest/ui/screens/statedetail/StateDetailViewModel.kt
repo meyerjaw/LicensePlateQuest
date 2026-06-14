@@ -92,6 +92,7 @@ class StateDetailViewModel(
         val toSave = state.selectedPlayerIds
         viewModelScope.launch {
             spottingRepository.setAttribution(regionCode, toSave.toList())
+            analytics.event("attribution_set", mapOf("player_count" to toSave.size))
             _uiState.update { it.copy(savedAttribution = toSave, markComplete = true) }
         }
     }

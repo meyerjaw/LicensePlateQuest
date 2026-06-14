@@ -102,6 +102,7 @@ object AppViewModelProvider {
                 regionRepository = lpqApp().container.regionRepository,
                 sampleDataSeeder = lpqApp().container.sampleDataSeeder,
                 uiPreferences = lpqApp().container.uiPreferences,
+                analytics = lpqApp().container.analytics,
             )
         }
         initializer {
@@ -111,6 +112,7 @@ object AppViewModelProvider {
                 playerRepository = lpqApp().container.playerRepository,
                 tripRepository = lpqApp().container.tripRepository,
                 regionRepository = lpqApp().container.regionRepository,
+                analytics = lpqApp().container.analytics,
             )
         }
     }

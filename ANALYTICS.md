@@ -162,14 +162,21 @@ means switching providers is a one-file change.
    trip_list split) plus `tab_selected` for the Map/List tabs inside the active trip.
 3. ◑ Feature events + taps (test-first). **Done:** `trip_created` (in `NewTripViewModel`),
    `state_marked`/`state_unmarked` (in `StateDetailViewModel`, gated so `state_marked` only fires on
-   a brand-new mark), `tab_selected` (in `ActiveTripViewModel`), and taps `tap_new_trip_fab` /
-   `tap_manage_trip` / `tap_settings` (in `AppNavHost`). Each has a `FakeAnalytics` test
-   (`NewTripAnalyticsTest`, `StateDetailAnalyticsTest`, `ActiveTripViewModelTest.onTabSelected_*`).
-   **Remaining:** `attribution_set`, `share_completed`, `achievement_unlocked`,
-   `onboarding_completed`/`_skipped`, `setting_changed`, `reminder_action`, and the user
-   properties — all follow the same pattern (inject `analytics` with a `NoOpAnalytics` default so
-   existing tests/constructors keep compiling; wire the real one in the factory; assert with
-   `FakeAnalytics`).
+   a brand-new mark), `tab_selected` (in `ActiveTripViewModel`), `achievement_unlocked` (one per
+   newly-earned id, in `ActiveTripViewModel`'s achievement collector), `setting_changed` (key + new
+   value, on every `SettingsViewModel` toggle; note opt-outs of analytics itself are gated out by
+   `ConsentGatedAnalytics`), and taps `tap_new_trip_fab` / `tap_manage_trip` / `tap_settings` (in
+   `AppNavHost`). Each has a `FakeAnalytics` test (`NewTripAnalyticsTest`, `StateDetailAnalyticsTest`,
+   `SettingsViewModelTest`, `ActiveTripViewModelTest`), plus `attribution_set` (in
+   `StateDetailViewModel.onSaveAttribution`, `player_count`) and `share_completed` (in the
+   `shareTripImage` util, which now takes an injectable `analytics`; the celebration/share screen
+   passes the container's instance). Tests: `StateDetailAnalyticsTest`, `TripShareTest`. Also
+   `onboarding_completed`/`onboarding_skipped` (in `OnboardingViewModel.finish()`, distinguished by
+   the `step` the user exited on — Ready ⇒ completed, earlier ⇒ skipped; the `step` is the param).
+   Tests: `OnboardingViewModelTest`.
+   **Remaining:** `reminder_action`, the `tap_share` tap, and the user properties — all follow the
+   same pattern (inject `analytics` with a `NoOpAnalytics` default so existing tests/constructors
+   keep compiling; wire the real one in the factory; assert with `FakeAnalytics`).
 4. ✅ **Analytics** toggle in Settings (mirrors Sound/Vibration; default on; gates all events).
 5. Create the Firebase project, add `google-services.json` + deps, implement `FirebaseAnalyticsClient`,
    swap `NoOpAnalytics` → it in `AppContainer`.

@@ -8,6 +8,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.entity.GameTypeEntity
 import com.getmecookies.licenseplatequest.data.local.entity.PlateRegionEntity
+import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
@@ -67,6 +68,7 @@ class StateDetailAnalyticsTest {
             endDate = null,
             playerIds = emptyList(),
         )
+        Unit // keep @Before's return type Unit (createTrip returns a UUID)
     }
 
     @After
@@ -98,6 +100,22 @@ class StateDetailAnalyticsTest {
         awaitUntil { analytics.eventNames().contains("state_unmarked") }
 
         assertEquals(regions[0].regionCode, analytics.paramsOf("state_unmarked")?.get("region"))
+    }
+
+    @Test
+    fun onSaveAttribution_logsAttributionSet() = runBlocking {
+        val playerId = PlayerRepository(db.playerDao(), db.tripPlayerDao(), db.eventLogDao())
+            .addPlayer("Sam")
+        spotting.markState(regions[0].regionCode) // found, with no attribution yet
+        val analytics = FakeAnalytics()
+        val vm = viewModelFor(regions[0].regionCode, analytics)
+        awaitUntil { vm.uiState.value.data?.found == true }
+
+        vm.onTogglePlayer(playerId) // attribute one player
+        vm.onSaveAttribution()
+        awaitUntil { analytics.eventNames().contains("attribution_set") }
+
+        assertEquals(1, analytics.paramsOf("attribution_set")?.get("player_count"))
     }
 
     private fun viewModelFor(code: String, analytics: FakeAnalytics): StateDetailViewModel {

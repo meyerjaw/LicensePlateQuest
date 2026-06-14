@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.seed.SampleDataSeeder
+import com.getmecookies.licenseplatequest.domain.Analytics
+import com.getmecookies.licenseplatequest.domain.NoOpAnalytics
 import com.getmecookies.licenseplatequest.domain.UiPreferences
 import com.getmecookies.licenseplatequest.domain.model.HomeLocation
 import com.getmecookies.licenseplatequest.domain.model.RegionOption
@@ -30,6 +32,7 @@ class SettingsViewModel(
     private val regionRepository: RegionRepository,
     private val sampleDataSeeder: SampleDataSeeder,
     private val uiPreferences: UiPreferences,
+    private val analytics: Analytics = NoOpAnalytics,
 ) : ViewModel() {
 
     val themeMode: StateFlow<ThemeMode> = settingsRepository.themeMode
@@ -46,16 +49,36 @@ class SettingsViewModel(
     private val _homeDialog = MutableStateFlow<HomeDialogState?>(null)
     val homeDialog: StateFlow<HomeDialogState?> = _homeDialog.asStateFlow()
 
-    fun onThemeModeSelected(mode: ThemeMode) = settingsRepository.setThemeMode(mode)
+    fun onThemeModeSelected(mode: ThemeMode) {
+        settingsRepository.setThemeMode(mode)
+        logSettingChanged("theme", mode.name.lowercase())
+    }
 
-    fun onHapticsToggled(enabled: Boolean) = settingsRepository.setHapticsEnabled(enabled)
+    fun onHapticsToggled(enabled: Boolean) {
+        settingsRepository.setHapticsEnabled(enabled)
+        logSettingChanged("haptics", enabled)
+    }
 
-    fun onSoundToggled(enabled: Boolean) = settingsRepository.setSoundEnabled(enabled)
+    fun onSoundToggled(enabled: Boolean) {
+        settingsRepository.setSoundEnabled(enabled)
+        logSettingChanged("sound", enabled)
+    }
 
-    fun onTripRemindersToggled(enabled: Boolean) =
+    fun onTripRemindersToggled(enabled: Boolean) {
         settingsRepository.setTripRemindersEnabled(enabled)
+        logSettingChanged("trip_reminders", enabled)
+    }
 
-    fun onAnalyticsToggled(enabled: Boolean) = settingsRepository.setAnalyticsEnabled(enabled)
+    fun onAnalyticsToggled(enabled: Boolean) {
+        settingsRepository.setAnalyticsEnabled(enabled)
+        // Note: turning analytics off is gated out by ConsentGatedAnalytics (the flag is already
+        // false by the time we log), so only opt-ins are recorded — by design.
+        logSettingChanged("analytics", enabled)
+    }
+
+    private fun logSettingChanged(key: String, value: Any) {
+        analytics.event("setting_changed", mapOf("key" to key, "value" to value))
+    }
 
     fun onEditHome() {
         val current = home.value

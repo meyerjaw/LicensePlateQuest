@@ -69,7 +69,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.getmecookies.licenseplatequest.LicensePlateQuestApp
 import com.getmecookies.licenseplatequest.R
+import com.getmecookies.licenseplatequest.domain.NoOpAnalytics
 import com.getmecookies.licenseplatequest.domain.model.CelebrationStats
 import com.getmecookies.licenseplatequest.domain.model.PlayerHighlight
 import com.getmecookies.licenseplatequest.domain.model.PlayerScore
@@ -109,6 +111,9 @@ fun CelebrationScreen(
     val stats = uiState.stats
 
     val context = LocalContext.current
+    val analytics = remember(context) {
+        (context.applicationContext as? LicensePlateQuestApp)?.container?.analytics ?: NoOpAnalytics
+    }
     val shareChooserTitle = stringResource(R.string.share_chooser_title)
     val graphicsLayer = rememberGraphicsLayer()
     var shareRequested by remember { mutableStateOf(false) }
@@ -286,7 +291,7 @@ fun CelebrationScreen(
                 withFrameNanos { }
                 withFrameNanos { }
                 val bitmap = graphicsLayer.toImageBitmap().asAndroidBitmap()
-                shareTripImage(context, bitmap, shareChooserTitle)
+                shareTripImage(context, bitmap, shareChooserTitle, analytics)
                 shareRequested = false
             }
         }

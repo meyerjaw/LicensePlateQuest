@@ -242,7 +242,12 @@ class ActiveTripViewModel(
                 } catch (e: Exception) {
                     emptySet()
                 }
-                if (newly.isNotEmpty()) _achievementEvents.send(newly.toList())
+                if (newly.isNotEmpty()) {
+                    newly.forEach { id ->
+                        analytics.event("achievement_unlocked", mapOf("achievement_id" to id))
+                    }
+                    _achievementEvents.send(newly.toList())
+                }
             }
         }
         viewModelScope.launch {
