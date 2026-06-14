@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.di
 import android.content.Context
 import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.DatabaseProvider
+import com.getmecookies.licenseplatequest.data.analytics.FirebaseAnalyticsClient
 import com.getmecookies.licenseplatequest.data.location.AndroidCityLocator
 import com.getmecookies.licenseplatequest.data.map.MapRepository
 import com.getmecookies.licenseplatequest.data.sound.SoundPoolCelebrationSounds
@@ -19,7 +20,6 @@ import com.getmecookies.licenseplatequest.domain.Analytics
 import com.getmecookies.licenseplatequest.domain.CelebrationSounds
 import com.getmecookies.licenseplatequest.domain.CelebrationTracker
 import com.getmecookies.licenseplatequest.domain.ConsentGatedAnalytics
-import com.getmecookies.licenseplatequest.domain.NoOpAnalytics
 import com.getmecookies.licenseplatequest.domain.CityLocator
 import com.getmecookies.licenseplatequest.domain.UiPreferences
 import com.getmecookies.licenseplatequest.notifications.ReminderScheduler
@@ -59,13 +59,23 @@ class AppContainer(context: Context) {
 
     val settingsRepository: SettingsRepository = SettingsRepository(context.applicationContext)
 
-    // Product analytics. Provider-agnostic seam, gated on the user's analytics setting (read live).
-    // The real sink is NoOp until a provider (e.g. Firebase) is wired in — see ANALYTICS.md; swap
-    // NoOpAnalytics for the real client there and everything downstream keeps working.
+    // Product analytics (see ANALYTICS.md). Firebase is the real sink, wrapped in the consent gate
+    // so explicit events are dropped live when the user opts out. The Firebase client itself
+    // degrades to a no-op if no FirebaseApp is initialized (e.g. JVM unit tests).
+    private val firebaseAnalytics: FirebaseAnalyticsClient =
+        FirebaseAnalyticsClient(context.applicationContext)
+
     val analytics: Analytics = ConsentGatedAnalytics(
-        delegate = NoOpAnalytics,
+        delegate = firebaseAnalytics,
         isEnabled = { settingsRepository.analyticsEnabled.value },
     )
+
+    /**
+     * Push the consent flag down to Firebase's collection switch, so an opt-out also stops the SDK's
+     * automatic events (sessions, etc.) — not just our explicit ones. Called on startup and whenever
+     * the setting changes (see [com.getmecookies.licenseplatequest.LicensePlateQuestApp]).
+     */
+    fun applyAnalyticsConsent(enabled: Boolean) = firebaseAnalytics.setCollectionEnabled(enabled)
 
     val mapRepository: MapRepository = MapRepository(context.applicationContext)
 

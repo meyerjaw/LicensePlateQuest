@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -93,6 +94,10 @@ dependencies {
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
+
+    // Firebase Analytics (product analytics — see ANALYTICS.md). BoM pins the versions.
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
 
     // Test (JVM unit + Robolectric)
     testImplementation(libs.junit)

@@ -29,6 +29,13 @@ class LicensePlateQuestApp : Application() {
             reconcileTripReminders()
             syncAnalyticsUserProperties()
         }
+        // Keep Firebase's collection switch in lock-step with the consent setting (handles the
+        // SDK's automatic events; our explicit events are also gated by ConsentGatedAnalytics).
+        applicationScope.launch {
+            container.settingsRepository.analyticsEnabled.collect { enabled ->
+                container.applyAnalyticsConsent(enabled)
+            }
+        }
     }
 
     /**

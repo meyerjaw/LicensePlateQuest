@@ -186,10 +186,25 @@ means switching providers is a one-file change.
    **✅ The event catalog (§3) is now fully instrumented.** What's left is the provider + compliance
    (steps 5–6 below).
 4. ✅ **Analytics** toggle in Settings (mirrors Sound/Vibration; default on; gates all events).
-5. Create the Firebase project, add `google-services.json` + deps, implement `FirebaseAnalyticsClient`,
-   swap `NoOpAnalytics` → it in `AppContainer`.
+5. ✅ Firebase wired: `google-services.json` in `app/` (git-ignored), the `com.google.gms.google-services`
+   plugin (4.4.4) + `firebase-bom` (34.14.0) / `firebase-analytics`, `FirebaseAnalyticsClient :
+   Analytics` (params→Bundle via the testable `analyticsParamsToBundle`; degrades to no-op if no
+   `FirebaseApp`), and `AppContainer` now sinks to it through the consent gate. The consent setting
+   also drives `setAnalyticsCollectionEnabled` (via `AppContainer.applyAnalyticsConsent`, observed in
+   `LicensePlateQuestApp`) so opt-out stops the SDK's automatic events too. Test:
+   `FirebaseAnalyticsClientTest`. **Note:** `google-services.json` is git-ignored, so CI/fresh clones
+   need it dropped into `app/` before the build will configure.
 6. Write the **privacy policy**, complete the Play **Data Safety** form (declare: App activity /
    interactions; not linked to identity; used for analytics; Advertising ID only if not disabled).
+7. **⚠️ Before production release — separate analytics environments.** Today *every* build (debug +
+   release) reports to the single `license-plate-quest` Firebase project, so dev/QA events
+   co-mingle with production data. We want lower envs reporting for testing, so before going live
+   split them. Preferred: a debug build type / flavor with an `applicationIdSuffix` (e.g. `.debug`)
+   + a separate Firebase app/project + its own `google-services.json` under `app/src/debug/` (the
+   plugin merges per-variant; the suffixed package needs its own client entry or the plugin's config
+   step fails). Lighter alternative: keep one project and stamp an `env`/`build_type` user property
+   from `BuildConfig` (one-line via `UserProperties`) and filter in the console. The `Analytics`
+   seam + `FirebaseAnalyticsClient` need no changes either way — this is purely build/config wiring.
 
 ---
 
@@ -201,3 +216,5 @@ means switching providers is a one-file change.
 - [ ] Settings toggle present and honored (the `ConsentGatedAnalytics` gate).
 - [ ] No PII in any event params (audit the catalog before each release).
 - [ ] Re-confirm audience is teen/adult in Play Console (this whole design assumes it).
+- [ ] **Analytics environments separated** so lower-env/test events don't pollute production data
+      (see §6.7) — required before the production release.
