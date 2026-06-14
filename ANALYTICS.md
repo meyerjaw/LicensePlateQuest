@@ -159,11 +159,13 @@ means switching providers is a one-file change.
 
 1. ✅ Seam + consent gate + setting + DI + tests (done 2026-06-13).
 2. ✅ Auto screen tracking in `AppNavHost` (logs `screen` on route change, with the active_trip /
-   trip_list split). *Still to add: `tab_selected` for the Map/List tabs inside the active trip.*
-3. ◑ Feature events + taps (test-first). **Done:** `trip_created` (in `NewTripViewModel`, with a
-   `FakeAnalytics` test) and taps `tap_new_trip_fab` / `tap_manage_trip` / `tap_settings` (in
-   `AppNavHost`). **Remaining:** `state_marked`/`state_unmarked` (State Detail VM), `tab_selected`
-   (Active Trip VM), `attribution_set`, `share_completed`, `achievement_unlocked`,
+   trip_list split) plus `tab_selected` for the Map/List tabs inside the active trip.
+3. ◑ Feature events + taps (test-first). **Done:** `trip_created` (in `NewTripViewModel`),
+   `state_marked`/`state_unmarked` (in `StateDetailViewModel`, gated so `state_marked` only fires on
+   a brand-new mark), `tab_selected` (in `ActiveTripViewModel`), and taps `tap_new_trip_fab` /
+   `tap_manage_trip` / `tap_settings` (in `AppNavHost`). Each has a `FakeAnalytics` test
+   (`NewTripAnalyticsTest`, `StateDetailAnalyticsTest`, `ActiveTripViewModelTest.onTabSelected_*`).
+   **Remaining:** `attribution_set`, `share_completed`, `achievement_unlocked`,
    `onboarding_completed`/`_skipped`, `setting_changed`, `reminder_action`, and the user
    properties — all follow the same pattern (inject `analytics` with a `NoOpAnalytics` default so
    existing tests/constructors keep compiling; wire the real one in the factory; assert with

@@ -4,6 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
+import com.getmecookies.licenseplatequest.domain.Analytics
+import com.getmecookies.licenseplatequest.domain.NoOpAnalytics
 import com.getmecookies.licenseplatequest.domain.model.StateDetailData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,6 +44,7 @@ data class StateDetailUiState(
 class StateDetailViewModel(
     savedStateHandle: SavedStateHandle,
     private val spottingRepository: SpottingRepository,
+    private val analytics: Analytics = NoOpAnalytics,
 ) : ViewModel() {
 
     private val regionCode: String = checkNotNull(savedStateHandle[ARG_CODE]) {
@@ -96,10 +99,18 @@ class StateDetailViewModel(
     /** Mark immediately (no confirmation), then signal the screen to return to the map. */
     fun onMarkClick() {
         viewModelScope.launch {
-            val created = spottingRepository.markState(
-                regionCode,
-                _uiState.value.selectedPlayerIds.toList(),
-            )
+            val players = _uiState.value.selectedPlayerIds
+            val created = spottingRepository.markState(regionCode, players.toList())
+            if (created) {
+                analytics.event(
+                    "state_marked",
+                    mapOf(
+                        "region" to regionCode,
+                        "attributed_player_count" to players.size,
+                        "source" to "detail",
+                    ),
+                )
+            }
             _uiState.update { it.copy(justMarked = created, markComplete = true) }
         }
     }
@@ -120,6 +131,7 @@ class StateDetailViewModel(
     fun onConfirmUnmark() {
         viewModelScope.launch {
             spottingRepository.unmarkState(regionCode)
+            analytics.event("state_unmarked", mapOf("region" to regionCode))
             _uiState.update { it.copy(dialog = StateDetailDialog.NONE) }
             reload()
         }

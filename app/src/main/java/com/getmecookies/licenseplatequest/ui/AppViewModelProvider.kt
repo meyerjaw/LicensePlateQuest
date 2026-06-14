@@ -46,6 +46,7 @@ object AppViewModelProvider {
                 celebrationTracker = lpqApp().container.celebrationTracker,
                 uiPreferences = lpqApp().container.uiPreferences,
                 settingsRepository = lpqApp().container.settingsRepository,
+                analytics = lpqApp().container.analytics,
             )
         }
         initializer {
@@ -84,6 +85,7 @@ object AppViewModelProvider {
             StateDetailViewModel(
                 savedStateHandle = createSavedStateHandle(),
                 spottingRepository = lpqApp().container.spottingRepository,
+                analytics = lpqApp().container.analytics,
             )
         }
         initializer {
