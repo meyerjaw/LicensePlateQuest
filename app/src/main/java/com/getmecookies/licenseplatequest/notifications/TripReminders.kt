@@ -51,6 +51,19 @@ object TripReminders {
     /** Local hour-of-day (24h) the reminder fires, so it lands at a friendly time. */
     const val REMINDER_HOUR = 10
 
+    /** Analytics label for the "Extend" deep-link (an activity intent, not a broadcast action). */
+    const val ACTION_LABEL_EXTEND = "extend"
+
+    /**
+     * The analytics `action` label for a reminder notification button, or null if [action] isn't a
+     * tracked reminder action. Pure mapping so it's unit-testable without the receiver/Android.
+     */
+    fun actionLabel(action: String?): String? = when (action) {
+        ACTION_END_TRIP -> "end"
+        ACTION_REMIND_LATER -> "remind"
+        else -> null
+    }
+
     fun workName(tripId: UUID): String = "$WORK_NAME_PREFIX$tripId"
 
     fun followUpWorkName(tripId: UUID): String = "$FOLLOWUP_WORK_NAME_PREFIX$tripId"

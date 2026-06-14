@@ -76,10 +76,14 @@ class MainActivity : ComponentActivity() {
         intent.removeExtra(TripReminders.EXTRA_TRIP_ID)
         intent.removeExtra(TripReminders.EXTRA_OPEN_EDIT)
 
+        val container = (application as LicensePlateQuestApp).container
         if (openEdit) {
+            container.analytics.event(
+                "reminder_action",
+                mapOf("action" to TripReminders.ACTION_LABEL_EXTEND),
+            )
             pendingEditTripId.value = tripIdString
         } else {
-            val container = (application as LicensePlateQuestApp).container
             lifecycleScope.launch {
                 container.tripRepository.setActiveTrip(tripId)
             }
