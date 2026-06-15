@@ -102,6 +102,7 @@ object AppViewModelProvider {
                 regionRepository = lpqApp().container.regionRepository,
                 sampleDataSeeder = lpqApp().container.sampleDataSeeder,
                 uiPreferences = lpqApp().container.uiPreferences,
+                backupRepository = lpqApp().container.backupRepository,
                 analytics = lpqApp().container.analytics,
             )
         }

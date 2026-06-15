@@ -2,6 +2,7 @@ package com.getmecookies.licenseplatequest.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.getmecookies.licenseplatequest.data.local.entity.PlayerEntity
 import com.getmecookies.licenseplatequest.data.local.entity.TripPlayerEntity
@@ -56,4 +57,12 @@ interface TripPlayerDao {
         """
     )
     suspend fun getPlayerNamesForTrip(tripId: UUID): List<String>
+
+    /** All trip-player links (backup export). */
+    @Query("SELECT * FROM trip_player")
+    suspend fun getAll(): List<TripPlayerEntity>
+
+    /** Bulk insert, skipping rows whose primary key already exists (backup import / merge). */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAllIgnore(links: List<TripPlayerEntity>)
 }

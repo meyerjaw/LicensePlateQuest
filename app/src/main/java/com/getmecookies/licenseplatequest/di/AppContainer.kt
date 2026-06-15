@@ -4,6 +4,7 @@ import android.content.Context
 import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.local.DatabaseProvider
 import com.getmecookies.licenseplatequest.data.analytics.FirebaseAnalyticsClient
+import com.getmecookies.licenseplatequest.data.backup.BackupRepository
 import com.getmecookies.licenseplatequest.data.location.AndroidCityLocator
 import com.getmecookies.licenseplatequest.data.map.MapRepository
 import com.getmecookies.licenseplatequest.data.sound.SoundPoolCelebrationSounds
@@ -89,6 +90,8 @@ class AppContainer(context: Context) {
         plateRegionDao = database.plateRegionDao(),
         gameTypeDao = database.gameTypeDao(),
     )
+
+    val backupRepository: BackupRepository = BackupRepository(database, settingsRepository)
 
     val sampleDataSeeder: SampleDataSeeder = SampleDataSeeder(
         database = database,

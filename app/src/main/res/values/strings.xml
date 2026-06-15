@@ -142,6 +142,20 @@
     <string name="settings_analytics">Anonymous usage data</string>
     <string name="settings_analytics_desc">Share anonymous, non-personal usage stats to help improve the app</string>
 
+    <!-- Backup (export / import) -->
+    <string name="settings_backup">Backup</string>
+    <string name="settings_backup_desc">Save all your trips, players, and progress to a file, or restore from one. Handy for moving to a new phone.</string>
+    <string name="settings_backup_export">Export backup</string>
+    <string name="settings_backup_import">Import backup</string>
+    <string name="settings_backup_import_title">Import backup</string>
+    <string name="settings_backup_import_body">Replace erases everything currently on this device and restores the backup. Merge adds the backup\'s data to what you already have.</string>
+    <string name="settings_backup_import_replace">Replace all</string>
+    <string name="settings_backup_import_merge">Merge</string>
+    <string name="settings_backup_export_ok">Backup saved</string>
+    <string name="settings_backup_export_failed">Couldn\'t save the backup</string>
+    <string name="settings_backup_import_ok">Backup imported</string>
+    <string name="settings_backup_import_failed">Couldn\'t import that file</string>
+
     <!-- Notification pre-permission primer (shown before Android's POST_NOTIFICATIONS dialog). -->
     <string name="notif_primer_title">Want a heads-up when your trip wraps up?</string>
     <string name="notif_primer_body">We\'ll send a gentle reminder the day after your trip\'s end date, so you can finish spotting and see your final map.</string>

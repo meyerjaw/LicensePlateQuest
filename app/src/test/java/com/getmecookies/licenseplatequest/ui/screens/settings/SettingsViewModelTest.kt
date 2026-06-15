@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.ui.screens.settings
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.getmecookies.licenseplatequest.data.backup.BackupRepository
 import com.getmecookies.licenseplatequest.data.local.AppDatabase
 import com.getmecookies.licenseplatequest.data.repository.AchievementRepository
 import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
@@ -52,11 +53,13 @@ class SettingsViewModelTest {
             regionSeeder = RegionSeeder(context, db.plateRegionDao(), db.gameTypeDao()),
         )
         analytics = FakeAnalytics()
+        val settingsRepository = SettingsRepository(context)
         viewModel = SettingsViewModel(
-            settingsRepository = SettingsRepository(context),
+            settingsRepository = settingsRepository,
             regionRepository = regionRepository,
             sampleDataSeeder = sampleDataSeeder,
             uiPreferences = UiPreferences(context),
+            backupRepository = BackupRepository(db, settingsRepository),
             analytics = analytics,
         )
     }

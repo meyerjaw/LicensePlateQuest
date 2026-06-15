@@ -1,6 +1,8 @@
 package com.getmecookies.licenseplatequest.ui.screens.settings
 
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -45,6 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.BuildConfig
 import com.getmecookies.licenseplatequest.R
+import com.getmecookies.licenseplatequest.data.backup.BackupRepository
 import com.getmecookies.licenseplatequest.domain.model.RegionOption
 import com.getmecookies.licenseplatequest.domain.model.ThemeMode
 import com.getmecookies.licenseplatequest.ui.AppViewModelProvider
@@ -71,12 +74,46 @@ fun SettingsScreen(
     // Pre-permission primer for the Trip reminders toggle (renders its own dialogs).
     val notificationPrimer = rememberNotificationPermissionPrimer()
 
+    val context = LocalContext.current
+
     // Debug-only: guard the destructive "wipe all data" action behind a confirm dialog.
     var confirmWipe by remember { mutableStateOf(false) }
 
+    // Backup: import asks replace-vs-merge first (Replace is destructive, so it doubles as confirm).
+    var showImportMode by remember { mutableStateOf(false) }
+    var pendingImportMode by remember { mutableStateOf<BackupRepository.ImportMode?>(null) }
+
+    // SAF: export writes a new .json the user names/places; import reads one back.
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri -> uri?.let { viewModel.exportTo(it, context.contentResolver) } }
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        val mode = pendingImportMode
+        if (uri != null && mode != null) viewModel.importFrom(uri, context.contentResolver, mode)
+    }
+
+    // Report export/import results via a Toast. Resolve the strings at composition time (the lint
+    // forbids LocalContext.current.getString inside the effect).
+    val exportOkMsg = stringResource(R.string.settings_backup_export_ok)
+    val exportFailedMsg = stringResource(R.string.settings_backup_export_failed)
+    val importOkMsg = stringResource(R.string.settings_backup_import_ok)
+    val importFailedMsg = stringResource(R.string.settings_backup_import_failed)
+    LaunchedEffect(Unit) {
+        viewModel.backupEvents.collect { outcome ->
+            val msg = when (outcome) {
+                BackupOutcome.EXPORT_OK -> exportOkMsg
+                BackupOutcome.EXPORT_FAILED -> exportFailedMsg
+                BackupOutcome.IMPORT_OK -> importOkMsg
+                BackupOutcome.IMPORT_FAILED -> importFailedMsg
+            }
+            Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+        }
+    }
+
     // Debug-only: report the seed result (detailed message) via a Toast.
     if (BuildConfig.DEBUG) {
-        val context = LocalContext.current
         LaunchedEffect(Unit) {
             viewModel.seedEvents.collect { msg ->
                 Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
@@ -254,6 +291,28 @@ fun SettingsScreen(
                 }
             }
 
+            // Backup: export/import all data (basic local backup; online backup is separate).
+            SettingsSection(title = stringResource(R.string.settings_backup)) {
+                Column(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_backup_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        TextButton(onClick = { exportLauncher.launch(viewModel.suggestedBackupFileName()) }) {
+                            Text(stringResource(R.string.settings_backup_export))
+                        }
+                        TextButton(onClick = { showImportMode = true }) {
+                            Text(stringResource(R.string.settings_backup_import))
+                        }
+                    }
+                }
+            }
+
             SettingsSection(title = stringResource(R.string.settings_help)) {
                 Column(
                     modifier = Modifier.padding(vertical = 8.dp),
@@ -311,6 +370,37 @@ fun SettingsScreen(
             onRegionSelected = viewModel::onHomeRegionSelected,
             onSave = viewModel::onHomeDialogSave,
             onDismiss = viewModel::onHomeDialogDismiss,
+        )
+    }
+
+    if (showImportMode) {
+        AlertDialog(
+            onDismissRequest = { showImportMode = false },
+            title = { Text(stringResource(R.string.settings_backup_import_title)) },
+            text = { Text(stringResource(R.string.settings_backup_import_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showImportMode = false
+                        pendingImportMode = BackupRepository.ImportMode.REPLACE
+                        importLauncher.launch(BACKUP_IMPORT_MIME_TYPES)
+                    },
+                ) {
+                    Text(
+                        text = stringResource(R.string.settings_backup_import_replace),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showImportMode = false
+                        pendingImportMode = BackupRepository.ImportMode.MERGE
+                        importLauncher.launch(BACKUP_IMPORT_MIME_TYPES)
+                    },
+                ) { Text(stringResource(R.string.settings_backup_import_merge)) }
+            },
         )
     }
 
@@ -401,6 +491,10 @@ private fun SettingsSection(title: String, content: @Composable () -> Unit) {
         }
     }
 }
+
+/** MIME types the import picker accepts — providers tag exported JSON inconsistently. */
+private val BACKUP_IMPORT_MIME_TYPES =
+    arrayOf("application/json", "application/octet-stream", "text/plain")
 
 @Composable
 private fun themeLabel(mode: ThemeMode): String = stringResource(

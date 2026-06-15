@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.data.local.dao
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.getmecookies.licenseplatequest.data.local.entity.TripEntity
@@ -66,6 +67,14 @@ interface TripDao {
     /** Delete every trip (debug-only wipe). FK cascades clear stops, players, games, and spottings. */
     @Query("DELETE FROM trip")
     suspend fun deleteAll()
+
+    /** All trips (backup export). */
+    @Query("SELECT * FROM trip")
+    suspend fun getAll(): List<TripEntity>
+
+    /** Bulk insert, skipping rows whose primary key already exists (backup import / merge). */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAllIgnore(trips: List<TripEntity>)
 }
 
 /** Projection for a trip's status and how many players are on it. */

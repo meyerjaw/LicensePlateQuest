@@ -3,6 +3,7 @@ package com.getmecookies.licenseplatequest.data.local.dao
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.getmecookies.licenseplatequest.data.local.entity.SpottingEntity
 import kotlinx.coroutines.flow.Flow
@@ -167,4 +168,12 @@ interface SpottingDao {
         """
     )
     suspend fun countOtherTripsWithRegion(regionCode: String, excludeTripId: UUID): Int
+
+    /** All spottings (backup export). */
+    @Query("SELECT * FROM spotting")
+    suspend fun getAll(): List<SpottingEntity>
+
+    /** Bulk insert, skipping rows whose primary key already exists (backup import / merge). */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAllIgnore(spottings: List<SpottingEntity>)
 }

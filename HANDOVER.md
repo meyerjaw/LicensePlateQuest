@@ -124,6 +124,7 @@ app/src/main/
     di/AppContainer.kt              – manual dependency container (incl. the analytics sink + consent)
     data/                           – Room (entities incl. trip_stop, DAOs, AppDatabase @ DB v6), repositories, seeding
       analytics/FirebaseAnalyticsClient.kt – Firebase impl of the Analytics seam (+ params→Bundle)
+      backup/                       – local JSON export/import (BackupRepository, BackupModels)
     domain/                         – domain models, CelebrationTracker, UiPreferences
       Analytics.kt                  – analytics seam (interface, NoOp, ConsentGated), UserProperties.kt (cohorts)
     notifications/                  – ReminderScheduler (WorkManager), ReminderWorker, ReminderActionReceiver (overdue-trip reminders)
@@ -154,7 +155,7 @@ SPEC.md · BACKLOG.md · HANDOVER.md · TESTING.md · ANALYTICS.md  – docs
 - The DB column `plate_image_path` is **retained but unused** (state flags are derived from the state code) — left in place to avoid a Room migration. See `BACKLOG.md` for the eventual cleanup.
 - **Line-ending churn:** the working tree often shows the whole repo as "modified" due to CRLF/LF normalization; `git diff --ignore-all-space` reveals the real changes. Stage real files explicitly (or sort out `.gitattributes`/`core.autocrlf`) rather than a blanket `git add -A`.
 - **Intermittent dev data loss:** on a physical device, Android Studio sometimes does an uninstall→reinstall (e.g. signature mismatch) that wipes app data. This is the IDE/device, **not** a migration bug (migrations are additive and verified). The debug seed above exists to recover quickly.
-- App data (trips/players) lives only on the device; it does **not** transfer with the source. Moving the *project* to a new computer does not move any *gameplay data* off a phone.
+- App data (trips/players) lives only on the device; it does **not** transfer with the source. Moving the *project* to a new computer does not move any *gameplay data* off a phone. Users can move *their own* data between phones via **Settings → Backup → Export/Import** (a JSON file; SPEC v1.24). A planned **online backup / cloud sync** is still in `BACKLOG.md`.
 
 ---
 
