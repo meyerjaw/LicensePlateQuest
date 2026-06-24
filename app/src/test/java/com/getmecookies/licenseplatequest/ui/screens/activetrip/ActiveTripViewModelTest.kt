@@ -17,6 +17,7 @@ import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
 import com.getmecookies.licenseplatequest.domain.AlbersUsaProjection
 import com.getmecookies.licenseplatequest.domain.CelebrationTracker
 import com.getmecookies.licenseplatequest.domain.CityLocator
+import com.getmecookies.licenseplatequest.domain.FakeAnalytics
 import com.getmecookies.licenseplatequest.domain.GeoPoint
 import com.getmecookies.licenseplatequest.domain.UiPreferences
 import com.getmecookies.licenseplatequest.domain.model.TripStatus
@@ -263,7 +264,35 @@ class ActiveTripViewModelTest {
         assertNull(vm.uiState.value.routeCityPoints[1])
     }
 
-    private fun loadedViewModel(): ActiveTripViewModel {
+    @Test
+    fun firstFind_logsAchievementUnlocked() = runBlocking {
+        createActiveTrip()
+        val analytics = FakeAnalytics()
+        val vm = loadedViewModel(analytics)
+
+        spotting.markState(regions[0].regionCode)
+        awaitUntil { analytics.eventNames().contains("achievement_unlocked") }
+
+        // The very first lifetime find unlocks "first_plate".
+        val ids = analytics.events
+            .filter { it.name == "achievement_unlocked" }
+            .map { it.params["achievement_id"] }
+        assertTrue("first_plate should unlock", ids.contains("first_plate"))
+    }
+
+    @Test
+    fun onTabSelected_logsTabSelectedEvent() = runBlocking {
+        createActiveTrip()
+        val analytics = FakeAnalytics()
+        val vm = loadedViewModel(analytics)
+
+        vm.onTabSelected(ActiveTripTab.LIST)
+
+        assertTrue(analytics.eventNames().contains("tab_selected"))
+        assertEquals("list", analytics.paramsOf("tab_selected")?.get("tab"))
+    }
+
+    private fun loadedViewModel(analytics: FakeAnalytics = FakeAnalytics()): ActiveTripViewModel {
         val vm = ActiveTripViewModel(
             mapRepository = mapRepository,
             tripRepository = trips,
@@ -274,6 +303,7 @@ class ActiveTripViewModelTest {
             celebrationTracker = celebrationTracker,
             uiPreferences = uiPreferences,
             settingsRepository = settings,
+            analytics = analytics,
         )
         // Wait for the first pipeline emission (active trip loaded) so the celebration baseline
         // is established before we mark states.

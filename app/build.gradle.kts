@@ -97,6 +97,10 @@ dependencies {
     // Glance (home-screen app widget)
     implementation(libs.androidx.glance.appwidget)
 
+    // Firebase Analytics (product analytics — see ANALYTICS.md). BoM pins the versions.
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.analytics)
+
     // Test (JVM unit + Robolectric)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

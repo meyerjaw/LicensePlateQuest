@@ -2,7 +2,7 @@
 
 **Project:** License Plate Quest (launcher label "LP Quest")
 **Platform:** Android (Native, Kotlin + Jetpack Compose)
-**Document version:** 1.6
+**Document version:** 1.25
 **Status:** MVP shipped; in active post-MVP iteration
 **Development approach:** Test-Driven Development (TDD) — see §9 "Testing & development approach". New behavior starts with a failing test.
 
@@ -811,3 +811,19 @@ Several of these were resolved during build (noted inline):
     every 30 min so the relative time stays roughly honest. The pure `relativeTimeLabel` is
     unit-tested.
   - Needs an on-device check (widget sizing + the map bitmap can't be verified off-device).
+- **v1.25 (2026-06-14)** — Local backup (export / import):
+  - A **Backup** section in Settings exports all user data to a `.json` file via the Android system
+    file picker (Storage Access Framework — no permissions, any local/cloud target) and imports one
+    back. Import offers **Replace all** (wipe + restore) or **Merge** (add, skipping ids that already
+    exist) in a dialog; Replace is styled destructive and doubles as the confirm. A backup from a
+    newer app version is refused.
+  - **Scope:** the 9 user-data tables (players, trips, trip_players, trip_stops, game_instances,
+    spottings, spotting_players, achievements, event_log) plus settings (theme, home, sound, haptics,
+    reminders, analytics consent). Reference data (`plate_region`, `game_type`) is **excluded** — it
+    reseeds from bundled assets with deterministic ids (`Ids`), so foreign keys still resolve after a
+    restore on any device.
+  - **Architecture:** `data/backup/` — serializable DTOs with string ids/dates (decoupled from the
+    Room entities), `BackupRepository.export()/import(mode)` over the real DAOs (new bulk
+    `getAll()` / `insertAllIgnore()`), and a thin `SettingsViewModel` + SAF layer on top. Round-trip,
+    merge-dedupe, and version-guard are unit-tested (`BackupRepositoryTest`). No schema change.
+  - Distinct from the planned future **online backup / cloud sync** (still in `BACKLOG.md`).

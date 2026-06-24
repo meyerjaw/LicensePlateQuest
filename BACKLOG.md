@@ -410,15 +410,14 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
       make
       C big — A and B avoid both.*
 - **Additional road-trip games** (slug bug, alphabet game, etc.) via the existing `GameType` → `GameInstance` → `Spotting` hierarchy, which was designed for this.
-- **Backup / restore (manual export/import) or cloud sync.** Currently fully offline with system
-  backup disabled. Add an in-app **manual JSON export/import** so a family can save and restore
-  their trip history — and recover from the occasional dev/reinstall data wipe (`[2026-06-09]`, a
-  real user feature, not just a dev aid). Export all trips/players/spottings to a shareable file;
-  import merges or replaces behind a confirm, validating the schema/version. A lighter step before
-  any optional account-based **cloud sync** across devices. *Deprioritized 2026-06-11 — the JSON
-  export/import is on hold in favor of a planned future **online backup / cloud sync** feature;
-  revisit
-  the manual file approach only if a stopgap is needed before that lands.*
+- **Backup / restore (manual export/import).** ✅ **Done (2026-06-14, SPEC v1.24).** In-app JSON
+  export/import via the system file picker (SAF): export writes a `.json` with all user data
+  (players, trips, stops, finds + attribution, achievements, event log) **and** settings; import
+  offers **replace** (clean restore) or **merge** (add, de-dupe by id) behind a dialog, and refuses
+  a file from a newer app version. Reference data (regions/game types) is excluded — it reseeds with
+  deterministic ids so foreign keys resolve on any device. Lives in `data/backup/`
+  (`BackupRepository`, round-trip tested). *Still open:* **online backup / cloud sync** across
+  devices (account-based) — the larger feature this was a local stopgap for.
 
 ## Cross-cutting concerns
 

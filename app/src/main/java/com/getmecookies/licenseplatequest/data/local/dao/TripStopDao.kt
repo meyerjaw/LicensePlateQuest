@@ -2,6 +2,7 @@ package com.getmecookies.licenseplatequest.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.getmecookies.licenseplatequest.data.local.entity.TripStopEntity
 import kotlinx.coroutines.flow.Flow
@@ -37,6 +38,14 @@ interface TripStopDao {
 
     @Query("DELETE FROM trip_stop WHERE trip_id = :tripId")
     suspend fun deleteForTrip(tripId: UUID)
+
+    /** All stops (backup export). */
+    @Query("SELECT * FROM trip_stop")
+    suspend fun getAll(): List<TripStopEntity>
+
+    /** Bulk insert, skipping rows whose primary key already exists (backup import / merge). */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAllIgnore(stops: List<TripStopEntity>)
 }
 
 /** A trip stop's region code + the city the user typed (for geocoding the route pin). */

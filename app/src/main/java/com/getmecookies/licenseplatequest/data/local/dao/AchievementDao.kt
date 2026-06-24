@@ -27,4 +27,8 @@ interface AchievementDao {
     /** Delete every earned achievement (debug-only wipe). */
     @Query("DELETE FROM achievement")
     suspend fun deleteAll()
+
+    /** All earned achievements (backup export). Import reuses [insertIgnore]. */
+    @Query("SELECT * FROM achievement")
+    suspend fun getAll(): List<AchievementEntity>
 }

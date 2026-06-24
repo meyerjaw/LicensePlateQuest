@@ -2,6 +2,7 @@ package com.getmecookies.licenseplatequest.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.getmecookies.licenseplatequest.data.local.entity.PlayerEntity
@@ -57,4 +58,12 @@ interface PlayerDao {
     /** Delete every player (debug-only wipe). */
     @Query("DELETE FROM player")
     suspend fun deleteAll()
+
+    /** All players (backup export). */
+    @Query("SELECT * FROM player")
+    suspend fun getAll(): List<PlayerEntity>
+
+    /** Bulk insert, skipping rows whose primary key already exists (backup import / merge). */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAllIgnore(players: List<PlayerEntity>)
 }

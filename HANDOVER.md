@@ -1,6 +1,6 @@
 # License Plate Quest — Project Handover
 
-How to move this project to a new computer and pick up where you left off (including continuing with Claude Cowork). Last updated 2026-06-08.
+How to move this project to a new computer and pick up where you left off (including continuing with Claude Cowork). Last updated 2026-06-14.
 
 ---
 
@@ -11,6 +11,7 @@ How to move this project to a new computer and pick up where you left off (inclu
 - **Canonical source of truth:** the Git repository (everything you need is in it).
 - **Full product spec & change history:** `SPEC.md`
 - **Future ideas / not-yet-done work:** `BACKLOG.md`
+- **Analytics design, event catalog & provider setup:** `ANALYTICS.md`
 - **This file:** `HANDOVER.md`
 
 Tech stack: Kotlin · Jetpack Compose · Material 3 · Room (SQLite, KSP) · kotlinx-serialization · manual DI (`AppContainer`, no Hilt) · MVVM. Package / applicationId: `com.getmecookies.licenseplatequest`.
@@ -47,13 +48,13 @@ The generated launcher icons and all 50 **state flag PNGs** (`app/src/main/asset
 
 ## 4. Prerequisites on the NEW computer
 
-- **Android Studio** — latest stable version (must support **AGP 9.1** and **Android SDK Platform 37**).
+- **Android Studio** — latest stable version (must support **AGP 9.2** and **Android SDK Platform 37**). AGP 9.2 needs **Android Studio Otter 3 Feature Drop (2025.2.3) or newer** — an older Studio fails the Gradle sync with an "incompatible AGP version" error.
 - **Android SDK Platform 37** (install via Android Studio → SDK Manager). `minSdk = 31`, `targetSdk = 36`, `compileSdk = 37`.
 - **JDK 17+** to run Gradle — Android Studio's bundled JDK (JBR) is fine; no separate install needed.
 - **Git**.
 - An **Android emulator** (API 31+) or a physical device with USB debugging for testing.
 
-Build tooling versions (already pinned in the repo, listed for reference): Gradle **9.5.1**, AGP **9.1.1**, Kotlin **2.1.0**, KSP **2.1.0-1.0.29**, Compose BOM **2026.05.01**. Note: **AGP 9 has a built-in Kotlin plugin** — do *not* add the `kotlin.android` plugin or Gradle fails with "Cannot add extension with name 'kotlin'". Coroutines (1.10.2) and kotlinx-serialization (1.8.0) are pinned to match Kotlin 2.1.0.
+Build tooling versions (already pinned in `gradle/libs.versions.toml`, listed for reference): Gradle **9.5.1**, AGP **9.2.1**, Kotlin **2.2.10**, KSP **2.3.2**, Compose BOM **2026.05.01**, Room **2.8.4**. Firebase: google-services plugin **4.4.4** + Firebase BoM **34.14.0** (see §11). Note: **AGP 9 has a built-in Kotlin plugin** — do *not* add the `kotlin.android` plugin or Gradle fails with "Cannot add extension with name 'kotlin'"; apply the `google-services` plugin (it's fine alongside the built-in). Coroutines (1.10.2) and kotlinx-serialization (1.8.0) remain pinned to the older line (serialization 1.8.x targets Kotlin 2.1; bump cautiously).
 
 ---
 
@@ -68,7 +69,9 @@ Build tooling versions (already pinned in the repo, listed for reference): Gradl
 4. If prompted, install any missing SDK components (Platform 36, build-tools).
 5. **Build & run** on an emulator or device (Run ▶). You should see the "LP Quest" icon and the sunny-themed app.
 
-That's it — no secrets, API keys, or signing config are required to build and run the debug app.
+That's it — no signing config is required to build and run the debug app.
+
+> **One exception (Firebase):** `app/google-services.json` is **git-ignored**, so a fresh clone won't have it and the Gradle sync will fail at the google-services config step with "File google-services.json is missing." Copy it from your other machine into `app/` (it's Firebase *client* config — a project identifier, not a real secret; see §11), or download a fresh one from the Firebase console (project `license-plate-quest`, Android app `com.getmecookies.licenseplatequest`).
 
 ---
 
@@ -103,11 +106,11 @@ The app was built collaboratively using **Claude Cowork** (Claude desktop). To k
 3. Start a new session and point it at the repo.
 
 **Important:** Cowork's local working memory/notes from the old machine do **not** transfer automatically. That's by design here — the durable context lives in the repo:
-- `SPEC.md` — the complete spec **and** a dated change log (v1.0 → v1.3) describing every feature and decision.
+- `SPEC.md` — the complete spec **and** a dated change log (v1.0 → v1.23) describing every feature and decision.
 - `BACKLOG.md` — what's intentionally not done yet.
 - `HANDOVER.md` — this file.
 
-A fresh Cowork session that reads those three files will have everything it needs to continue. (`SPEC.md` is at **v1.6** as of this writing; its change log runs v1.0 → v1.6.)
+A fresh Cowork session that reads those three files will have everything it needs to continue. (`SPEC.md` is at **v1.23** as of this writing; its change log runs v1.0 → v1.23.)
 
 > **Working style:** new work is done **test-first (TDD)** — see `TESTING.md` for the test layers and the standing rule that every Room migration ships with a migration test.
 
@@ -118,9 +121,12 @@ A fresh Cowork session that reads those three files will have everything it need
 ```
 app/src/main/
   java/com/getmecookies/licenseplatequest/
-    di/AppContainer.kt              – manual dependency container
-    data/                           – Room (entities incl. trip_stop, DAOs, AppDatabase @ DB v4), repositories, seeding
+    di/AppContainer.kt              – manual dependency container (incl. the analytics sink + consent)
+    data/                           – Room (entities incl. trip_stop, DAOs, AppDatabase @ DB v6), repositories, seeding
+      analytics/FirebaseAnalyticsClient.kt – Firebase impl of the Analytics seam (+ params→Bundle)
+      backup/                       – local JSON export/import (BackupRepository, BackupModels)
     domain/                         – domain models, CelebrationTracker, UiPreferences
+      Analytics.kt                  – analytics seam (interface, NoOp, ConsentGated), UserProperties.kt (cohorts)
     notifications/                  – ReminderScheduler (WorkManager), ReminderWorker, ReminderActionReceiver (overdue-trip reminders)
     ui/
       navigation/                   – AppNavHost, Routes, TopDestination (bottom tabs)
@@ -134,7 +140,7 @@ app/schemas/                        – exported Room schemas (used by migration
 app/src/test/                       – JVM unit tests (Robolectric + in-memory Room)
 app/src/androidTest/                – instrumented tests (Compose UI + Room MigrationTestHelper)
 tools/fetch_flags.py                – flag downloader (already run; rarely needed)
-SPEC.md · BACKLOG.md · HANDOVER.md · TESTING.md  – docs
+SPEC.md · BACKLOG.md · HANDOVER.md · TESTING.md · ANALYTICS.md  – docs
 ```
 
 ---
@@ -142,22 +148,40 @@ SPEC.md · BACKLOG.md · HANDOVER.md · TESTING.md  – docs
 ## 10. Known state / gotchas
 
 - **App version:** `versionName 1.0`, `versionCode 1` (debug builds only so far; no release signing config set up yet).
-- **Database is at v4** with explicit migrations (`MIGRATION_1_2 … MIGRATION_3_4`) and **no destructive fallback**; exported schemas live in `app/schemas/` and every migration has a `MigrationTestHelper` test. Latest addition: the `trip_stop` table for multi-leg trips.
+- **Database is at v6** with explicit, sequential migrations and **no destructive fallback**; exported schemas (`2.json … 6.json`) live in `app/schemas/` and every migration has a `MigrationTestHelper` test. (Earlier addition: the `trip_stop` table for multi-leg trips.)
 - **Automated tests exist** and new work is TDD: JVM unit tests (Robolectric + in-memory Room) in `app/src/test/`, instrumented Compose UI + migration tests in `app/src/androidTest/`. See `TESTING.md`. Run unit tests from Android Studio or `./gradlew testDebugUnitTest`.
 - **Debug-only "Seed sample data"** lives in Settings → Developer (gated on `BuildConfig.DEBUG`, absent from release builds). One tap seeds a few players and a multi-stop trip with finds.
 - **Celebration sound is not implemented** (deferred — see `BACKLOG.md`); per-find feedback uses confetti + haptics.
 - The DB column `plate_image_path` is **retained but unused** (state flags are derived from the state code) — left in place to avoid a Room migration. See `BACKLOG.md` for the eventual cleanup.
 - **Line-ending churn:** the working tree often shows the whole repo as "modified" due to CRLF/LF normalization; `git diff --ignore-all-space` reveals the real changes. Stage real files explicitly (or sort out `.gitattributes`/`core.autocrlf`) rather than a blanket `git add -A`.
 - **Intermittent dev data loss:** on a physical device, Android Studio sometimes does an uninstall→reinstall (e.g. signature mismatch) that wipes app data. This is the IDE/device, **not** a migration bug (migrations are additive and verified). The debug seed above exists to recover quickly.
-- App data (trips/players) lives only on the device; it does **not** transfer with the source. Moving the *project* to a new computer does not move any *gameplay data* off a phone.
+- App data (trips/players) lives only on the device; it does **not** transfer with the source. Moving the *project* to a new computer does not move any *gameplay data* off a phone. Users can move *their own* data between phones via **Settings → Backup → Export/Import** (a JSON file; SPEC v1.24). A planned **online backup / cloud sync** is still in `BACKLOG.md`.
 
 ---
 
-## 11. New-machine checklist
+## 11. Analytics & Firebase
+
+Product analytics (usage, taps, feature funnels) was added in mid-2026. Full design, the event catalog, and provider setup live in **`ANALYTICS.md`** — read that first. The short version:
+
+- **Audience:** the app is listed for **teen/adult** (not child-directed), so standard Firebase/Google Analytics is permitted with disclosure. Analytics defaults **on** with a Settings opt-out. If the audience ever changes to include children, revisit everything (COPPA/Families rules).
+- **Architecture:** a provider-agnostic `Analytics` seam (`domain/Analytics.kt`) with `NoOpAnalytics`, a `ConsentGatedAnalytics` decorator (reads the opt-out **live**), and `FirebaseAnalyticsClient` (`data/analytics/`) as the real sink. ViewModels take `analytics` with a `NoOpAnalytics` default and get the real one from `AppContainer` via the factory; receivers/activities read `container.analytics`.
+- **Consent:** the Settings "Anonymous usage data" toggle gates explicit events via `ConsentGatedAnalytics`, **and** drives Firebase `setAnalyticsCollectionEnabled` (via `AppContainer.applyAnalyticsConsent`, observed in `LicensePlateQuestApp`) so opting out also stops the SDK's automatic events.
+- **No PII** ever leaves the device — events use counts, enums, region codes, and bucketed cohorts only. The whole catalog (§3 of ANALYTICS.md) is instrumented and test-first (`FakeAnalytics`).
+- **Firebase config:** google-services plugin **4.4.4** + Firebase BoM **34.14.0** / `firebase-analytics`. `app/google-services.json` (project `license-plate-quest`) is **git-ignored** — see §5. `FirebaseAnalyticsClient` no-ops if no `FirebaseApp` is initialized (so JVM unit tests don't need it).
+- **Verify events:** `adb shell setprop debug.firebase.analytics.app com.getmecookies.licenseplatequest` enables Firebase **DebugView** (live event stream) for QA builds.
+
+**⚠️ Before a production release** (also tracked in ANALYTICS.md §6.7 / §7):
+- **Separate analytics environments.** Today *every* build (debug + release) reports to the single `license-plate-quest` project, so dev/QA events co-mingle with production data. Split before launch — preferred: a debug build type / flavor with an `applicationIdSuffix` + its own Firebase app + `google-services.json` in `app/src/debug/`; lighter: one project tagged by an `env`/`build_type` user property. Seam/client need no changes.
+- **Privacy policy** URL published + linked in Play Console, and the Play **Data Safety** form completed (App activity / interactions; not linked to identity; used for analytics). Consider removing the `com.google.android.gms.permission.AD_ID` permission (`tools:node="remove"`) if you don't need the Advertising ID — fewer disclosures.
+
+---
+
+## 12. New-machine checklist
 
 - [ ] Old machine: `git add -A && git commit && git push`, working tree clean
-- [ ] New machine: Android Studio (latest) + SDK Platform 36 installed
+- [ ] New machine: Android Studio **Otter 3 Feature Drop (2025.2.3)+** with SDK Platform 37 installed
 - [ ] `git clone https://github.com/meyerjaw/LicensePlateQuest.git`
+- [ ] Put `google-services.json` in `app/` (git-ignored — copy over or re-download; see §5/§11)
 - [ ] Open in Android Studio, Gradle sync succeeds (creates `local.properties`)
 - [ ] App builds and runs on emulator/device
 - [ ] Launcher shows the "LP Quest" icon; app opens with the sunny theme

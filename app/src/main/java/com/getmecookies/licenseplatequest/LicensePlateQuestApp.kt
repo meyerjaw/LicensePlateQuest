@@ -2,6 +2,7 @@ package com.getmecookies.licenseplatequest
 
 import android.app.Application
 import com.getmecookies.licenseplatequest.di.AppContainer
+import com.getmecookies.licenseplatequest.domain.UserProperties
 import com.getmecookies.licenseplatequest.domain.model.TripStatus
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,12 +27,38 @@ class LicensePlateQuestApp : Application() {
         applicationScope.launch {
             container.regionSeeder.seedIfNeeded()
             reconcileTripReminders()
+            syncAnalyticsUserProperties()
         }
         // The home-screen widget is refreshed when the app goes to the background (MainActivity.onStop)
         // — i.e. right before the user looks at the home screen — plus the provider XML's periodic
         // refresh. We deliberately do NOT drive it from a long-lived Application observer: the system
         // restarts this process headlessly to run widget sessions, which would re-fire the observer
         // and create a churn of cancelling Glance sessions.
+        // Keep Firebase's collection switch in lock-step with the consent setting (handles the
+        // SDK's automatic events; our explicit events are also gated by ConsentGatedAnalytics).
+
+        applicationScope.launch {
+            container.settingsRepository.analyticsEnabled.collect { enabled ->
+                container.applyAnalyticsConsent(enabled)
+            }
+        }
+    }
+
+    /**
+     * Refresh the non-PII analytics cohort properties on each launch (consent-gated like every
+     * event). Bucketed counts only — see [UserProperties]. theme_pref reflects the value at launch;
+     * an in-session theme change takes effect on the next launch, which is fine for cohorting.
+     */
+    private suspend fun syncAnalyticsUserProperties() {
+        val playerCount = container.playerRepository.observePlayers().first().size
+        val stats = container.achievementRepository.getStats()
+        UserProperties.apply(
+            analytics = container.analytics,
+            playerCount = playerCount,
+            hasCompletedTrip = stats.completedTripCount > 0,
+            lifetimeStatesFound = stats.lifetimeFound.size,
+            theme = container.settingsRepository.themeMode.value,
+        )
     }
 
     /**

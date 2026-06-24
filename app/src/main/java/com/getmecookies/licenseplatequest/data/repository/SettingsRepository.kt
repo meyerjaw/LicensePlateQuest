@@ -30,6 +30,11 @@ class SettingsRepository(context: Context) {
     private val _tripRemindersEnabled = MutableStateFlow(prefs.getBoolean(KEY_TRIP_REMINDERS, true))
     val tripRemindersEnabled: StateFlow<Boolean> = _tripRemindersEnabled.asStateFlow()
 
+    // Anonymous usage analytics. Default on for the teen/adult audience (disclosed in the privacy
+    // policy + Data Safety form); the Settings toggle lets users opt out, which gates all events.
+    private val _analyticsEnabled = MutableStateFlow(prefs.getBoolean(KEY_ANALYTICS, true))
+    val analyticsEnabled: StateFlow<Boolean> = _analyticsEnabled.asStateFlow()
+
     private val _home = MutableStateFlow(loadHome())
     val home: StateFlow<HomeLocation?> = _home.asStateFlow()
 
@@ -51,6 +56,11 @@ class SettingsRepository(context: Context) {
     fun setTripRemindersEnabled(enabled: Boolean) {
         prefs.edit { putBoolean(KEY_TRIP_REMINDERS, enabled) }
         _tripRemindersEnabled.value = enabled
+    }
+
+    fun setAnalyticsEnabled(enabled: Boolean) {
+        prefs.edit { putBoolean(KEY_ANALYTICS, enabled) }
+        _analyticsEnabled.value = enabled
     }
 
     fun setHome(regionId: UUID, city: String) {
@@ -85,6 +95,7 @@ class SettingsRepository(context: Context) {
         const val KEY_HAPTICS = "haptics_enabled"
         const val KEY_SOUND = "sound_enabled"
         const val KEY_TRIP_REMINDERS = "trip_reminders_enabled"
+        const val KEY_ANALYTICS = "analytics_enabled"
         const val KEY_HOME_REGION = "home_region_id"
         const val KEY_HOME_CITY = "home_city"
     }

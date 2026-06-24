@@ -12,6 +12,7 @@ import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.data.seed.RegionSeeder
+import com.getmecookies.licenseplatequest.domain.FakeAnalytics
 import com.getmecookies.licenseplatequest.domain.UiPreferences
 import com.getmecookies.licenseplatequest.notifications.FakeReminderScheduler
 import com.getmecookies.licenseplatequest.testutil.MainDispatcherRule
@@ -68,8 +69,8 @@ class OnboardingViewModelTest {
     @After
     fun tearDown() = db.close()
 
-    private fun viewModel() =
-        OnboardingViewModel(uiPreferences, settings, players, trips, regionRepository)
+    private fun viewModel(analytics: FakeAnalytics = FakeAnalytics()) =
+        OnboardingViewModel(uiPreferences, settings, players, trips, regionRepository, analytics)
 
     @Test
     fun nextAndBack_moveStepAndPersist() {
@@ -139,6 +140,32 @@ class OnboardingViewModelTest {
         vm.finish()
         assertTrue(uiPreferences.onboardingComplete.value)
         assertEquals(0, uiPreferences.onboardingStep)
+    }
+
+    @Test
+    fun finishFromWelcome_logsOnboardingSkipped() {
+        val analytics = FakeAnalytics()
+        val vm = viewModel(analytics) // starts at step 0 (Welcome)
+
+        vm.finish()
+
+        assertEquals("onboarding_skipped", analytics.eventNames().last())
+        assertEquals(0, analytics.paramsOf("onboarding_skipped")?.get("step"))
+    }
+
+    @Test
+    fun finishFromReadyStep_logsOnboardingCompleted() {
+        val analytics = FakeAnalytics()
+        val vm = viewModel(analytics)
+        repeat(OnboardingViewModel.LAST_STEP) { vm.next() } // advance to the Ready step
+
+        vm.finish()
+
+        assertEquals("onboarding_completed", analytics.eventNames().last())
+        assertEquals(
+            OnboardingViewModel.LAST_STEP,
+            analytics.paramsOf("onboarding_completed")?.get("step"),
+        )
     }
 
     /** Spin the main looper until [condition] holds (the VM writes through real Room off-thread). */

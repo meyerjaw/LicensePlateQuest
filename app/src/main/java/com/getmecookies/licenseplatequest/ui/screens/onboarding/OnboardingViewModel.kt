@@ -6,6 +6,8 @@ import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
+import com.getmecookies.licenseplatequest.domain.Analytics
+import com.getmecookies.licenseplatequest.domain.NoOpAnalytics
 import com.getmecookies.licenseplatequest.domain.UiPreferences
 import com.getmecookies.licenseplatequest.domain.model.RegionOption
 import com.getmecookies.licenseplatequest.domain.model.TripStop
@@ -73,6 +75,7 @@ class OnboardingViewModel(
     private val playerRepository: PlayerRepository,
     private val tripRepository: TripRepository,
     regionRepository: RegionRepository,
+    private val analytics: Analytics = NoOpAnalytics,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -131,6 +134,11 @@ class OnboardingViewModel(
 
     /** Finish or skip the whole wizard — flips the completion flag so the app root swaps in. */
     fun finish() {
+        // finish() is only ever reached from Welcome's Skip (step 0) or Ready's Done (LAST_STEP);
+        // the step they were on tells completed-the-wizard from bailed-early.
+        val step = _uiState.value.step
+        val event = if (step >= LAST_STEP) "onboarding_completed" else "onboarding_skipped"
+        analytics.event(event, mapOf("step" to step))
         uiPreferences.onboardingStep = 0
         uiPreferences.setOnboardingComplete(true)
     }

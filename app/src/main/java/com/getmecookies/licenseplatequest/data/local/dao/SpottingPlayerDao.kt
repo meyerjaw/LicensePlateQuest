@@ -63,4 +63,12 @@ interface SpottingPlayerDao {
         """
     )
     suspend fun creditedFindsForGame(gameInstanceId: UUID): List<PlayerFindRow>
+
+    /** All spotting-player credits (backup export). */
+    @Query("SELECT * FROM spotting_player")
+    suspend fun getAll(): List<SpottingPlayerEntity>
+
+    /** Bulk insert, skipping rows whose primary key already exists (backup import / merge). */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAllIgnore(links: List<SpottingPlayerEntity>)
 }

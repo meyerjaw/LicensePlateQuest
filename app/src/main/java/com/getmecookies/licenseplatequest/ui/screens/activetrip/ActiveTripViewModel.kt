@@ -9,6 +9,8 @@ import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.repository.SpottingRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
 import com.getmecookies.licenseplatequest.domain.AlbersUsaProjection
+import com.getmecookies.licenseplatequest.domain.Analytics
+import com.getmecookies.licenseplatequest.domain.NoOpAnalytics
 import com.getmecookies.licenseplatequest.domain.CelebrationTracker
 import com.getmecookies.licenseplatequest.domain.CityLocator
 import com.getmecookies.licenseplatequest.domain.MapPoint
@@ -129,6 +131,7 @@ class ActiveTripViewModel(
     private val celebrationTracker: CelebrationTracker,
     private val uiPreferences: UiPreferences,
     settingsRepository: SettingsRepository,
+    private val analytics: Analytics = NoOpAnalytics,
 ) : ViewModel() {
 
     /** Whether the per-find haptic should fire (Settings toggle). */
@@ -239,7 +242,12 @@ class ActiveTripViewModel(
                 } catch (e: Exception) {
                     emptySet()
                 }
-                if (newly.isNotEmpty()) _achievementEvents.send(newly.toList())
+                if (newly.isNotEmpty()) {
+                    newly.forEach { id ->
+                        analytics.event("achievement_unlocked", mapOf("achievement_id" to id))
+                    }
+                    _achievementEvents.send(newly.toList())
+                }
             }
         }
         viewModelScope.launch {
@@ -483,6 +491,7 @@ class ActiveTripViewModel(
     /** Switch tabs and remember the choice for next time the user opens a trip. */
     fun onTabSelected(tab: ActiveTripTab) {
         uiPreferences.activeTripTab = tab.ordinal
+        analytics.event("tab_selected", mapOf("tab" to tab.name.lowercase()))
         _uiState.update { it.copy(selectedTab = tab) }
     }
 

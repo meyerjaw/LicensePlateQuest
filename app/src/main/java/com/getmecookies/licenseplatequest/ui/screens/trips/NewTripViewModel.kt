@@ -6,6 +6,8 @@ import com.getmecookies.licenseplatequest.data.repository.PlayerRepository
 import com.getmecookies.licenseplatequest.data.repository.RegionRepository
 import com.getmecookies.licenseplatequest.data.repository.SettingsRepository
 import com.getmecookies.licenseplatequest.data.repository.TripRepository
+import com.getmecookies.licenseplatequest.domain.Analytics
+import com.getmecookies.licenseplatequest.domain.NoOpAnalytics
 import com.getmecookies.licenseplatequest.domain.model.TripStop
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +29,7 @@ class NewTripViewModel(
     regionRepository: RegionRepository,
     private val playerRepository: PlayerRepository,
     settingsRepository: SettingsRepository,
+    private val analytics: Analytics = NoOpAnalytics,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NewTripUiState())
@@ -172,6 +175,14 @@ class NewTripViewModel(
                 startDate = state.startDate,
                 endDate = state.endDate,
                 playerIds = state.selectedPlayerIds.toList(),
+            )
+            analytics.event(
+                "trip_created",
+                mapOf(
+                    "player_count" to state.selectedPlayerIds.size,
+                    "stop_count" to state.stops.size,
+                    "has_end_date" to (state.endDate != null),
+                ),
             )
             _saved.value = true
         }

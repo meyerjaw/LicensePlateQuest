@@ -29,6 +29,10 @@ class ReminderActionReceiver : BroadcastReceiver() {
         // Dismiss the notification either way.
         NotificationManagerCompat.from(context).cancel(TripReminders.notificationId(tripId))
 
+        TripReminders.actionLabel(intent.action)?.let { label ->
+            container.analytics.event("reminder_action", mapOf("action" to label))
+        }
+
         when (intent.action) {
             TripReminders.ACTION_END_TRIP -> {
                 // endTrip is suspend + touches the DB, so finish the broadcast asynchronously.
