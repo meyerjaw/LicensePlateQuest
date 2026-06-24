@@ -10,11 +10,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.glance.appwidget.updateAll
 import com.getmecookies.licenseplatequest.domain.model.ThemeMode
 import com.getmecookies.licenseplatequest.notifications.TripReminders
 import com.getmecookies.licenseplatequest.ui.navigation.AppRoot
 import com.getmecookies.licenseplatequest.ui.screens.onboarding.OnboardingFlow
 import com.getmecookies.licenseplatequest.ui.theme.LicensePlateQuestTheme
+import com.getmecookies.licenseplatequest.widget.TripWidget
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -55,6 +57,15 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    // Refresh the home-screen widget as the app goes to the background — i.e. right before the user
+    // looks at the home screen — so it reflects the latest finds. The process is still alive here, so
+    // the update runs promptly; failures are ignored. This (plus the provider's periodic refresh)
+    // replaces the fragile always-on Application observer.
+    override fun onStop() {
+        super.onStop()
+        lifecycleScope.launch { runCatching { TripWidget().updateAll(this@MainActivity) } }
     }
 
     // singleTop: a notification tap on the already-running app arrives here rather than onCreate.

@@ -124,7 +124,23 @@ Ideas and improvements captured for later — not yet scheduled. Roughly priorit
 - **Home-screen widget.** `[2026-06-09]` A glanceable launcher widget for the active trip — X / 50,
   last state found, day of trip, maybe a tiny filled map — built with **Glance** (Jetpack app
   widgets), refreshed when spottings change; tapping opens the active trip. When no trip is active,
-  show a "start a trip" prompt. Handy during a real road trip with the phone on a mount.
+  show a "start a trip" prompt. Handy during a real road trip with the phone on a mount. *Status:
+  shipped 2026-06-11 (v1.24) — a responsive `TripWidget` (Glance 1.1.1): small = X/50 + progress
+  bar,
+  medium adds trip name / day / last-find with relative time, large adds a mini filled US map drawn
+  to a Bitmap (`WidgetMapRenderer`, reusing the parsed `UsMapShapes`). No-active-trip prompt; tap
+  opens the app. Refreshed via an app-scoped `observeActiveTrip` + `observeFoundCodesForActiveTrip`
+  observer calling `updateAll()`, plus a 30-min periodic refresh for the relative time. Pure
+  `relativeTimeLabel` unit-tested. Needs an on-device pass for widget sizing + the map bitmap.*
+  **Refresh reworked 2026-06-24 (MVP):** the always-on `Application` flow observer caused churn —
+  the OS restarts the process headlessly to run each Glance `SessionWorker`, which re-fired the
+  observer → cancelling Glance sessions → erratic/stale updates (incl. an off-by-one). Replaced with
+  a refresh on `MainActivity.onStop` (fires as the user backgrounds the app to view the widget;
+  reads
+  the fully-committed count) + the periodic refresh. **Revisit post-MVP:** live in-app updates while
+  the widget is visible (e.g. split-screen) — consider a foreground-scoped observer
+  (`ProcessLifecycleOwner`) or triggering `updateAll` from the find write-path via a `WidgetUpdater`
+  seam; also confirm the bitmap-map update stays under the RemoteViews size limit on real devices.*
 - **First-time trip wizard (onboarding).** `[2026-06-10]` Guide a brand-new user from zero state to
   "ready to play" in their first session instead of dropping them on an empty trip list with no idea
   what to do — a friendly, *skippable* multi-step flow covering the essentials (what the game is,

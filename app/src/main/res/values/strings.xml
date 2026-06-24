@@ -115,6 +115,9 @@
     <string name="onb_ready_title">You\'re all set!</string>
     <string name="onb_ready_subtitle">Start spotting whenever you\'re on the road. Tap a state on the map to mark it found.</string>
     <string name="onb_ready_go">Let\'s go</string>
+    <string name="widget_label">License Plate Quest</string>
+    <string name="widget_description">Your road-trip plate count, at a glance.</string>
+
     <string name="settings_help">Help</string>
     <string name="settings_restart_wizard">Restart setup wizard</string>
     <string name="settings_restart_wizard_summary">Run the first-time setup guide again</string>

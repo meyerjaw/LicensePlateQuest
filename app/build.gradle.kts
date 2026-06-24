@@ -94,6 +94,9 @@ dependencies {
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
 
+    // Glance (home-screen app widget)
+    implementation(libs.androidx.glance.appwidget)
+
     // Test (JVM unit + Robolectric)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

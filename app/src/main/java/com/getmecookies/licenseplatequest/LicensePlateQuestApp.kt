@@ -27,6 +27,11 @@ class LicensePlateQuestApp : Application() {
             container.regionSeeder.seedIfNeeded()
             reconcileTripReminders()
         }
+        // The home-screen widget is refreshed when the app goes to the background (MainActivity.onStop)
+        // — i.e. right before the user looks at the home screen — plus the provider XML's periodic
+        // refresh. We deliberately do NOT drive it from a long-lived Application observer: the system
+        // restarts this process headlessly to run widget sessions, which would re-fire the observer
+        // and create a churn of cancelling Glance sessions.
     }
 
     /**

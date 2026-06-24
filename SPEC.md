@@ -792,3 +792,22 @@ Several of these were resolved during build (noted inline):
   - `OnboardingViewModel` orchestration is unit-tested (step nav, validation gate, completion). No
     schema change. Still open v1.1: optional dates / round-trip toggle in the in-wizard trip step
     (today the trip starts undated; add stops/dates later from Manage trip).
+- **v1.24 (2026-06-11)** — Home-screen widget (Jetpack Glance):
+  - A glanceable launcher widget for the active trip, responsive across sizes: **small** shows the
+    "X / 50" count + a progress bar; **medium** adds the trip name, day-of-trip, and last find with
+    a
+    relative "time ago"; **large** adds a **mini filled US map**. No active trip → a "Start a road
+    trip" prompt. Tapping anywhere opens the app.
+  - Built with `androidx.glance:glance-appwidget` 1.1.1 (`TripWidget` + `TripWidgetReceiver`,
+    provider
+    XML, manifest entry). Data is loaded fresh per update from the active trip (count, found codes,
+    last find name+time, day-of-trip). Glance can't host the in-app Compose `UsMap`, so the map is
+    drawn to a `Bitmap` with `android.graphics` (`WidgetMapRenderer`), **reusing the already-parsed
+    `UsMapShapes` geometry** (`StateShape.path.asAndroidPath()`) — no second SVG parse.
+  - **Refresh:** an app-scoped observer combines `observeActiveTrip()` +
+    `observeFoundCodesForActiveTrip()`
+    and calls `updateAll()` on any change (instant update on a catch); the provider XML also
+    refreshes
+    every 30 min so the relative time stays roughly honest. The pure `relativeTimeLabel` is
+    unit-tested.
+  - Needs an on-device check (widget sizing + the map bitmap can't be verified off-device).
