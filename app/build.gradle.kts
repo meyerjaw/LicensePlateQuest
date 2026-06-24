@@ -97,6 +97,9 @@ dependencies {
     // Glance (home-screen app widget)
     implementation(libs.androidx.glance.appwidget)
 
+    // Jetpack Compose for XR (experimental — spatial panel on Android XR)
+    implementation(libs.androidx.xr.compose)
+
     // Firebase Analytics (product analytics — see ANALYTICS.md). BoM pins the versions.
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)

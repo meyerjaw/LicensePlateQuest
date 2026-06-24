@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
@@ -23,6 +25,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -35,6 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.xr.compose.platform.LocalSpatialCapabilities
+import androidx.xr.compose.spatial.SpatialDialog
 import com.getmecookies.licenseplatequest.R
 import com.getmecookies.licenseplatequest.domain.model.RegionOption
 import java.util.UUID
@@ -102,7 +107,50 @@ fun RegionPickerSheet(
     onDismiss: () -> Unit,
     excludeId: UUID? = null,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    if (LocalSpatialCapabilities.current.isSpatialUiEnabled) {
+        // Android XR (experimental): a ModalBottomSheet is hosted in its own window and doesn't
+        // render inside the SpatialPanel, so use SpatialDialog — a real spatial surface — with the
+        // same content. On phones/tablets this branch is never taken.
+        SpatialDialog(onDismissRequest = onDismiss) {
+            Surface(
+                shape = RoundedCornerShape(28.dp),
+                tonalElevation = 6.dp,
+                modifier = Modifier.width(440.dp),
+            ) {
+                RegionPickerContent(
+                    options = options,
+                    selectedId = selectedId,
+                    excludeId = excludeId,
+                    onSelected = onSelected,
+                    modifier = Modifier.padding(20.dp),
+                )
+            }
+        }
+    } else {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
+            RegionPickerContent(
+                options = options,
+                selectedId = selectedId,
+                excludeId = excludeId,
+                onSelected = onSelected,
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 24.dp),
+            )
+        }
+    }
+}
+
+/** Shared picker body (title + search + results), reused by the bottom sheet and the spatial dialog. */
+@Composable
+private fun RegionPickerContent(
+    options: List<RegionOption>,
+    selectedId: UUID?,
+    excludeId: UUID?,
+    onSelected: (UUID) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     var query by remember { mutableStateOf("") }
 
     val filtered = remember(options, query, excludeId) {
@@ -117,54 +165,49 @@ fun RegionPickerSheet(
         }
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.region_picker_title),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                singleLine = true,
-                placeholder = { Text(stringResource(R.string.region_picker_search)) },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                trailingIcon = {
-                    if (query.isNotEmpty()) {
-                        IconButton(onClick = { query = "" }) {
-                            Icon(
-                                Icons.Filled.Close,
-                                contentDescription = stringResource(R.string.region_picker_clear_search),
-                            )
-                        }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            if (filtered.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.region_picker_no_match, query.trim()),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 16.dp),
-                )
-            } else {
-                LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
-                    items(filtered, key = { it.id }) { option ->
-                        RegionRow(
-                            option = option,
-                            selected = option.id == selectedId,
-                            onClick = { onSelected(option.id) },
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.region_picker_title),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            singleLine = true,
+            placeholder = { Text(stringResource(R.string.region_picker_search)) },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+            trailingIcon = {
+                if (query.isNotEmpty()) {
+                    IconButton(onClick = { query = "" }) {
+                        Icon(
+                            Icons.Filled.Close,
+                            contentDescription = stringResource(R.string.region_picker_clear_search),
                         )
-                        HorizontalDivider()
                     }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        if (filtered.isEmpty()) {
+            Text(
+                text = stringResource(R.string.region_picker_no_match, query.trim()),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 16.dp),
+            )
+        } else {
+            LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+                items(filtered, key = { it.id }) { option ->
+                    RegionRow(
+                        option = option,
+                        selected = option.id == selectedId,
+                        onClick = { onSelected(option.id) },
+                    )
+                    HorizontalDivider()
                 }
             }
         }

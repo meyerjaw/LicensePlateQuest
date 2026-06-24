@@ -16,6 +16,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.LicensePlateQuest">
 
+        <!-- Experimental Android XR: launch into Full Space so the spatial panel shows on a headset.
+             Ignored on phones/tablets. (Value may need tweaking against the alpha Jetpack XR SDK.) -->
+        <property
+            android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE"
+            android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_MANAGED" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"

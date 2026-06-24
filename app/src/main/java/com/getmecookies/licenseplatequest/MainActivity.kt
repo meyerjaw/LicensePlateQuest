@@ -6,11 +6,19 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.glance.appwidget.updateAll
+import androidx.xr.compose.platform.LocalSpatialCapabilities
+import androidx.xr.compose.spatial.Subspace
+import androidx.xr.compose.subspace.SpatialPanel
+import androidx.xr.compose.subspace.layout.SubspaceModifier
+import androidx.xr.compose.subspace.layout.height
+import androidx.xr.compose.subspace.layout.width
 import com.getmecookies.licenseplatequest.domain.model.ThemeMode
 import com.getmecookies.licenseplatequest.notifications.TripReminders
 import com.getmecookies.licenseplatequest.ui.navigation.AppRoot
@@ -46,14 +54,35 @@ class MainActivity : ComponentActivity() {
             val onboardingComplete by container.uiPreferences.onboardingComplete
                 .collectAsStateWithLifecycle()
             LicensePlateQuestTheme(darkTheme = darkTheme) {
-                if (!onboardingComplete) {
-                    // First run (or a Settings-triggered restart): guide setup before the app shell.
-                    OnboardingFlow()
+                // The whole app shell (onboarding or the main nav). Reused as-is in both the flat
+                // (phone/tablet) and spatial (Android XR) presentations.
+                val appShell = @Composable {
+                    if (!onboardingComplete) {
+                        // First run (or a Settings restart): guide setup before the app shell.
+                        OnboardingFlow()
+                    } else {
+                        AppRoot(
+                            editTripRequest = pendingEditTripId.value,
+                            onEditTripRequestConsumed = { pendingEditTripId.value = null },
+                        )
+                    }
+                }
+
+                // On an Android XR headset in Full Space, float the existing 2D UI as a spatial
+                // panel; everywhere else (phones/tablets, or XR Home Space) render it flat. The same
+                // composable is reused — no separate XR UI to maintain. (Experimental: Jetpack XR.)
+                if (LocalSpatialCapabilities.current.isSpatialUiEnabled) {
+                    Subspace {
+                        SpatialPanel(
+                            modifier = SubspaceModifier
+                                .width(1024.dp)
+                                .height(768.dp),
+                        ) {
+                            appShell()
+                        }
+                    }
                 } else {
-                    AppRoot(
-                        editTripRequest = pendingEditTripId.value,
-                        onEditTripRequestConsumed = { pendingEditTripId.value = null },
-                    )
+                    appShell()
                 }
             }
         }
