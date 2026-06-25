@@ -39,6 +39,14 @@ existing
       `interactive = false`) filled with the active trip's found codes
       (`observeFoundCodesForActiveTrip`), so it updates live as plates are marked.
 
+4. **Trophy shelf** — `MainActivity` + `ui/xr/XrTrophyShelf.kt`
+    - The cockpit is wrapped in a `SpatialColumn`; below it, `XrTrophyShelf` floats each **earned**
+      achievement as its own small `SpatialPanel` (badge icon + title), in a grid of 4 per row,
+      driven by `achievementRepository.observeEarned()`. Renders nothing when none are earned.
+    - **Panels, not meshes.** Upgrade path: swap each `SpatialPanel` for a real glTF trophy mesh
+      loaded via **SceneCore** (`androidx.xr.scenecore`, a `.glb` in `assets/`, placed through a
+      `Volume`/SceneCore entity) once a model exists — the data + grid layout here stay the same.
+
 ## The pattern (reuse this)
 
 For any window-hosted overlay, keep the normal Compose component and swap only the host:
@@ -83,7 +91,8 @@ Spatial layout (rearrange existing UI):
 
 3D objects (collection as physical things):
 
-- 🟡 **3D trophy shelf** — earned achievements as little 3D trophies on a floating shelf.
+- 🟢 ~~**Trophy shelf** — earned achievements floating on a shelf.~~ **Done** as spatial-panel
+  tiles (see "What's implemented" #4); 🟡 glTF-mesh upgrade still open.
 - 🟡 **Floating 3D license plates** — each found state as a 3D plate you can grab and inspect.
 - 🟡 **3D car on the route** — a model car that advances along the trip route as you log states.
 - 🔴 **3D relief map** — the US extruded in 3D, found states raised/glowing; tabletop version to lean

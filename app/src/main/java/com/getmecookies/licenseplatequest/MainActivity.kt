@@ -25,10 +25,13 @@ import com.getmecookies.licenseplatequest.ui.navigation.AppRoot
 import com.getmecookies.licenseplatequest.ui.screens.onboarding.OnboardingFlow
 import com.getmecookies.licenseplatequest.ui.theme.LicensePlateQuestTheme
 import com.getmecookies.licenseplatequest.ui.xr.XrMapPanel
+import com.getmecookies.licenseplatequest.ui.xr.XrTrophyShelf
 import com.getmecookies.licenseplatequest.widget.TripWidget
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import androidx.xr.compose.subspace.SpatialColumn
 import androidx.xr.compose.subspace.SpatialCurvedRow
+import androidx.xr.compose.subspace.layout.padding
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -80,26 +83,36 @@ class MainActivity : ComponentActivity() {
                     val foundCodes by container.spottingRepository
                         .observeFoundCodesForActiveTrip()
                         .collectAsStateWithLifecycle(emptySet())
+                    val earnedTrophies by container.achievementRepository
+                        .observeEarned()
+                        .collectAsStateWithLifecycle(emptySet())
                     Subspace {
-                        SpatialCurvedRow(curveRadius = 1400.dp) {
-                            SpatialPanel(
-                                modifier = SubspaceModifier
-                                    .width(820.dp)
-                                    .height(720.dp),
-                            ) {
-                                appShell()
+                        SpatialColumn {
+                            SpatialCurvedRow(curveRadius = 1400.dp) {
+                                SpatialPanel(
+                                    modifier = SubspaceModifier
+                                        .width(820.dp)
+                                        .height(720.dp),
+                                ) {
+                                    appShell()
+                                }
+                                SpatialPanel(
+                                    modifier = SubspaceModifier
+                                        .width(1100.dp)
+                                        .height(720.dp),
+                                ) {
+                                    XrMapPanel(
+                                        mapRepository = container.mapRepository,
+                                        foundCodes = foundCodes,
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                }
                             }
-                            SpatialPanel(
-                                modifier = SubspaceModifier
-                                    .width(1100.dp)
-                                    .height(720.dp),
-                            ) {
-                                XrMapPanel(
-                                    mapRepository = container.mapRepository,
-                                    foundCodes = foundCodes,
-                                    modifier = Modifier.fillMaxSize(),
-                                )
-                            }
+                            // Earned achievements float as a trophy shelf below the cockpit.
+                            XrTrophyShelf(
+                                earnedAchievements = earnedTrophies,
+                                modifier = SubspaceModifier.padding(top = 32.dp),
+                            )
                         }
                     }
                 } else {
