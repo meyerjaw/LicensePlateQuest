@@ -26,6 +26,8 @@ import kotlin.random.Random
  * @param trigger restart key — pass a counter that increments per celebration.
  * @param particleCount total number of sparks across all bursts.
  * @param durationMillis how long the whole show lasts.
+ * @param particleScale multiplier on spark size — bump it on large surfaces (e.g. an XR panel) so
+ *   particles stay big and bold instead of looking tiny and sparse.
  */
 @Composable
 fun Confetti(
@@ -33,6 +35,7 @@ fun Confetti(
     modifier: Modifier = Modifier,
     particleCount: Int = 160,
     durationMillis: Int = 1800,
+    particleScale: Float = 1f,
 ) {
     val colors = remember {
         listOf(
@@ -113,7 +116,7 @@ fun Confetti(
                 }
                 // Twinkle: brief size pulsing as the spark travels.
                 val twinkle = 0.75f + 0.25f * sin(local * 22f + s.angle)
-                val r = s.size * (1f - 0.35f * local) * twinkle
+                val r = s.size * particleScale * (1f - 0.35f * local) * twinkle
                 if (r > 0.3f) {
                     drawCircle(
                         color = s.color.copy(alpha = alpha),

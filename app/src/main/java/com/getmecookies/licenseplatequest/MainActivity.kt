@@ -7,8 +7,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -24,14 +28,18 @@ import com.getmecookies.licenseplatequest.notifications.TripReminders
 import com.getmecookies.licenseplatequest.ui.navigation.AppRoot
 import com.getmecookies.licenseplatequest.ui.screens.onboarding.OnboardingFlow
 import com.getmecookies.licenseplatequest.ui.theme.LicensePlateQuestTheme
+import com.getmecookies.licenseplatequest.ui.xr.XrCelebrationOverlay
 import com.getmecookies.licenseplatequest.ui.xr.XrMapPanel
 import com.getmecookies.licenseplatequest.ui.xr.XrTrophyShelf
 import com.getmecookies.licenseplatequest.widget.TripWidget
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import androidx.xr.compose.subspace.SpatialBox
 import androidx.xr.compose.subspace.SpatialColumn
 import androidx.xr.compose.subspace.SpatialCurvedRow
+import androidx.xr.compose.subspace.layout.offset
 import androidx.xr.compose.subspace.layout.padding
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -86,33 +94,75 @@ class MainActivity : ComponentActivity() {
                     val earnedTrophies by container.achievementRepository
                         .observeEarned()
                         .collectAsStateWithLifecycle(emptySet())
+
+                    // Spatial confetti trigger: collect the active trip's found set directly and bump
+                    // the trigger only when it GROWS after the first (baseline) emission — so it never
+                    // fires on app load (the initial emission only seeds the baseline; the artificial
+                    // emptySet from collectAsState would have looked like growth).
+                    // confettiActive keeps the input-capturing confetti panel mounted only during the
+                    // burst, so it doesn't block taps on the app the rest of the time.
+                    var confettiTrigger by remember { mutableIntStateOf(0) }
+                    var confettiActive by remember { mutableStateOf(false) }
+                    LaunchedEffect(Unit) {
+                        var baseline: Int? = null
+                        container.spottingRepository.observeFoundCodesForActiveTrip()
+                            .collect { codes ->
+                                val prev = baseline
+                                if (prev != null && codes.size > prev) confettiTrigger++
+                                baseline = codes.size
+                            }
+                    }
+                    LaunchedEffect(confettiTrigger) {
+                        if (confettiTrigger > 0) {
+                            confettiActive = true
+                            delay(2900L)
+                            confettiActive = false
+                        }
+                    }
+
                     Subspace {
-                        SpatialColumn {
-                            SpatialCurvedRow(curveRadius = 1400.dp) {
-                                SpatialPanel(
-                                    modifier = SubspaceModifier
-                                        .width(820.dp)
-                                        .height(720.dp),
-                                ) {
-                                    appShell()
+                        SpatialBox {
+                            SpatialColumn {
+                                SpatialCurvedRow(curveRadius = 1400.dp) {
+                                    SpatialPanel(
+                                        modifier = SubspaceModifier
+                                            .width(820.dp)
+                                            .height(720.dp),
+                                    ) {
+                                        appShell()
+                                    }
+                                    SpatialPanel(
+                                        modifier = SubspaceModifier
+                                            .width(1100.dp)
+                                            .height(720.dp),
+                                    ) {
+                                        XrMapPanel(
+                                            mapRepository = container.mapRepository,
+                                            foundCodes = foundCodes,
+                                            modifier = Modifier.fillMaxSize(),
+                                        )
+                                    }
                                 }
+                                // Earned achievements float as a trophy shelf below the cockpit.
+                                XrTrophyShelf(
+                                    earnedAchievements = earnedTrophies,
+                                    modifier = SubspaceModifier.padding(top = 32.dp),
+                                )
+                            }
+                            // Transparent confetti panel, pulled toward the viewer (+z) so it rains in
+                            // FRONT of the cockpit. Only mounted during the burst — an XR panel
+                            // captures input across its whole quad, so leaving it up would block taps
+                            // on the app. (If the burst appears *behind* the windows, flip the z sign.)
+                            if (confettiActive) {
                                 SpatialPanel(
                                     modifier = SubspaceModifier
-                                        .width(1100.dp)
-                                        .height(720.dp),
+                                        .width(1600.dp)
+                                        .height(1100.dp)
+                                        .offset(z = 250.dp),
                                 ) {
-                                    XrMapPanel(
-                                        mapRepository = container.mapRepository,
-                                        foundCodes = foundCodes,
-                                        modifier = Modifier.fillMaxSize(),
-                                    )
+                                    XrCelebrationOverlay(trigger = confettiTrigger)
                                 }
                             }
-                            // Earned achievements float as a trophy shelf below the cockpit.
-                            XrTrophyShelf(
-                                earnedAchievements = earnedTrophies,
-                                modifier = SubspaceModifier.padding(top = 32.dp),
-                            )
                         }
                     }
                 } else {

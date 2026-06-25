@@ -47,6 +47,23 @@ existing
       loaded via **SceneCore** (`androidx.xr.scenecore`, a `.glb` in `assets/`, placed through a
       `Volume`/SceneCore entity) once a model exists — the data + grid layout here stay the same.
 
+5. **Spatial confetti** — `MainActivity` + `ui/xr/XrCelebrationOverlay.kt`
+    - The whole spatial scene is wrapped in a `SpatialBox`; a transparent `SpatialPanel` (1600×1100)
+      pulled toward the viewer (`offset(z = 250.dp)`) renders the in-app `Confetti` Canvas so the
+      burst rains in FRONT of the cockpit panels (coplanar, it was occluded by the opaque panels).
+      `Confetti` gained a `particleScale` knob (default 1; the XR overlay uses 5× + 320 particles +
+      2.8s) so particles stay big/dense on a large surface. (If the burst shows behind the windows,
+      flip the z-offset sign.)
+    - Trigger: collect the active trip's found set **directly** and bump the counter only when it
+      grows
+      *after* the first (baseline) emission — so it never fires on app load (the artificial
+      `collectAsState` emptySet would otherwise read as growth). Reuses the existing `Confetti`.
+    - The panel is only **mounted during the burst** (`confettiActive`, ~2.9s): an XR panel captures
+      input across its whole quad, so leaving it up permanently blocked taps on the app behind it.
+    - Future tweak: distinct bursts for 50/50 vs rare plates (currently any find fires it), and a
+      true
+      3D particle system via SceneCore.
+
 ## The pattern (reuse this)
 
 For any window-hosted overlay, keep the normal Compose component and swap only the host:
