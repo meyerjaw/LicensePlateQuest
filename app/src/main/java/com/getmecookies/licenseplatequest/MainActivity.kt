@@ -24,7 +24,11 @@ import com.getmecookies.licenseplatequest.notifications.TripReminders
 import com.getmecookies.licenseplatequest.ui.navigation.AppRoot
 import com.getmecookies.licenseplatequest.ui.screens.onboarding.OnboardingFlow
 import com.getmecookies.licenseplatequest.ui.theme.LicensePlateQuestTheme
+import com.getmecookies.licenseplatequest.ui.xr.XrMapPanel
 import com.getmecookies.licenseplatequest.widget.TripWidget
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import androidx.xr.compose.subspace.SpatialCurvedRow
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -68,17 +72,34 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // On an Android XR headset in Full Space, float the existing 2D UI as a spatial
-                // panel; everywhere else (phones/tablets, or XR Home Space) render it flat. The same
-                // composable is reused — no separate XR UI to maintain. (Experimental: Jetpack XR.)
+                // On an Android XR headset in Full Space, lay out a curved "cockpit": the interactive
+                // app on one panel and a big dedicated US map curving alongside it (reflecting the
+                // active trip's finds live). Everywhere else (phones/tablets, or XR Home Space) render
+                // the same shell flat — no separate XR UI to maintain. (Experimental: Jetpack XR.)
                 if (LocalSpatialCapabilities.current.isSpatialUiEnabled) {
+                    val foundCodes by container.spottingRepository
+                        .observeFoundCodesForActiveTrip()
+                        .collectAsStateWithLifecycle(emptySet())
                     Subspace {
-                        SpatialPanel(
-                            modifier = SubspaceModifier
-                                .width(1024.dp)
-                                .height(768.dp),
-                        ) {
-                            appShell()
+                        SpatialCurvedRow(curveRadius = 1400.dp) {
+                            SpatialPanel(
+                                modifier = SubspaceModifier
+                                    .width(820.dp)
+                                    .height(720.dp),
+                            ) {
+                                appShell()
+                            }
+                            SpatialPanel(
+                                modifier = SubspaceModifier
+                                    .width(1100.dp)
+                                    .height(720.dp),
+                            ) {
+                                XrMapPanel(
+                                    mapRepository = container.mapRepository,
+                                    foundCodes = foundCodes,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            }
                         }
                     }
                 } else {

@@ -30,6 +30,15 @@ existing
       surface, in a sized `Surface`) in spatial mode, `ModalBottomSheet` otherwise. Both share the
       extracted `RegionPickerContent`, so there's one picker body, two containers.
 
+3. **Curved map cockpit** — `MainActivity` + `ui/xr/XrMapPanel.kt`
+    - In spatial mode the single panel is replaced by a `SpatialCurvedRow(curveRadius = 1400.dp)`
+      with
+      two `SpatialPanel`s: the interactive app shell (820×720) and a big dedicated map panel
+      (1100×720) curving alongside.
+    - `XrMapPanel` loads the bundled `UsMapShapes` and renders the in-app `UsMap` (display-only,
+      `interactive = false`) filled with the active trip's found codes
+      (`observeFoundCodesForActiveTrip`), so it updates live as plates are marked.
+
 ## The pattern (reuse this)
 
 For any window-hosted overlay, keep the normal Compose component and swap only the host:
@@ -50,14 +59,51 @@ if (LocalSpatialCapabilities.current.isSpatialUiEnabled) {
     - Achievement detail sheet (`ModalBottomSheet` in `PassportScreen`).
     - Any `AlertDialog`/`Dialog` (e.g. the end-trip prompt, home-location dialog).
     - The celebration screen, if it ever uses a popup/sheet.
-- **Spatial enhancements to play with** (beyond parity):
-    - `Orbiter` floating controls (e.g. a floating tab bar or trip switcher).
-    - Break the US map out into its own elevated/curved `SpatialPanel`.
-    - Multiple panels (map + list side by side).
+- **Spatial enhancements** — see the **Ideas backlog** below.
 - **Verify on device/emulator:** panel sizing (1024×768 is a guess), `SpatialDialog` size/elevation,
   and whether any alpha-API signatures need updating on the next SDK bump.
 - **Decision deferred:** whether XR ever graduates from experiment → supported (would then enter
   `SPEC.md` and need its own QA matrix).
+
+## Ideas backlog
+
+Effort: 🟢 Jetpack XR Compose only · 🟡 needs SceneCore + glTF/environment asset · 🔴 ambitious /
+uncertain on alpha SDK.
+
+Spatial layout (rearrange existing UI):
+
+- 🟢 ~~**Curved map panel** — pull the US map into a large curved `SpatialPanel`, controls on a side
+  panel.~~ **Done** (curved cockpit; see "What's implemented" #3).
+- 🟢 **Cockpit layout** — map + found/list + leaderboard panels arranged in an arc, like a road-trip
+  dashboard.
+- 🟢 **Orbiter controls** — float the tab bar / trip switcher as an `Orbiter` so it's always
+  reachable.
+- 🟢 **Spatialize remaining sheets** — achievement detail + dialogs via the `SpatialDialog` branch (
+  parity cleanup).
+
+3D objects (collection as physical things):
+
+- 🟡 **3D trophy shelf** — earned achievements as little 3D trophies on a floating shelf.
+- 🟡 **Floating 3D license plates** — each found state as a 3D plate you can grab and inspect.
+- 🟡 **3D car on the route** — a model car that advances along the trip route as you log states.
+- 🔴 **3D relief map** — the US extruded in 3D, found states raised/glowing; tabletop version to lean
+  over.
+
+Immersion & celebration:
+
+- 🟡 **Themed environment / skybox** — open-highway or national-park backdrop in Full Space.
+- 🟡 **Spatial confetti / fireworks** — 50/50 and rare-plate celebrations burst into the room.
+- 🟡 **Spatial audio** — the find chime / rare sparkle comes from where the state sits on the map.
+
+XR-native interaction:
+
+- 🔴 **Gaze + pinch to mark** — look at a state on the big map and pinch to mark it found.
+- 🔴 **Reach out and grab** — direct hand-touch the map states / floating plates.
+
+Social (speculative):
+
+- 🔴 **Shared space** — family in one XR session marking plates on a shared map (needs platform
+  multiuser).
 
 ## How to run
 
