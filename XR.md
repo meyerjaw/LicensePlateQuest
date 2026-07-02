@@ -81,7 +81,8 @@ if (LocalSpatialCapabilities.current.isSpatialUiEnabled) {
 ## Remaining / ideas
 
 - **Other window-hosted overlays** to route through `SpatialDialog`/`SpatialPopup` the same way:
-    - Achievement detail sheet (`ModalBottomSheet` in `PassportScreen`).
+    - ~~Achievement detail sheet (`ModalBottomSheet` in `PassportScreen`).~~ **Done** — branches to
+      `SpatialDialog`, sharing `AchievementDetailContent` (same recipe as the region picker).
     - Any `AlertDialog`/`Dialog` (e.g. the end-trip prompt, home-location dialog).
     - The celebration screen, if it ever uses a popup/sheet.
 - **Spatial enhancements** — see the **Ideas backlog** below.

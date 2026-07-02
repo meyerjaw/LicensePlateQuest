@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
@@ -54,6 +55,8 @@ import androidx.core.app.ShareCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.getmecookies.licenseplatequest.R
+import androidx.xr.compose.platform.LocalSpatialCapabilities
+import androidx.xr.compose.spatial.SpatialDialog
 import com.getmecookies.licenseplatequest.domain.Achievement
 import com.getmecookies.licenseplatequest.domain.AchievementProgress
 import com.getmecookies.licenseplatequest.domain.AchievementStats
@@ -342,7 +345,8 @@ private fun AchievementBadge(
     }
 }
 
-/** Bottom sheet shown when a badge is tapped: full description, earned date or progress, and share. */
+/** Shown when a badge is tapped: full description, earned date or progress, and share. A bottom
+ *  sheet on phones; a SpatialDialog on Android XR (a window-hosted sheet doesn't render in a panel). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AchievementDetailSheet(
@@ -352,88 +356,123 @@ private fun AchievementDetailSheet(
     earnedAt: Instant?,
     onDismiss: () -> Unit,
 ) {
+    if (LocalSpatialCapabilities.current.isSpatialUiEnabled) {
+        SpatialDialog(onDismissRequest = onDismiss) {
+            Surface(
+                shape = RoundedCornerShape(28.dp),
+                tonalElevation = 6.dp,
+                modifier = Modifier.width(440.dp),
+            ) {
+                AchievementDetailContent(
+                    achievement = achievement,
+                    earned = earned,
+                    progress = progress,
+                    earnedAt = earnedAt,
+                    modifier = Modifier.padding(24.dp),
+                )
+            }
+        }
+    } else {
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = rememberModalBottomSheetState(),
+        ) {
+            AchievementDetailContent(
+                achievement = achievement,
+                earned = earned,
+                progress = progress,
+                earnedAt = earnedAt,
+                modifier = Modifier
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 24.dp)
+                    .windowInsetsPadding(WindowInsets.navigationBars),
+            )
+        }
+    }
+}
+
+/** The detail body, reused by the bottom sheet and the spatial dialog. */
+@Composable
+private fun AchievementDetailContent(
+    achievement: Achievement,
+    earned: Boolean,
+    progress: AchievementProgress,
+    earnedAt: Instant?,
+    modifier: Modifier = Modifier,
+) {
     val meta = achievementMeta(achievement)
     val context = LocalContext.current
     val title = stringResource(meta.titleRes)
     val desc = stringResource(meta.descRes)
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(),
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
+        Icon(
+            imageVector = meta.icon,
+            contentDescription = null,
+            tint = if (earned) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 24.dp)
-                .windowInsetsPadding(WindowInsets.navigationBars),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Icon(
-                imageVector = meta.icon,
-                contentDescription = null,
-                tint = if (earned) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                modifier = Modifier
-                    .size(56.dp)
-                    .alpha(if (earned) 1f else 0.45f),
+                .size(56.dp)
+                .alpha(if (earned) 1f else 0.45f),
+        )
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = desc,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        when {
+            earned -> Text(
+                text = stringResource(
+                    R.string.ach_detail_earned,
+                    (earnedAt ?: Instant.now())
+                        .atZone(ZoneId.systemDefault()).toLocalDate().format(DATE_FORMAT),
+                ),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
             )
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = desc,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            when {
-                earned -> Text(
-                    text = stringResource(
-                        R.string.ach_detail_earned,
-                        (earnedAt ?: Instant.now())
-                            .atZone(ZoneId.systemDefault()).toLocalDate().format(DATE_FORMAT),
-                    ),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
+
+            !progress.isBinary -> {
+                LinearProgressIndicator(
+                    progress = { progress.fraction },
+                    modifier = Modifier.fillMaxWidth(),
                 )
-
-                !progress.isBinary -> {
-                    LinearProgressIndicator(
-                        progress = { progress.fraction },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Text(
-                        text = stringResource(
-                            R.string.ach_progress,
-                            progress.current,
-                            progress.target
-                        ),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                else -> Text(
-                    text = stringResource(R.string.ach_detail_locked),
+                Text(
+                    text = stringResource(
+                        R.string.ach_progress,
+                        progress.current,
+                        progress.target
+                    ),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            if (earned) {
-                Button(onClick = { shareAchievement(context, title, desc) }) {
-                    Icon(
-                        Icons.Filled.Share,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(Modifier.size(8.dp))
-                    Text(stringResource(R.string.ach_detail_share))
-                }
+
+            else -> Text(
+                text = stringResource(R.string.ach_detail_locked),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (earned) {
+            Button(onClick = { shareAchievement(context, title, desc) }) {
+                Icon(
+                    Icons.Filled.Share,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.size(8.dp))
+                Text(stringResource(R.string.ach_detail_share))
             }
         }
     }
