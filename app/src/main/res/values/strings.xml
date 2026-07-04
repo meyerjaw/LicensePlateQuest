@@ -118,6 +118,9 @@
     <string name="widget_label">License Plate Quest</string>
     <string name="widget_description">Your road-trip plate count, at a glance.</string>
 
+    <string name="settings_scan">Scan a plate (experimental)</string>
+    <string name="settings_scan_summary">Point the camera at a plate to detect its state</string>
+
     <string name="settings_help">Help</string>
     <string name="settings_restart_wizard">Restart setup wizard</string>
     <string name="settings_restart_wizard_summary">Run the first-time setup guide again</string>

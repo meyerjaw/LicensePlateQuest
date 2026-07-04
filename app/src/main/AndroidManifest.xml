@@ -5,6 +5,12 @@
     <!-- Overdue-trip reminder notifications (playtest #13). Runtime-requested on Android 13+. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Camera plate → state recognition (experimental; see PLATE_RECOGNITION.md). Runtime-requested. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature
+        android:name="android.hardware.camera.any"
+        android:required="false" />
+
     <application
         android:name=".LicensePlateQuestApp"
         android:allowBackup="true"

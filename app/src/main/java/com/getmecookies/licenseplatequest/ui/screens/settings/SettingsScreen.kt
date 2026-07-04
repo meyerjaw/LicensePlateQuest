@@ -60,6 +60,7 @@ import java.util.UUID
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onOpenScan: () -> Unit = {},
     viewModel: SettingsViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
@@ -325,6 +326,14 @@ fun SettingsScreen(
                     )
                     TextButton(onClick = viewModel::restartOnboarding) {
                         Text(stringResource(R.string.settings_restart_wizard))
+                    }
+                    Text(
+                        text = stringResource(R.string.settings_scan_summary),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    TextButton(onClick = onOpenScan) {
+                        Text(stringResource(R.string.settings_scan))
                     }
                 }
             }

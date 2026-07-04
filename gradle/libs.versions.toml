@@ -19,6 +19,8 @@ coroutines = "1.10.2"
 workManager = "2.11.2"
 glance = "1.1.1"
 xrCompose = "1.0.0-alpha12"
+camerax = "1.4.2"
+mlkitText = "16.0.1"
 robolectric = "4.16"
 androidxTestCore = "1.6.1"
 googleServices = "4.4.4"
@@ -67,6 +69,13 @@ androidx-glance-appwidget = { group = "androidx.glance", name = "glance-appwidge
 
 # Jetpack Compose for XR (experimental — spatial panel on Android XR headsets)
 androidx-xr-compose = { group = "androidx.xr.compose", name = "compose", version.ref = "xrCompose" }
+
+# CameraX + ML Kit (camera plate → state recognition; see PLATE_RECOGNITION.md)
+androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
+androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
+mlkit-text-recognition = { group = "com.google.mlkit", name = "text-recognition", version.ref = "mlkitText" }
 
 # Firebase (Analytics) — versions managed by the BoM; firebase-analytics has no explicit version.
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }

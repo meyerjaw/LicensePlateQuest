@@ -91,11 +91,28 @@ The seam keeps the ViewModel/UI oblivious to which engine ran, and makes it fake
 - Fake `PlateRecognizer` for ViewModel tests.
 - Offline harness: a folder of sample plate photos → run the matcher, measure hit rate.
 
+## Progress
+
+- **Matcher built** (`domain/plate/PlateStateMatcher.kt`, pure, unit-tested): OCR lines → best
+  `PlateMatch(stateCode, confidence, matchedPhrase)`. Bundled 50-state dictionary of names + plate
+  slogans; normalization + embedded-phrase + fuzzy (edit-distance) matching; ignores bare 2-letter
+  codes (too noisy); `ACCEPT_THRESHOLD` tunable. Known limit: 4-letter names (OHIO/IOWA/UTAH) need a
+  near-clean read — short names don't tolerate an OCR error at the current threshold.
+- **Recognizer seam built** (`data/plate/PlateRecognizer.kt`): interface + `MlKitPlateRecognizer`
+  (ML Kit Latin text recognition → `PlateStateMatcher`, on-device, one at a time).
+- **Scan spike built** (`ui/screens/scan/ScanScreen.kt`): CameraX preview + throttled
+  `ImageAnalysis` (skip-while-busy) → recognizer → on-screen chip + Logcat (`PlateScan` tag). **No
+  DB
+  writes.** Reached from **Settings → Help → "Scan a plate (experimental)"**. Deps: CameraX 1.4.2 +
+  ML Kit text-recognition 16.0.1; `CAMERA` permission (runtime-requested in-screen).
+- **Next (device):** run it on real plates and read the Logcat hit rate — the Phase 0 go/no-go. If
+  accuracy is good, Phase 1 wires the match → confirm chip → `markState`.
+
 ## Phasing
 
 - **Phase 0 — spike (go/no-go):** CameraX preview + ML Kit OCR + matcher, just *log* the recognized
   state (no DB writes). Answers the one real question: **does reading the state name off real plates
-  actually work** at distance/angle/motion?
+  actually work** at distance/angle/motion? *(Matcher done; camera/ML Kit wiring next.)*
 - **Phase 1:** wire recognition → confirm chip → `markState`; CAMERA permission + primer; settings
   toggle; matcher tests.
 - **Phase 2:** stabilization/debounce polish; attribution; auto-mark with undo.

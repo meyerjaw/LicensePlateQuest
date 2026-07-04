@@ -10,6 +10,9 @@ object Routes {
     const val NEW_TRIP = "trips/new"
     const val SETTINGS = "settings"
 
+    /** Experimental camera plate → state recognition spike (see PLATE_RECOGNITION.md). */
+    const val SCAN = "scan"
+
     /** State Detail, parameterized by 2-letter state code. */
     const val STATE_DETAIL = "state/{code}"
     fun stateDetail(code: String) = "state/$code"

@@ -30,6 +30,7 @@ import com.getmecookies.licenseplatequest.ui.screens.celebration.CelebrationScre
 import com.getmecookies.licenseplatequest.ui.screens.players.AddPlayerScreen
 import com.getmecookies.licenseplatequest.ui.screens.passport.PassportScreen
 import com.getmecookies.licenseplatequest.ui.screens.players.PlayersScreen
+import com.getmecookies.licenseplatequest.ui.screens.scan.ScanScreen
 import com.getmecookies.licenseplatequest.ui.screens.settings.SettingsScreen
 import com.getmecookies.licenseplatequest.ui.screens.statedetail.StateDetailScreen
 import com.getmecookies.licenseplatequest.ui.screens.trips.ManageTripScreen
@@ -67,6 +68,7 @@ fun AppRoot(
         Routes.CELEBRATION,
         Routes.EDIT_TRIP,
         Routes.SETTINGS,
+        Routes.SCAN,
     )
     // The Active Trip (map) view lives inside the Trips tab rather than on its own route, so it
     // reports up whether it's showing; the bottom bar hides while the map is up so it reads as a
@@ -245,7 +247,13 @@ fun AppRoot(
                 )
             }
             composable(Routes.SETTINGS) {
-                SettingsScreen(onBack = { navController.popBackStack() })
+                SettingsScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenScan = { navController.navigate(Routes.SCAN) },
+                )
+            }
+            composable(Routes.SCAN) {
+                ScanScreen(onBack = { navController.popBackStack() })
             }
         }
     }

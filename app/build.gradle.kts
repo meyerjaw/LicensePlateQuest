@@ -100,6 +100,13 @@ dependencies {
     // Jetpack Compose for XR (experimental — spatial panel on Android XR)
     implementation(libs.androidx.xr.compose)
 
+    // CameraX + ML Kit (camera plate → state recognition)
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.mlkit.text.recognition)
+
     // Firebase Analytics (product analytics — see ANALYTICS.md). BoM pins the versions.
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.analytics)
